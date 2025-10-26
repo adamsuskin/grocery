@@ -24,6 +24,7 @@ export interface GroceryItemTable {
   gotten: number; // SQLite uses INTEGER for boolean (0 = false, 1 = true)
   category: string;
   notes: string;
+  user_id: string;
   created_at: number;
 }
 
@@ -35,6 +36,7 @@ export interface GroceryItem {
   gotten: boolean;
   category: Category;
   notes: string;
+  userId: string;
   createdAt: number;
 }
 
@@ -95,4 +97,69 @@ export interface BulkOperationsProps {
   gottenCount: number;
   onMarkAllGotten: () => Promise<void>;
   onDeleteAllGotten: () => Promise<void>;
+}
+
+// Authentication types
+
+/**
+ * Represents a user in the system
+ */
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  createdAt: number;
+}
+
+/**
+ * Authentication state for the application
+ */
+export interface AuthState {
+  user: User | null;
+  token: string | null;
+  loading: boolean;
+  error: AuthError | null;
+}
+
+/**
+ * Credentials required for user login
+ */
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+/**
+ * Credentials required for user registration
+ */
+export interface RegisterCredentials {
+  username: string;
+  email: string;
+  password: string;
+}
+
+/**
+ * Authentication error with code and message
+ */
+export interface AuthError {
+  code: string;
+  message: string;
+}
+
+/**
+ * Response from authentication endpoints
+ */
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
+/**
+ * Authentication context type for React context
+ */
+export interface AuthContextType extends AuthState {
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (credentials: RegisterCredentials) => Promise<void>;
+  logout: () => void;
+  clearError: () => void;
 }

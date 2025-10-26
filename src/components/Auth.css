@@ -1,0 +1,892 @@
+/* ============================================
+   AUTHENTICATION COMPONENTS - COMPREHENSIVE STYLES
+   ============================================
+
+   This file contains all styles for authentication components:
+   - Login Form
+   - Register Form
+   - User Menu/Profile
+   - Auth Page Container
+   - Loading States
+   - Error Messages
+   - Password Visibility Toggle
+   - Form Validation States
+
+   Designed to match the existing App.css design language
+   ============================================ */
+
+:root {
+  /* Auth-specific colors (inherits from App.css) */
+  --auth-card-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --auth-card-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.15);
+  --error-bg: #ffebee;
+  --error-text: var(--danger-color);
+  --success-bg: #e8f5e9;
+  --success-text: var(--primary-color);
+}
+
+/* ============================================
+   AUTH PAGE CONTAINER
+   ============================================ */
+
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-color);
+  padding: 20px;
+}
+
+.auth-main {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 40px;
+  width: 100%;
+}
+
+/* ============================================
+   AUTH FORM CONTAINERS (Login & Register)
+   ============================================ */
+
+.login-form-container,
+.register-form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  background-color: var(--bg-color);
+  width: 100%;
+}
+
+.login-form-card,
+.register-form-card {
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 40px;
+  box-shadow: var(--auth-card-shadow);
+  width: 100%;
+  max-width: 420px;
+  transition: box-shadow 0.3s ease;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.login-form-card:hover,
+.register-form-card:hover {
+  box-shadow: var(--auth-card-shadow-hover);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   FORM HEADERS
+   ============================================ */
+
+.login-form-header,
+.register-form-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.login-form-header h2,
+.register-form-header h2 {
+  margin: 0 0 8px;
+  font-size: 1.75rem;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.login-form-subtitle,
+.register-form-subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+/* ============================================
+   FORM STRUCTURE
+   ============================================ */
+
+.login-form,
+.register-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.form-label .required {
+  color: var(--danger-color);
+  margin-left: 2px;
+}
+
+/* ============================================
+   INPUT FIELDS
+   ============================================ */
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  outline: none;
+  transition: all 0.2s ease;
+  background-color: white;
+  font-family: inherit;
+}
+
+.input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.input:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.input::placeholder {
+  color: #a0aec0;
+}
+
+/* Input Error State */
+.input-error {
+  border-color: var(--danger-color) !important;
+}
+
+.input-error:focus {
+  border-color: var(--danger-color) !important;
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+
+/* ============================================
+   PASSWORD INPUT WITH TOGGLE
+   ============================================ */
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .input {
+  padding-right: 48px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 8px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 1.2rem;
+  opacity: 0.6;
+  transition: opacity 0.2s, transform 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.password-toggle:hover:not(:disabled) {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.password-toggle:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.password-toggle:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* ============================================
+   ERROR MESSAGES
+   ============================================ */
+
+/* Banner Error (Form-level) */
+.login-error-banner,
+.error-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background-color: var(--error-bg);
+  border: 1px solid var(--error-text);
+  border-left: 4px solid var(--error-text);
+  border-radius: 4px;
+  color: var(--error-text);
+  font-size: 0.9rem;
+  animation: slideDown 0.3s ease-out, shake 0.4s ease;
+}
+
+.error-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-message {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* Field Error (Input-level) */
+.field-error {
+  color: var(--danger-color);
+  font-size: 0.85rem;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: slideDown 0.2s ease-out;
+}
+
+.field-error::before {
+  content: '⚠';
+  font-size: 0.9rem;
+}
+
+/* Field Help Text */
+.field-help {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 4px;
+  display: block;
+  line-height: 1.4;
+}
+
+/* ============================================
+   SUCCESS MESSAGES
+   ============================================ */
+
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background-color: var(--success-bg);
+  border: 1px solid var(--success-text);
+  border-left: 4px solid var(--success-text);
+  border-radius: 4px;
+  color: var(--success-text);
+  font-size: 0.9rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+.success-icon {
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+/* ============================================
+   PASSWORD STRENGTH INDICATOR (Register Form)
+   ============================================ */
+
+.password-strength {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.password-strength-bars {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+
+.strength-bar {
+  height: 4px;
+  flex: 1;
+  border-radius: 2px;
+  background-color: #e0e0e0;
+  transition: background-color 0.3s ease;
+}
+
+.strength-bar.active {
+  background-color: var(--primary-color);
+}
+
+.strength-bar.weak {
+  background-color: var(--danger-color);
+}
+
+.strength-bar.medium {
+  background-color: #ffb74d;
+}
+
+.strength-bar.strong {
+  background-color: var(--primary-color);
+}
+
+.password-strength-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Password Requirements List */
+.password-requirements {
+  list-style: none;
+  padding: 12px;
+  margin: 8px 0 0;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border-left: 3px solid var(--border-color);
+  font-size: 0.85rem;
+}
+
+.password-requirements li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+
+.password-requirements li.met {
+  color: var(--primary-color);
+}
+
+.password-requirements li.met .requirement-icon::before {
+  content: '✓';
+}
+
+.password-requirements li:not(.met) .requirement-icon::before {
+  content: '○';
+}
+
+.requirement-icon {
+  font-weight: bold;
+  width: 16px;
+  display: inline-flex;
+  justify-content: center;
+}
+
+/* ============================================
+   FORM BUTTONS
+   ============================================ */
+
+/* Primary Submit Buttons */
+.btn-login,
+.btn-register {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 1rem;
+  padding: 12px 20px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-login:disabled,
+.btn-register:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: #ccc;
+}
+
+.btn-login:disabled:hover,
+.btn-register:disabled:hover {
+  background-color: #ccc;
+  transform: none;
+}
+
+.btn-login:not(:disabled):active,
+.btn-register:not(:disabled):active {
+  transform: scale(0.98);
+}
+
+/* Link Buttons */
+.link-button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  transition: color 0.2s;
+  font-family: inherit;
+}
+
+.link-button:hover:not(:disabled) {
+  color: var(--primary-color);
+}
+
+.link-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.link-button.link-primary {
+  color: var(--primary-color);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.link-button.link-primary:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+/* ============================================
+   FORM LINKS & FOOTER
+   ============================================ */
+
+.form-links {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -8px;
+}
+
+.form-footer {
+  text-align: center;
+  margin-top: 12px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.form-footer p,
+.register-prompt {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-color);
+}
+
+/* ============================================
+   LOADING STATES
+   ============================================ */
+
+/* Auth Page Loading (Full Page) */
+.auth-loading,
+.protected-route-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 16px;
+  color: var(--text-muted);
+}
+
+.auth-loading p,
+.protected-route-loading p {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Large Loading Spinner (Full Page) */
+.loading-spinner-large {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Small Loading Spinner (Button) */
+.spinner,
+.loading-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   USER MENU / PROFILE SECTION
+   ============================================ */
+
+/* Header with User Menu */
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.header-title {
+  flex: 1;
+  min-width: 200px;
+}
+
+/* User Menu Card */
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.2s ease;
+}
+
+.user-menu:hover {
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* User Info Section */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-icon {
+  font-size: 1.5rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.user-icon:hover {
+  transform: scale(1.05);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.user-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-email {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================
+   LOGOUT BUTTON
+   ============================================ */
+
+.btn-logout {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.btn-logout:hover:not(:disabled) {
+  background: var(--danger-color);
+  color: white;
+  border-color: var(--danger-color);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(244, 67, 54, 0.2);
+}
+
+.btn-logout:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-logout:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-10px);
+  }
+  75% {
+    transform: translateX(10px);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY - FOCUS STATES
+   ============================================ */
+
+.input:focus-visible,
+.btn:focus-visible,
+.link-button:focus-visible,
+.password-toggle:focus-visible,
+.btn-logout:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Remove default focus outline, rely on focus-visible */
+.input:focus,
+.btn:focus,
+.link-button:focus,
+.password-toggle:focus {
+  outline: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .input {
+    border-width: 2px;
+  }
+
+  .input-error {
+    border-width: 3px;
+  }
+
+  .btn {
+    border-width: 2px;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY - REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .spinner,
+  .loading-spinner,
+  .loading-spinner-large {
+    animation: none;
+    border: 2px solid var(--primary-color);
+  }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .header-title {
+    text-align: center;
+  }
+
+  .user-menu {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .user-details {
+    max-width: 150px;
+  }
+
+  .user-email {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .login-form-card,
+  .register-form-card {
+    padding: 32px 24px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .login-form-container,
+  .register-form-container {
+    padding: 12px;
+    align-items: flex-start;
+  }
+
+  .login-form-card,
+  .register-form-card {
+    padding: 24px 20px;
+    margin-top: 20px;
+    max-width: 100%;
+  }
+
+  .login-form-header h2,
+  .register-form-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .login-form-subtitle,
+  .register-form-subtitle {
+    font-size: 0.9rem;
+  }
+
+  .user-menu {
+    padding: 10px 12px;
+    gap: 12px;
+  }
+
+  .user-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.3rem;
+  }
+
+  .user-name {
+    font-size: 0.9rem;
+  }
+
+  .user-email {
+    font-size: 0.8rem;
+  }
+
+  .btn-logout {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  .password-strength {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .password-strength-bars {
+    width: 100%;
+  }
+}
+
+/* Extra Small Mobile */
+@media (max-width: 360px) {
+  .login-form-card,
+  .register-form-card {
+    padding: 20px 16px;
+  }
+
+  .user-menu {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .user-info {
+    justify-content: center;
+  }
+
+  .btn-logout {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  .auth-page,
+  .login-form-container,
+  .register-form-container,
+  .user-menu,
+  .btn-logout {
+    display: none;
+  }
+}

@@ -10,24 +10,47 @@
     "zero:dev": "zero-cache-dev",
     "db:up": "docker compose up -d",
     "db:down": "docker compose down",
-    "dev:full": "concurrently \"pnpm db:up\" \"pnpm zero:dev\" \"pnpm dev\""
+    "db:init": "psql -h localhost -U grocery -d grocery_db -f server/db/schema.sql",
+    "server:dev": "nodemon --exec ts-node --esm server/index.ts",
+    "server:build": "tsc -p tsconfig.server.json",
+    "server:start": "node dist/server/index.js",
+    "dev:full": "concurrently \"pnpm db:up\" \"pnpm zero:dev\" \"pnpm dev\"",
+    "dev:all": "concurrently \"pnpm db:up\" \"pnpm zero:dev\" \"pnpm server:dev\" \"pnpm dev\""
   },
   "dependencies": {
     "@rocicorp/zero": "^0.1.0",
+    "axios": "^1.7.7",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "express-validator": "^7.3.0",
+    "jsonwebtoken": "^9.0.2",
     "kysely": "^0.27.3",
     "nanoid": "^5.0.7",
+    "pg": "^8.16.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.4",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/pg": "^8.15.5",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "concurrently": "^8.2.2",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
     "typescript": "^5.5.3",
     "vite": "^5.3.4"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["@rocicorp/zero-sqlite3"]
+    "onlyBuiltDependencies": [
+      "@rocicorp/zero-sqlite3"
+    ]
   }
 }

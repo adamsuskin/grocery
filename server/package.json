@@ -1,0 +1,47 @@
+{
+  "name": "grocery-list-server",
+  "version": "0.1.0",
+  "description": "Authentication server for Grocery List application",
+  "main": "index.ts",
+  "scripts": {
+    "dev": "nodemon --exec ts-node --esm index.ts",
+    "build": "tsc -p ../tsconfig.server.json",
+    "start": "node ../dist/server/index.js",
+    "type-check": "tsc --noEmit -p ../tsconfig.server.json",
+    "migrate": "ts-node --esm migrations/migrate.ts",
+    "migrate:up": "npm run migrate up",
+    "migrate:down": "npm run migrate down",
+    "migrate:status": "npm run migrate status"
+  },
+  "keywords": [
+    "express",
+    "authentication",
+    "jwt",
+    "postgresql"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
+    "express-validator": "^7.3.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.4",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/pg": "^8.15.5",
+    "nodemon": "^3.1.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

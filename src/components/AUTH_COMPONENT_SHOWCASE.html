@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Authentication Styles Showcase</title>
+  <style>
+    /* Import base styles */
+    :root {
+      --primary-color: #4caf50;
+      --primary-hover: #45a049;
+      --danger-color: #f44336;
+      --danger-hover: #da190b;
+      --bg-color: #f5f5f5;
+      --card-bg: #ffffff;
+      --text-color: #333;
+      --text-muted: #666;
+      --border-color: #ddd;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+        sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 20px;
+    }
+
+    .showcase-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .showcase-header {
+      text-align: center;
+      margin-bottom: 40px;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .showcase-header h1 {
+      margin: 0 0 10px;
+      color: var(--primary-color);
+    }
+
+    .showcase-header p {
+      margin: 0;
+      color: var(--text-muted);
+    }
+
+    .showcase-section {
+      background: white;
+      border-radius: 8px;
+      padding: 30px;
+      margin-bottom: 30px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .showcase-section h2 {
+      margin: 0 0 20px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--primary-color);
+    }
+
+    .component-example {
+      margin-bottom: 30px;
+      padding: 20px;
+      background: #f9f9f9;
+      border-radius: 4px;
+      border-left: 4px solid var(--primary-color);
+    }
+
+    .component-example h3 {
+      margin: 0 0 15px;
+      font-size: 1.1rem;
+      color: var(--text-color);
+    }
+
+    .example-description {
+      margin-bottom: 15px;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .color-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .color-swatch {
+      padding: 20px;
+      border-radius: 8px;
+      color: white;
+      text-align: center;
+    }
+
+    .color-swatch.primary {
+      background: var(--primary-color);
+    }
+
+    .color-swatch.danger {
+      background: var(--danger-color);
+    }
+
+    .color-swatch.text {
+      background: var(--text-color);
+    }
+
+    .color-swatch.muted {
+      background: var(--text-muted);
+    }
+
+    .button-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .btn-primary {
+      background-color: var(--primary-color);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background-color: var(--danger-color);
+      color: white;
+    }
+
+    .btn-danger:hover {
+      background-color: var(--danger-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-color);
+    }
+
+    .btn-outline:hover {
+      background: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+
+    .input-example {
+      margin-bottom: 15px;
+    }
+
+    .input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 1rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      transition: border-color 0.2s;
+    }
+
+    .input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    }
+
+    .input-error {
+      border-color: var(--danger-color);
+    }
+
+    .error-message {
+      color: var(--danger-color);
+      font-size: 0.85rem;
+      margin-top: 5px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .error-banner {
+      padding: 12px 16px;
+      background-color: #ffebee;
+      border: 1px solid var(--danger-color);
+      border-left: 4px solid var(--danger-color);
+      border-radius: 4px;
+      color: var(--danger-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .success-banner {
+      padding: 12px 16px;
+      background-color: #e8f5e9;
+      border: 1px solid var(--primary-color);
+      border-left: 4px solid var(--primary-color);
+      border-radius: 4px;
+      color: var(--primary-color);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .user-menu {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 16px;
+      background: var(--card-bg);
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      max-width: 400px;
+    }
+
+    .user-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-color);
+      color: white;
+      border-radius: 50%;
+      font-weight: 600;
+    }
+
+    .user-details {
+      flex: 1;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+    }
+
+    .user-email {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .password-strength-example {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .password-strength-bars {
+      display: flex;
+      gap: 4px;
+      flex: 1;
+    }
+
+    .strength-bar {
+      height: 4px;
+      flex: 1;
+      border-radius: 2px;
+      background-color: #e0e0e0;
+    }
+
+    .strength-bar.active {
+      background-color: var(--primary-color);
+    }
+
+    .strength-bar.weak {
+      background-color: var(--danger-color);
+    }
+
+    .code-block {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 0.9rem;
+      margin-top: 10px;
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 4px 8px;
+      background: var(--primary-color);
+      color: white;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-right: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="showcase-container">
+    <!-- Header -->
+    <div class="showcase-header">
+      <h1>🎨 Authentication Styles Showcase</h1>
+      <p>Comprehensive visual guide to all authentication component styles</p>
+    </div>
+
+    <!-- Color System -->
+    <div class="showcase-section">
+      <h2>Color System</h2>
+      <div class="color-grid">
+        <div class="color-swatch primary">
+          <strong>Primary</strong><br>
+          #4caf50<br>
+          --primary-color
+        </div>
+        <div class="color-swatch danger">
+          <strong>Danger</strong><br>
+          #f44336<br>
+          --danger-color
+        </div>
+        <div class="color-swatch text">
+          <strong>Text</strong><br>
+          #333<br>
+          --text-color
+        </div>
+        <div class="color-swatch muted">
+          <strong>Muted</strong><br>
+          #666<br>
+          --text-muted
+        </div>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="showcase-section">
+      <h2>Buttons</h2>
+
+      <div class="component-example">
+        <h3>Primary Buttons</h3>
+        <div class="button-grid">
+          <button class="btn btn-primary">Sign In</button>
+          <button class="btn btn-primary">
+            <span class="spinner"></span>
+            <span style="margin-left: 8px;">Loading...</span>
+          </button>
+          <button class="btn btn-primary" disabled style="opacity: 0.6; cursor: not-allowed;">
+            Disabled
+          </button>
+        </div>
+      </div>
+
+      <div class="component-example">
+        <h3>Danger Buttons</h3>
+        <div class="button-grid">
+          <button class="btn btn-danger">Logout</button>
+          <button class="btn btn-danger">Delete Account</button>
+        </div>
+      </div>
+
+      <div class="component-example">
+        <h3>Outline Buttons</h3>
+        <div class="button-grid">
+          <button class="btn btn-outline">Cancel</button>
+          <button class="btn btn-outline">Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Input Fields -->
+    <div class="showcase-section">
+      <h2>Input Fields</h2>
+
+      <div class="component-example">
+        <h3>Normal Input</h3>
+        <p class="example-description">Default input state with focus effect</p>
+        <input type="text" class="input" placeholder="Enter your email">
+      </div>
+
+      <div class="component-example">
+        <h3>Error Input</h3>
+        <p class="example-description">Input with error state</p>
+        <input type="text" class="input input-error" value="invalid@" placeholder="Enter your email">
+        <div class="error-message">
+          <span>⚠</span>
+          <span>Please enter a valid email address</span>
+        </div>
+      </div>
+
+      <div class="component-example">
+        <h3>Password Input with Toggle</h3>
+        <p class="example-description">Password field with show/hide button</p>
+        <div style="position: relative;">
+          <input type="password" class="input" value="password123" style="padding-right: 48px;">
+          <button style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 1.2rem; opacity: 0.6;">
+            👁️
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="showcase-section">
+      <h2>Messages</h2>
+
+      <div class="component-example">
+        <h3>Error Banner</h3>
+        <div class="error-banner">
+          <span style="font-size: 1.2rem;">⚠</span>
+          <span>Invalid email or password. Please try again.</span>
+        </div>
+      </div>
+
+      <div class="component-example">
+        <h3>Success Banner</h3>
+        <div class="success-banner">
+          <span style="font-size: 1.2rem;">✓</span>
+          <span>Account created successfully! You can now sign in.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- User Menu -->
+    <div class="showcase-section">
+      <h2>User Menu</h2>
+
+      <div class="component-example">
+        <h3>User Profile Display</h3>
+        <div class="user-menu">
+          <div class="user-icon">JD</div>
+          <div class="user-details">
+            <div class="user-name">John Doe</div>
+            <div class="user-email">john.doe@example.com</div>
+          </div>
+          <button class="btn btn-outline" style="white-space: nowrap;">Logout</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Password Strength -->
+    <div class="showcase-section">
+      <h2>Password Strength Indicator</h2>
+
+      <div class="component-example">
+        <h3>Weak Password</h3>
+        <div class="password-strength-example">
+          <div class="password-strength-bars">
+            <div class="strength-bar active weak"></div>
+            <div class="strength-bar"></div>
+            <div class="strength-bar"></div>
+            <div class="strength-bar"></div>
+          </div>
+          <span style="font-size: 0.85rem; font-weight: 500; color: var(--danger-color);">Weak</span>
+        </div>
+      </div>
+
+      <div class="component-example">
+        <h3>Medium Password</h3>
+        <div class="password-strength-example">
+          <div class="password-strength-bars">
+            <div class="strength-bar active" style="background-color: #ffb74d;"></div>
+            <div class="strength-bar active" style="background-color: #ffb74d;"></div>
+            <div class="strength-bar"></div>
+            <div class="strength-bar"></div>
+          </div>
+          <span style="font-size: 0.85rem; font-weight: 500; color: #ffb74d;">Medium</span>
+        </div>
+      </div>
+
+      <div class="component-example">
+        <h3>Strong Password</h3>
+        <div class="password-strength-example">
+          <div class="password-strength-bars">
+            <div class="strength-bar active"></div>
+            <div class="strength-bar active"></div>
+            <div class="strength-bar active"></div>
+            <div class="strength-bar active"></div>
+          </div>
+          <span style="font-size: 0.85rem; font-weight: 500; color: var(--primary-color);">Strong</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Component Classes -->
+    <div class="showcase-section">
+      <h2>Key CSS Classes</h2>
+
+      <div class="component-example">
+        <h3>Form Components</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+          <span class="tag">.login-form-container</span>
+          <span class="tag">.login-form-card</span>
+          <span class="tag">.login-form</span>
+          <span class="tag">.form-field</span>
+          <span class="tag">.form-label</span>
+          <span class="tag">.input</span>
+          <span class="tag">.btn-login</span>
+        </div>
+      </div>
+
+      <div class="component-example">
+        <h3>Error States</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+          <span class="tag">.error-banner</span>
+          <span class="tag">.error-icon</span>
+          <span class="tag">.error-message</span>
+          <span class="tag">.field-error</span>
+          <span class="tag">.input-error</span>
+        </div>
+      </div>
+
+      <div class="component-example">
+        <h3>User Menu</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+          <span class="tag">.user-menu</span>
+          <span class="tag">.user-info</span>
+          <span class="tag">.user-icon</span>
+          <span class="tag">.user-details</span>
+          <span class="tag">.user-name</span>
+          <span class="tag">.user-email</span>
+          <span class="tag">.btn-logout</span>
+        </div>
+      </div>
+
+      <div class="component-example">
+        <h3>Loading States</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+          <span class="tag">.auth-loading</span>
+          <span class="tag">.spinner</span>
+          <span class="tag">.loading-spinner</span>
+          <span class="tag">.loading-spinner-large</span>
+        </div>
+      </div>
+
+      <div class="component-example">
+        <h3>Password Features</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+          <span class="tag">.password-input-wrapper</span>
+          <span class="tag">.password-toggle</span>
+          <span class="tag">.password-strength</span>
+          <span class="tag">.password-strength-bars</span>
+          <span class="tag">.strength-bar</span>
+          <span class="tag">.password-requirements</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Usage Example -->
+    <div class="showcase-section">
+      <h2>Complete Form Example</h2>
+
+      <div class="component-example">
+        <h3>Login Form HTML Structure</h3>
+        <div class="code-block">
+&lt;div class="login-form-container"&gt;
+  &lt;div class="login-form-card"&gt;
+    &lt;div class="login-form-header"&gt;
+      &lt;h2&gt;Welcome Back&lt;/h2&gt;
+      &lt;p class="login-form-subtitle"&gt;Sign in to continue&lt;/p&gt;
+    &lt;/div&gt;
+
+    &lt;form class="login-form"&gt;
+      &lt;div class="error-banner"&gt;
+        &lt;span class="error-icon"&gt;⚠&lt;/span&gt;
+        &lt;span&gt;Invalid credentials&lt;/span&gt;
+      &lt;/div&gt;
+
+      &lt;div class="form-field"&gt;
+        &lt;label class="form-label"&gt;Email&lt;/label&gt;
+        &lt;input type="email" class="input" /&gt;
+      &lt;/div&gt;
+
+      &lt;div class="form-field"&gt;
+        &lt;label class="form-label"&gt;Password&lt;/label&gt;
+        &lt;div class="password-input-wrapper"&gt;
+          &lt;input type="password" class="input" /&gt;
+          &lt;button class="password-toggle"&gt;👁️&lt;/button&gt;
+        &lt;/div&gt;
+      &lt;/div&gt;
+
+      &lt;button class="btn btn-primary btn-login"&gt;
+        Sign In
+      &lt;/button&gt;
+    &lt;/form&gt;
+  &lt;/div&gt;
+&lt;/div&gt;
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+      <p>For complete documentation, see <strong>AUTH_STYLES_README.md</strong></p>
+      <p>For quick reference, see <strong>AUTH_STYLES_QUICK_REFERENCE.md</strong></p>
+    </div>
+  </div>
+</body>
+</html>

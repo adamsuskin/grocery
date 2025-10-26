@@ -1,0 +1,247 @@
+# Production Docker Compose Configuration
+# Use this file for production deployments with proper security and optimization
+
+services:
+  # PostgreSQL Database - Production Configuration
+  postgres:
+    image: postgres:16
+    container_name: grocery-postgres-prod
+    environment:
+      POSTGRES_USER: ${DB_USER:-grocery}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Database password required}
+      POSTGRES_DB: ${DB_NAME:-grocery_db}
+      POSTGRES_INITDB_ARGS: "-c wal_level=logical"
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./server/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+      # Backup location
+      - ./backups:/backups
+    command: |
+      postgres
+        -c wal_level=logical
+        -c max_wal_senders=10
+        -c max_replication_slots=10
+        -c shared_buffers=256MB
+        -c effective_cache_size=1GB
+        -c maintenance_work_mem=64MB
+        -c checkpoint_completion_target=0.9
+        -c wal_buffers=16MB
+        -c default_statistics_target=100
+        -c random_page_cost=1.1
+        -c effective_io_concurrency=200
+        -c work_mem=4MB
+        -c min_wal_size=1GB
+        -c max_wal_size=4GB
+        -c max_worker_processes=4
+        -c max_parallel_workers_per_gather=2
+        -c max_parallel_workers=4
+        -c max_parallel_maintenance_workers=2
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-grocery} -d ${DB_NAME:-grocery_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - grocery-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Authentication & API Server - Production Configuration
+  auth-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+      target: production
+    container_name: grocery-auth-server-prod
+    environment:
+      # Server configuration
+      NODE_ENV: production
+      PORT: ${PORT:-3001}
+
+      # Database connection
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${DB_NAME:-grocery_db}
+      DB_USER: ${DB_USER:-grocery}
+      DB_PASSWORD: ${DB_PASSWORD:?Database password required}
+      DB_MAX_CONNECTIONS: ${DB_MAX_CONNECTIONS:-20}
+      DB_IDLE_TIMEOUT: ${DB_IDLE_TIMEOUT:-30000}
+      DB_CONNECTION_TIMEOUT: ${DB_CONNECTION_TIMEOUT:-2000}
+
+      # JWT configuration
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?JWT access secret required}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?JWT refresh secret required}
+      JWT_ACCESS_EXPIRY: ${JWT_ACCESS_EXPIRY:-15m}
+      JWT_REFRESH_EXPIRY: ${JWT_REFRESH_EXPIRY:-7d}
+
+      # Security
+      BCRYPT_ROUNDS: ${BCRYPT_ROUNDS:-12}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS:-100}
+
+      # CORS configuration
+      CORS_ORIGIN: ${CORS_ORIGIN:?CORS origin required}
+
+      # Zero-cache configuration
+      ZERO_UPSTREAM_DB: postgresql://${DB_USER:-grocery}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-grocery_db}
+      ZERO_AUTH_SECRET: ${ZERO_AUTH_SECRET:?Zero auth secret required}
+    ports:
+      - "${PORT:-3001}:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - grocery-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+      replicas: 1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
+  # Zero-cache Server - Production Configuration
+  zero-cache:
+    image: rocicorp/zero-cache:latest
+    container_name: grocery-zero-cache-prod
+    environment:
+      # Database connection for replication
+      ZERO_UPSTREAM_DB: postgresql://${DB_USER:-grocery}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-grocery_db}
+
+      # Local replica storage
+      ZERO_REPLICA_FILE: /data/zero-replica.db
+
+      # Authentication secret
+      ZERO_AUTH_SECRET: ${ZERO_AUTH_SECRET:?Zero auth secret required}
+
+      # Zero server configuration
+      ZERO_PORT: 4848
+      ZERO_HOST: 0.0.0.0
+
+      # Logging
+      ZERO_LOG_LEVEL: ${ZERO_LOG_LEVEL:-info}
+    ports:
+      - "4848:4848"
+    volumes:
+      # Persistent storage for replica database
+      - zero-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4848/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - grocery-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Frontend - Production Configuration with nginx
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      target: production
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:3001}
+        VITE_ZERO_SERVER: ${VITE_ZERO_SERVER:-http://localhost:4848}
+        VITE_AUTH_ENABLED: ${VITE_AUTH_ENABLED:-true}
+    container_name: grocery-frontend-prod
+    ports:
+      - "3000:3000"
+    depends_on:
+      - auth-server
+      - zero-cache
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - grocery-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/run
+
+# Docker volumes for persistent data
+volumes:
+  postgres-data:
+    driver: local
+
+  zero-data:
+    driver: local
+
+# Internal network for service communication
+networks:
+  grocery-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

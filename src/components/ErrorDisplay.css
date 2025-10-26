@@ -1,0 +1,682 @@
+/**
+ * Error Display Styles
+ *
+ * Styling for all error display components including:
+ * - Error banners
+ * - Error toasts
+ * - Error alerts
+ * - Field errors
+ * - Error boundary fallbacks
+ */
+
+/* =============================================================================
+   ERROR BANNER
+   ============================================================================= */
+
+.error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  position: relative;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.error-banner-icon {
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.error-banner-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.error-banner-message {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  margin-bottom: 4px;
+}
+
+.error-banner-action {
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: 0.9;
+}
+
+.error-banner-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.error-banner-close:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Severity variants */
+.error-banner-info {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border: 1px solid #90caf9;
+}
+
+.error-banner-warning {
+  background-color: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffb74d;
+}
+
+.error-banner-error {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef5350;
+}
+
+.error-banner-critical {
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+  border: 1px solid #ba68c8;
+}
+
+/* =============================================================================
+   ERROR TOAST
+   ============================================================================= */
+
+.error-toast {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  max-width: 400px;
+  min-width: 300px;
+  animation: toastSlideIn 0.3s ease-out;
+  backdrop-filter: blur(10px);
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Toast positions */
+.error-toast-top {
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.error-toast-bottom {
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.error-toast-top-right {
+  top: 20px;
+  right: 20px;
+}
+
+.error-toast-bottom-right {
+  bottom: 20px;
+  right: 20px;
+}
+
+.error-toast-icon {
+  flex-shrink: 0;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.error-toast-message {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.error-toast-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.error-toast-close:hover {
+  opacity: 1;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Toast severity variants */
+.error-toast-info {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border: 1px solid #90caf9;
+}
+
+.error-toast-warning {
+  background-color: #fff3e0;
+  color: #e65100;
+  border: 1px solid #ffb74d;
+}
+
+.error-toast-error {
+  background-color: #ffebee;
+  color: #c62828;
+  border: 1px solid #ef5350;
+}
+
+.error-toast-critical {
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+  border: 1px solid #ba68c8;
+}
+
+/* =============================================================================
+   ERROR ALERT
+   ============================================================================= */
+
+.error-alert {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid;
+  margin-bottom: 16px;
+}
+
+.error-alert-icon {
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.error-alert-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.error-alert-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.error-alert-message {
+  font-size: 14px;
+  line-height: 1.5;
+  margin-bottom: 8px;
+}
+
+.error-alert-user-action {
+  font-size: 13px;
+  line-height: 1.4;
+  opacity: 0.9;
+  margin-bottom: 12px;
+}
+
+.error-alert-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.error-alert-action-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  background-color: rgba(0, 0, 0, 0.08);
+  color: inherit;
+}
+
+.error-alert-action-btn:hover {
+  background-color: rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.error-alert-action-btn:active {
+  transform: translateY(0);
+}
+
+/* Alert severity variants */
+.error-alert-info {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border-color: #90caf9;
+}
+
+.error-alert-warning {
+  background-color: #fff3e0;
+  color: #e65100;
+  border-color: #ffb74d;
+}
+
+.error-alert-error {
+  background-color: #ffebee;
+  color: #c62828;
+  border-color: #ef5350;
+}
+
+.error-alert-critical {
+  background-color: #f3e5f5;
+  color: #6a1b9a;
+  border-color: #ba68c8;
+}
+
+/* =============================================================================
+   FIELD ERROR
+   ============================================================================= */
+
+.field-error {
+  display: block;
+  font-size: 12px;
+  color: #d32f2f;
+  margin-top: 4px;
+  line-height: 1.4;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* =============================================================================
+   ERROR BOUNDARY FALLBACK
+   ============================================================================= */
+
+.error-boundary-fallback {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.error-boundary-content {
+  background: white;
+  border-radius: 12px;
+  padding: 40px;
+  max-width: 500px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.error-boundary-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.error-boundary-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 12px 0;
+}
+
+.error-boundary-message {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #666;
+  margin: 0 0 24px 0;
+}
+
+.error-boundary-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.error-boundary-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.error-boundary-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.error-boundary-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.error-boundary-btn-secondary {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.error-boundary-btn-secondary:hover {
+  background-color: #e0e0e0;
+  transform: translateY(-2px);
+}
+
+.error-boundary-btn:active {
+  transform: translateY(0);
+}
+
+.error-boundary-details {
+  margin-top: 24px;
+  text-align: left;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 16px;
+}
+
+.error-boundary-details summary {
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+  user-select: none;
+}
+
+.error-boundary-details summary:hover {
+  color: #333;
+}
+
+.error-boundary-stack {
+  background-color: #f5f5f5;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 12px;
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  color: #333;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* =============================================================================
+   ICON STYLES
+   ============================================================================= */
+
+.icon-info,
+.icon-warning,
+.icon-error,
+.icon-critical {
+  display: inline-block;
+  user-select: none;
+}
+
+/* =============================================================================
+   RESPONSIVE STYLES
+   ============================================================================= */
+
+@media (max-width: 768px) {
+  .error-banner {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .error-banner-message {
+    font-size: 13px;
+  }
+
+  .error-banner-action {
+    font-size: 12px;
+  }
+
+  .error-toast {
+    max-width: calc(100vw - 40px);
+    min-width: unset;
+  }
+
+  .error-toast-top,
+  .error-toast-bottom {
+    left: 20px;
+    right: 20px;
+    transform: none;
+  }
+
+  .error-toast-top-right,
+  .error-toast-bottom-right {
+    left: 20px;
+    right: 20px;
+  }
+
+  .error-alert {
+    padding: 12px;
+    gap: 8px;
+  }
+
+  .error-alert-actions {
+    flex-direction: column;
+  }
+
+  .error-alert-action-btn {
+    width: 100%;
+  }
+
+  .error-boundary-content {
+    padding: 30px 20px;
+  }
+
+  .error-boundary-title {
+    font-size: 20px;
+  }
+
+  .error-boundary-message {
+    font-size: 14px;
+  }
+
+  .error-boundary-actions {
+    flex-direction: column;
+  }
+
+  .error-boundary-btn {
+    width: 100%;
+  }
+}
+
+/* =============================================================================
+   DARK MODE SUPPORT
+   ============================================================================= */
+
+@media (prefers-color-scheme: dark) {
+  .error-banner-info {
+    background-color: #1e3a5f;
+    color: #90caf9;
+    border-color: #1565c0;
+  }
+
+  .error-banner-warning {
+    background-color: #4a2c00;
+    color: #ffb74d;
+    border-color: #e65100;
+  }
+
+  .error-banner-error {
+    background-color: #4a1414;
+    color: #ef5350;
+    border-color: #c62828;
+  }
+
+  .error-banner-critical {
+    background-color: #3d1a4f;
+    color: #ba68c8;
+    border-color: #6a1b9a;
+  }
+
+  /* Similar adjustments for other components... */
+  .error-toast-info {
+    background-color: #1e3a5f;
+    color: #90caf9;
+    border-color: #1565c0;
+  }
+
+  .error-toast-warning {
+    background-color: #4a2c00;
+    color: #ffb74d;
+    border-color: #e65100;
+  }
+
+  .error-toast-error {
+    background-color: #4a1414;
+    color: #ef5350;
+    border-color: #c62828;
+  }
+
+  .error-toast-critical {
+    background-color: #3d1a4f;
+    color: #ba68c8;
+    border-color: #6a1b9a;
+  }
+
+  .error-alert-info {
+    background-color: #1e3a5f;
+    color: #90caf9;
+    border-color: #1565c0;
+  }
+
+  .error-alert-warning {
+    background-color: #4a2c00;
+    color: #ffb74d;
+    border-color: #e65100;
+  }
+
+  .error-alert-error {
+    background-color: #4a1414;
+    color: #ef5350;
+    border-color: #c62828;
+  }
+
+  .error-alert-critical {
+    background-color: #3d1a4f;
+    color: #ba68c8;
+    border-color: #6a1b9a;
+  }
+
+  .field-error {
+    color: #ef5350;
+  }
+
+  .error-boundary-content {
+    background: #1a1a1a;
+    color: #e0e0e0;
+  }
+
+  .error-boundary-title {
+    color: #ffffff;
+  }
+
+  .error-boundary-message {
+    color: #b0b0b0;
+  }
+
+  .error-boundary-btn-secondary {
+    background-color: #2a2a2a;
+    color: #e0e0e0;
+  }
+
+  .error-boundary-btn-secondary:hover {
+    background-color: #3a3a3a;
+  }
+
+  .error-boundary-stack {
+    background-color: #2a2a2a;
+    border-color: #3a3a3a;
+    color: #e0e0e0;
+  }
+}
+
+/* =============================================================================
+   ACCESSIBILITY
+   ============================================================================= */
+
+/* Focus styles for keyboard navigation */
+.error-banner-close:focus,
+.error-toast-close:focus,
+.error-alert-action-btn:focus,
+.error-boundary-btn:focus {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Reduce motion for users who prefer it */
+@media (prefers-reduced-motion: reduce) {
+  .error-banner,
+  .error-toast,
+  .field-error {
+    animation: none;
+  }
+
+  .error-alert-action-btn:hover,
+  .error-boundary-btn-primary:hover,
+  .error-boundary-btn-secondary:hover {
+    transform: none;
+  }
+}

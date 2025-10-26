@@ -1,15 +1,182 @@
 services:
+  # PostgreSQL Database
+  # Stores user data, grocery items, and authentication tokens
   postgres:
     image: postgres:16
+    container_name: grocery-postgres
     environment:
       POSTGRES_USER: grocery
       POSTGRES_PASSWORD: grocery
       POSTGRES_DB: grocery_db
+      # Enable logical replication for Zero-cache sync
+      POSTGRES_INITDB_ARGS: "-c wal_level=logical"
     ports:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-    command: postgres -c wal_level=logical
+      # Mount schema file for easy initialization
+      - ./server/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    command: postgres -c wal_level=logical -c max_wal_senders=10 -c max_replication_slots=10
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grocery -d grocery_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - grocery-network
+    restart: unless-stopped
 
+  # Authentication & API Server
+  # Express.js server handling authentication and grocery list APIs
+  auth-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: grocery-auth-server
+    environment:
+      # Server configuration
+      NODE_ENV: development
+      PORT: 3001
+
+      # Database connection
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: grocery_db
+      DB_USER: grocery
+      DB_PASSWORD: grocery
+      DB_MAX_CONNECTIONS: 20
+      DB_IDLE_TIMEOUT: 30000
+      DB_CONNECTION_TIMEOUT: 2000
+
+      # JWT configuration
+      JWT_ACCESS_SECRET: dev-access-secret-change-in-production
+      JWT_REFRESH_SECRET: dev-refresh-secret-change-in-production
+      JWT_ACCESS_EXPIRY: 15m
+      JWT_REFRESH_EXPIRY: 7d
+
+      # Security
+      BCRYPT_ROUNDS: 10
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+
+      # CORS configuration
+      CORS_ORIGIN: http://localhost:3000
+
+      # Zero-cache configuration
+      ZERO_UPSTREAM_DB: postgresql://grocery:grocery@postgres:5432/grocery_db
+      ZERO_AUTH_SECRET: dev-secret-key
+    ports:
+      - "3001:3001"
+    volumes:
+      # Mount source code for development hot-reload
+      - ./server:/app/server:ro
+      - ./tsconfig.server.json:/app/tsconfig.server.json:ro
+      # Node modules volume for better performance
+      - server-node-modules:/app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - grocery-network
+    restart: unless-stopped
+    command: pnpm run server:dev
+
+  # Zero-cache Server
+  # Real-time synchronization server for offline-first functionality
+  zero-cache:
+    image: rocicorp/zero-cache:latest
+    container_name: grocery-zero-cache
+    environment:
+      # Database connection for replication
+      ZERO_UPSTREAM_DB: postgresql://grocery:grocery@postgres:5432/grocery_db
+
+      # Local replica storage
+      ZERO_REPLICA_FILE: /data/zero-replica.db
+
+      # Authentication secret (must match auth-server)
+      ZERO_AUTH_SECRET: dev-secret-key
+
+      # Zero server configuration
+      ZERO_PORT: 4848
+      ZERO_HOST: 0.0.0.0
+
+      # Logging
+      ZERO_LOG_LEVEL: info
+    ports:
+      - "4848:4848"
+    volumes:
+      # Persistent storage for replica database
+      - zero-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4848/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    networks:
+      - grocery-network
+    restart: unless-stopped
+
+  # Frontend Development Server (optional - for full stack development)
+  # Vite React application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: grocery-frontend
+    environment:
+      # API endpoints
+      VITE_API_URL: http://localhost:3001
+      VITE_ZERO_SERVER: http://localhost:4848
+
+      # Feature flags
+      VITE_AUTH_ENABLED: true
+    ports:
+      - "3000:3000"
+    volumes:
+      # Mount source code for development hot-reload
+      - ./src:/app/src:ro
+      - ./index.html:/app/index.html:ro
+      - ./vite.config.ts:/app/vite.config.ts:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./tsconfig.node.json:/app/tsconfig.node.json:ro
+      # Node modules volume for better performance
+      - frontend-node-modules:/app/node_modules
+    depends_on:
+      - auth-server
+      - zero-cache
+    networks:
+      - grocery-network
+    restart: unless-stopped
+    command: pnpm run dev -- --host 0.0.0.0
+
+# Docker volumes for persistent data
 volumes:
+  # PostgreSQL database files
   postgres-data:
+    driver: local
+
+  # Zero-cache replica database
+  zero-data:
+    driver: local
+
+  # Node modules for faster container startup (optional)
+  server-node-modules:
+    driver: local
+
+  frontend-node-modules:
+    driver: local
+
+# Internal network for service communication
+networks:
+  grocery-network:
+    driver: bridge

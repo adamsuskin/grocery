@@ -1,0 +1,70 @@
+# Node modules
+node_modules
+npm-debug.log
+pnpm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# Build outputs
+dist
+build
+.vite
+.cache
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Testing
+coverage
+.nyc_output
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+__tests__
+__mocks__
+
+# Documentation
+*.md
+docs
+LICENSE
+
+# Temporary files
+tmp
+temp
+*.tmp
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Zero cache local files
+*.db
+*.db-shm
+*.db-wal
+
+# Auth documentation and examples
+AUTH_*.md
+AUTHENTICATION*.md
+src/examples
