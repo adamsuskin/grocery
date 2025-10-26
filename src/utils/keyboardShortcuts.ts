@@ -9,6 +9,7 @@ export type ShortcutKey =
   | 'ctrl+n'
   | 'ctrl+s'
   | 'ctrl+l'
+  | 'ctrl+r'
   | 'escape'
   | '?'
   | 'arrowup'
@@ -18,7 +19,7 @@ export type ShortcutKey =
 export interface KeyboardShortcut {
   key: ShortcutKey;
   description: string;
-  category: 'List Operations' | 'Navigation' | 'General';
+  category: 'List Operations' | 'Navigation' | 'General' | 'Sync';
   handler: () => void;
   enabled?: boolean;
   // Prevent default browser behavior
@@ -41,6 +42,7 @@ export function getShortcutKey(event: KeyboardEvent): ShortcutKey | null {
     if (key === 'n') return 'ctrl+n';
     if (key === 's') return 'ctrl+s';
     if (key === 'l') return 'ctrl+l';
+    if (key === 'r') return 'ctrl+r';
   }
 
   // Single keys

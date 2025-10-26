@@ -1,0 +1,371 @@
+.sync-status {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  user-select: none;
+}
+
+.sync-status.compact {
+  padding: 12px 16px;
+}
+
+.sync-status.expanded {
+  cursor: default;
+  width: 320px;
+  max-width: calc(100vw - 40px);
+}
+
+.sync-status:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Compact View */
+.sync-status-compact {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Status Indicator */
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.status-dot {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+}
+
+.status-green .status-dot {
+  background-color: #4caf50;
+  box-shadow: 0 0 8px rgba(76, 175, 80, 0.6);
+}
+
+.status-yellow .status-dot {
+  background-color: #ffc107;
+  box-shadow: 0 0 8px rgba(255, 193, 7, 0.6);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.status-red .status-dot {
+  background-color: #f44336;
+  box-shadow: 0 0 8px rgba(244, 67, 54, 0.6);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* Status Text */
+.sync-status-text {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Expand Icon */
+.expand-icon {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-left: auto;
+  transition: transform 0.3s ease;
+}
+
+.sync-status.expanded .expand-icon {
+  transform: rotate(180deg);
+}
+
+/* Expanded View */
+.sync-status-expanded {
+  padding: 16px;
+  animation: expandIn 0.3s ease-out;
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sync-status-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.sync-status-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: var(--text-color);
+}
+
+/* Details */
+.sync-status-details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.detail-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.detail-value {
+  color: var(--text-color);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Status Badges */
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+}
+
+.status-badge-green {
+  background-color: #4caf50;
+}
+
+.status-badge-yellow {
+  background-color: #ffc107;
+}
+
+.status-badge-red {
+  background-color: #f44336;
+}
+
+/* Connection Quality */
+.quality-badge {
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.quality-good {
+  color: #4caf50;
+}
+
+.quality-poor {
+  color: #ff9800;
+}
+
+/* Syncing Animation */
+.syncing-text {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid var(--primary-color);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Queued Count */
+.queued-count {
+  color: #ff9800;
+  font-weight: 600;
+}
+
+/* Retry Button */
+.btn-retry-sync {
+  width: 100%;
+  padding: 10px 16px;
+  margin-top: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-retry-sync:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+.btn-retry-sync:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Help Text */
+.sync-status-help {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.help-text {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+
+.help-text.offline {
+  background-color: #fff3e0;
+  color: #e65100;
+  border-left: 3px solid #ff9800;
+}
+
+.help-text.warning {
+  background-color: #fff9c4;
+  color: #f57f17;
+  border-left: 3px solid #fbc02d;
+}
+
+.help-text.success {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-left: 3px solid #4caf50;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sync-status {
+    bottom: 16px;
+    right: 16px;
+    left: 16px;
+  }
+
+  .sync-status.expanded {
+    width: auto;
+    max-width: none;
+  }
+
+  .sync-status-compact {
+    justify-content: space-between;
+  }
+}
+
+/* Mobile-friendly sizing */
+@media (max-width: 480px) {
+  .sync-status {
+    bottom: 12px;
+    right: 12px;
+    left: 12px;
+  }
+
+  .sync-status.compact {
+    padding: 10px 14px;
+  }
+
+  .sync-status-text {
+    font-size: 0.85rem;
+  }
+
+  .detail-row {
+    font-size: 0.85rem;
+  }
+
+  .btn-retry-sync {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+}
+
+/* Accessibility - Focus States */
+.sync-status:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.close-btn:focus,
+.btn-retry-sync:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Print - Hide sync status when printing */
+@media print {
+  .sync-status {
+    display: none;
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .sync-status,
+  .status-dot,
+  .expand-icon,
+  .btn-retry-sync {
+    transition: none;
+    animation: none;
+  }
+
+  .status-yellow .status-dot {
+    animation: none;
+  }
+}

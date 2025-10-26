@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from './context/AuthContext';
 import { useList } from './contexts/ListContext';
+import { useSyncStatus, useConflicts } from './contexts/SyncContext';
 import { LoginForm } from './components/LoginForm';
 import { RegisterForm } from './components/RegisterForm';
 import { AddItemForm } from './components/AddItemForm';
@@ -8,6 +9,10 @@ import { GroceryList } from './components/GroceryList';
 import { UserProfile } from './components/UserProfile';
 import { ListSelector } from './components/ListSelector';
 import { Notifications } from './components/Notifications';
+import { SyncStatus } from './components/SyncStatus';
+import { ConflictNotifications } from './components/ConflictNotification';
+import { ConflictResolutionModal } from './components/ConflictResolutionModal';
+import type { ConflictData } from './components/ConflictResolutionModal';
 import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp';
 import { ListManagement } from './components/ListManagement';
 import { ShareListModal } from './components/ShareListModal';
@@ -15,7 +20,7 @@ import { OnboardingTour } from './components/OnboardingTour';
 import { ListErrorBoundary } from './components/ListErrorBoundary';
 import { useListMutations } from './zero-store';
 import { useOnboardingTour } from './hooks/useOnboardingTour';
-import type { FilterState, SortState, ListTemplate, PermissionLevel } from './types';
+import type { FilterState, SortState, ListTemplate, PermissionLevel, ConflictResolution, GroceryItem } from './types';
 import { CATEGORIES } from './types';
 import { createShortcutHandler, type KeyboardShortcut } from './utils/keyboardShortcuts';
 import './App.css';
@@ -35,7 +40,13 @@ function App() {
     deleteList
   } = useListMutations();
   const { showTour, startTour, completeTour, skipTour } = useOnboardingTour();
+
+  // Sync status and conflicts
+  const syncStatus = useSyncStatus();
+  const { conflicts, resolveConflict, dismissConflict } = useConflicts();
+
   const [authView, setAuthView] = useState<AuthView>('login');
+  const [currentConflict, setCurrentConflict] = useState<ConflictData | null>(null);
 
   const [filters, setFilters] = useState<FilterState>({
     searchText: '',
@@ -140,11 +151,20 @@ function App() {
       enabled: isAuthenticated && !listLoading,
     },
     {
+      key: 'ctrl+r',
+      description: 'Retry sync',
+      category: 'Sync',
+      handler: syncStatus.onRetrySync,
+      enabled: isAuthenticated && !syncStatus.isSyncing,
+    },
+    {
       key: 'escape',
       description: 'Close modal or clear focus',
       category: 'General',
       handler: () => {
-        if (showShortcutsHelp) {
+        if (currentConflict) {
+          setCurrentConflict(null);
+        } else if (showShortcutsHelp) {
           setShowShortcutsHelp(false);
         } else if (showListManagement) {
           setShowListManagement(false);
@@ -213,6 +233,47 @@ function App() {
     return newList.id;
   };
 
+  // Conflict resolution handlers
+  const handleConflictResolve = useCallback((conflictId: string, resolution: ConflictResolution) => {
+    const conflict = conflicts.find(c => c.id === conflictId);
+    if (!conflict) return;
+
+    if (resolution === 'manual') {
+      // Open modal for manual resolution
+      const conflictData: ConflictData = {
+        itemId: conflict.itemId,
+        itemName: conflict.itemName,
+        local: conflict.localVersion.value as GroceryItem,
+        remote: conflict.remoteVersion.value as GroceryItem,
+        timestamp: conflict.timestamp,
+      };
+      setCurrentConflict(conflictData);
+    } else {
+      // Auto-resolve with 'mine' or 'theirs'
+      resolveConflict(conflictId, resolution);
+    }
+  }, [conflicts, resolveConflict]);
+
+  const handleConflictDismiss = useCallback((conflictId: string) => {
+    dismissConflict(conflictId);
+  }, [dismissConflict]);
+
+  const handleManualResolve = useCallback((resolvedItem: GroceryItem) => {
+    if (!currentConflict) return;
+
+    // Find the conflict by itemId
+    const conflict = conflicts.find(c => c.itemId === currentConflict.itemId);
+    if (conflict) {
+      resolveConflict(conflict.id, 'manual', resolvedItem);
+    }
+
+    setCurrentConflict(null);
+  }, [currentConflict, conflicts, resolveConflict]);
+
+  const handleCancelManualResolve = useCallback(() => {
+    setCurrentConflict(null);
+  }, []);
+
   // Show loading state while checking authentication
   if (loading) {
     return (
@@ -255,6 +316,26 @@ function App() {
 
       {/* Notification toast container */}
       <Notifications position="top-right" autoHideDuration={5000} />
+
+      {/* Conflict notifications */}
+      <ConflictNotifications
+        conflicts={conflicts}
+        onResolve={handleConflictResolve}
+        onDismiss={handleConflictDismiss}
+        position="top-right"
+        maxVisible={3}
+      />
+
+      {/* Conflict resolution modal */}
+      {currentConflict && (
+        <ConflictResolutionModal
+          conflict={currentConflict}
+          onResolve={handleManualResolve}
+          onCancel={handleCancelManualResolve}
+          currentUserName={user?.email || 'You'}
+          remoteUserName="Other User"
+        />
+      )}
 
       {/* Keyboard shortcuts help modal */}
       <KeyboardShortcutsHelp
@@ -329,6 +410,7 @@ function App() {
             <p className="subtitle">Collaborative shopping list</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <SyncStatus {...syncStatus} />
             <button
               className="btn-help"
               onClick={() => setShowShortcutsHelp(true)}

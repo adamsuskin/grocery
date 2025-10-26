@@ -1,0 +1,67 @@
+OFFLINE QUEUE MANAGEMENT SYSTEM - FILE LISTING
+==============================================
+
+Implementation Files:
+--------------------
+1. /home/adam/grocery/src/utils/offlineQueue.ts
+   - Core implementation (872 lines)
+   - OfflineQueueManager class
+   - useOfflineQueue() hook
+   - Type definitions
+   - Helper functions
+
+2. /home/adam/grocery/src/utils/offlineQueue.index.ts
+   - Public API exports (52 lines)
+   - Clean TypeScript exports
+
+Example Files:
+-------------
+3. /home/adam/grocery/src/utils/offlineQueue.example.tsx
+   - 6 comprehensive examples (528 lines)
+   - React component demonstrations
+   - Real-world usage patterns
+
+Test Files:
+----------
+4. /home/adam/grocery/src/utils/offlineQueue.test.ts
+   - Complete test suite (549 lines)
+   - 20+ unit tests
+   - Full coverage
+
+Documentation Files:
+-------------------
+5. /home/adam/grocery/src/utils/OFFLINE_QUEUE_README.md
+   - Complete documentation (668 lines)
+   - API reference
+   - Best practices
+   - Troubleshooting
+
+6. /home/adam/grocery/src/utils/OFFLINE_QUEUE_INTEGRATION.md
+   - Integration guide (554 lines)
+   - 7-step tutorial
+   - Code templates
+   - Common issues
+
+7. /home/adam/grocery/src/utils/OFFLINE_QUEUE_ARCHITECTURE.md
+   - Architecture documentation (813 lines)
+   - System diagrams
+   - Data flow
+   - Performance
+
+8. /home/adam/grocery/src/utils/OFFLINE_QUEUE_SUMMARY.md
+   - Quick reference (193 lines)
+   - Feature summary
+   - API quick reference
+
+Summary Files:
+-------------
+9. /home/adam/grocery/OFFLINE_QUEUE_COMPLETE.md
+   - Complete overview (root level)
+   - Executive summary
+   - All features listed
+
+10. /home/adam/grocery/OFFLINE_QUEUE_FILES.txt
+    - This file
+    - Quick file reference
+
+Total: 10 files, 4,229 lines, ~105KB

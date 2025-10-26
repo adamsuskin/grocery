@@ -616,3 +616,84 @@ export interface OnboardingTourState {
   completeTour: () => void;
   skipTour: () => void;
 }
+
+// Conflict Resolution types
+
+/**
+ * Type of conflict that occurred
+ */
+export type ConflictType =
+  | 'concurrent_edit' // Both users edited the same item
+  | 'delete_edit' // One user deleted while another edited
+  | 'edit_edit'; // Both users edited different fields
+
+/**
+ * Resolution strategy for conflicts
+ */
+export type ConflictResolution = 'mine' | 'theirs' | 'manual';
+
+/**
+ * Field-level change in a conflict
+ */
+export interface FieldChange {
+  field: string;
+  oldValue: any;
+  newValue: any;
+}
+
+/**
+ * Version of an item in a conflict
+ */
+export interface ConflictVersion {
+  value: any;
+  changes: FieldChange[];
+  timestamp: number;
+  userId: string;
+  userName: string;
+}
+
+/**
+ * Represents a conflict between two versions of data
+ */
+export interface Conflict {
+  id: string;
+  type: ConflictType;
+  itemId: string;
+  itemName: string;
+  listId: string;
+  localVersion: ConflictVersion;
+  remoteVersion: ConflictVersion;
+  timestamp: number;
+  priority: number; // Higher priority shown first
+  autoResolvable: boolean;
+}
+
+/**
+ * Props for ConflictNotification component
+ */
+export interface ConflictNotificationProps {
+  conflict: Conflict;
+  onResolve: (conflictId: string, resolution: ConflictResolution) => void;
+  onDismiss: (conflictId: string) => void;
+  countdown?: number;
+  isPersistent?: boolean;
+}
+
+/**
+ * Props for ConflictResolutionModal component
+ * Note: ConflictResolutionModal uses ConflictData (defined in the component)
+ * which is a simplified interface focused on item comparison
+ */
+export interface ConflictResolutionModalProps {
+  conflict: {
+    itemId: string;
+    itemName: string;
+    local: GroceryItem;
+    remote: GroceryItem;
+    timestamp: number;
+  };
+  onResolve: (resolvedItem: GroceryItem) => void;
+  onCancel: () => void;
+  currentUserName?: string;
+  remoteUserName?: string;
+}
