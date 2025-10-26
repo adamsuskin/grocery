@@ -1,0 +1,167 @@
+groups:
+  - name: grocery_app_alerts
+    interval: 30s
+    rules:
+      # API Server is down
+      - alert: APIServerDown
+        expr: up{job="grocery-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "Grocery API Server is down"
+          description: "The Grocery API server has been down for more than 1 minute."
+
+      # Health check failing
+      - alert: HealthCheckFailing
+        expr: up{job="grocery-health"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          component: api
+        annotations:
+          summary: "Health check endpoint is failing"
+          description: "The /health/ready endpoint has been unreachable for more than 2 minutes."
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100 < 10
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High memory usage detected"
+          description: "Available memory is below 10% for more than 5 minutes. Current: {{ $value | humanize }}%"
+
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 5 minutes. Current: {{ $value | humanize }}%"
+
+      # Disk space low
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 10
+        for: 5m
+        labels:
+          severity: warning
+          component: system
+        annotations:
+          summary: "Low disk space on root partition"
+          description: "Root partition has less than 10% free space. Current: {{ $value | humanize }}%"
+
+      # Database connection pool exhausted
+      # Note: This requires custom metrics from your app
+      - alert: DatabasePoolExhausted
+        expr: database_pool_waiting_count > 5
+        for: 2m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "Database connection pool is exhausted"
+          description: "More than 5 connections are waiting for database pool for over 2 minutes."
+
+      # High API error rate
+      # Note: This requires custom metrics from your app
+      - alert: HighAPIErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) / rate(http_requests_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "High API error rate detected"
+          description: "More than 5% of API requests are returning 5xx errors for 5 minutes."
+
+      # Slow API response time
+      # Note: This requires custom metrics from your app
+      - alert: SlowAPIResponse
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          component: api
+        annotations:
+          summary: "API response time is slow"
+          description: "95th percentile of API response time is over 2 seconds. Current: {{ $value | humanize }}s"
+
+      # Too many authentication failures
+      # Note: This requires custom metrics from your app
+      - alert: HighAuthFailureRate
+        expr: rate(auth_login_failures_total[5m]) > 10
+        for: 2m
+        labels:
+          severity: warning
+          component: security
+        annotations:
+          summary: "High authentication failure rate"
+          description: "More than 10 login failures per second detected. Possible brute force attack."
+
+      # Application restart detected
+      - alert: ApplicationRestarted
+        expr: time() - process_start_time_seconds < 300
+        for: 1m
+        labels:
+          severity: info
+          component: api
+        annotations:
+          summary: "Application was recently restarted"
+          description: "The application was restarted less than 5 minutes ago."
+
+  - name: database_alerts
+    interval: 30s
+    rules:
+      # PostgreSQL exporter down (if using postgres_exporter)
+      - alert: PostgresExporterDown
+        expr: up{job="postgres"} == 0
+        for: 2m
+        labels:
+          severity: warning
+          component: database
+        annotations:
+          summary: "PostgreSQL exporter is down"
+          description: "Cannot scrape PostgreSQL metrics for more than 2 minutes."
+
+      # High database connection count (requires postgres_exporter)
+      # - alert: HighDatabaseConnections
+      #   expr: pg_stat_database_numbackends > 80
+      #   for: 5m
+      #   labels:
+      #     severity: warning
+      #     component: database
+      #   annotations:
+      #     summary: "High number of database connections"
+      #     description: "Database has more than 80 active connections."
+
+  - name: zero_cache_alerts
+    interval: 30s
+    rules:
+      # Zero-cache sync lag (requires custom metrics)
+      # - alert: ZeroCacheSyncLag
+      #   expr: zero_cache_sync_lag_seconds > 30
+      #   for: 2m
+      #   labels:
+      #     severity: warning
+      #     component: sync
+      #   annotations:
+      #     summary: "Zero-cache sync lag detected"
+      #     description: "Zero-cache sync is lagging by more than 30 seconds."
+
+      # Zero-cache connection failures (requires custom metrics)
+      # - alert: ZeroCacheConnectionFailures
+      #   expr: rate(zero_cache_connection_failures_total[5m]) > 0.1
+      #   for: 2m
+      #   labels:
+      #     severity: warning
+      #     component: sync
+      #   annotations:
+      #     summary: "Zero-cache connection failures"
+      #     description: "Zero-cache is experiencing connection failures."

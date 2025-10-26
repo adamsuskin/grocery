@@ -29,60 +29,68 @@ CMD ["pnpm", "run", "server:dev"]
 # Production build stage
 FROM node:20-alpine AS builder
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install pnpm globally (cached layer)
+RUN npm install -g pnpm@latest
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better caching
 COPY package.json pnpm-lock.yaml* ./
 
-# Install all dependencies (including dev dependencies for build)
+# Install all dependencies (this layer will be cached unless package files change)
 RUN pnpm install --frozen-lockfile
 
-# Copy source code and config
-COPY server ./server
+# Copy TypeScript configuration
 COPY tsconfig.server.json ./
 
-# Build TypeScript
-RUN pnpm run server:build
+# Copy server source code
+COPY server ./server
+
+# Build TypeScript with optimizations
+RUN pnpm run server:build && \
+    # Remove source maps in production for security
+    find /app/dist -name "*.map" -type f -delete
 
 # Production stage
 FROM node:20-alpine AS production
 
-# Install pnpm
-RUN npm install -g pnpm
-
-# Install curl for healthcheck
-RUN apk add --no-cache curl
+# Install system dependencies in a single layer
+RUN apk add --no-cache curl dumb-init && \
+    npm install -g pnpm@latest
 
 WORKDIR /app
 
+# Create non-root user early
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown nodejs:nodejs /app
+
 # Copy package files
-COPY package.json pnpm-lock.yaml* ./
+COPY --chown=nodejs:nodejs package.json pnpm-lock.yaml* ./
 
 # Install only production dependencies
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile --prod && \
+    # Clean up pnpm cache to reduce image size
+    pnpm store prune
 
-# Copy built files from builder
-COPY --from=builder /app/dist ./dist
+# Copy built files from builder with proper ownership
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 
-# Create non-root user for security
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001
-
-# Change ownership
-RUN chown -R nodejs:nodejs /app
-
-# Switch to non-root user
+# Switch to non-root user for security
 USER nodejs
+
+# Set NODE_ENV to production
+ENV NODE_ENV=production
 
 # Expose port
 EXPOSE 3001
 
-# Health check
+# Health check with appropriate timings for database initialization
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD curl -f http://localhost:3001/health || exit 1
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
 
 # Production command
 CMD ["node", "dist/server/index.js"]

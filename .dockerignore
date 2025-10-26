@@ -33,6 +33,7 @@ build
 Dockerfile*
 docker-compose*.yml
 .dockerignore
+deploy.sh
 
 # Testing
 coverage
@@ -48,6 +49,10 @@ __mocks__
 *.md
 docs
 LICENSE
+
+# Backups and logs
+backups
+logs
 
 # Temporary files
 tmp

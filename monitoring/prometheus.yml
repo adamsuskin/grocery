@@ -1,0 +1,72 @@
+global:
+  scrape_interval: 15s # How often to scrape targets
+  evaluation_interval: 15s # How often to evaluate rules
+  external_labels:
+    cluster: 'grocery-app'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Load alert rules
+rule_files:
+  - 'alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node Exporter - System metrics (CPU, memory, disk, network)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'grocery-server'
+
+  # Grocery App API Server
+  # Note: This assumes your app will expose metrics at /metrics endpoint
+  # You'll need to add a metrics library like prom-client to your Express app
+  - job_name: 'grocery-api'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['host.docker.internal:3000'] # Adjust port if needed
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'grocery-api'
+    # If your API requires authentication, add bearer token here:
+    # authorization:
+    #   type: Bearer
+    #   credentials: 'your-token-here'
+
+  # Health check monitoring
+  # Prometheus can scrape and monitor HTTP endpoints
+  - job_name: 'grocery-health'
+    metrics_path: '/health/ready'
+    scheme: http
+    static_configs:
+      - targets: ['host.docker.internal:3000'] # Adjust port if needed
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        target_label: __name__
+        replacement: 'health_check'
+
+  # PostgreSQL Exporter (optional - requires postgres_exporter)
+  # Uncomment if you want to monitor PostgreSQL metrics
+  # - job_name: 'postgres'
+  #   static_configs:
+  #     - targets: ['postgres-exporter:9187']
+
+  # Zero-cache monitoring (if Zero exposes metrics)
+  # - job_name: 'zero-cache'
+  #   static_configs:
+  #     - targets: ['host.docker.internal:4848'] # Adjust if Zero exposes metrics

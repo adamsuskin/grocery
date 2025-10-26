@@ -1,0 +1,10 @@
+# Don't commit sensitive files if accidentally placed here
+*.key
+*.pem
+*.crt
+*.cert
+dhparam.pem
+
+# Don't commit local test configs
+*.local.conf
+*.test.conf

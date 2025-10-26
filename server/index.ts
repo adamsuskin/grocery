@@ -126,37 +126,107 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 /**
- * Health check endpoint
+ * Health check endpoints
  */
+
+// Basic health check - quick response for load balancers
+app.get('/health', (req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Liveness probe - is the application running?
+// Does not check dependencies, just that the process is alive
 app.get(
-  '/health',
+  '/health/live',
   asyncHandler(async (req: Request, res: Response) => {
-    // Check database connection
-    const dbHealthy = await pool
-      .query('SELECT 1')
-      .then(() => true)
-      .catch(() => false);
-
-    const poolStats = getPoolStats();
-
+    const memoryUsage = process.memoryUsage();
     const health = {
       success: true,
-      status: dbHealthy ? 'healthy' : 'unhealthy',
+      status: 'alive',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       environment: serverConfig.nodeEnv,
-      database: {
-        connected: dbHealthy,
-        pool: poolStats,
+      process: {
+        pid: process.pid,
+        version: process.version,
+        platform: process.platform,
       },
       memory: {
-        used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-        total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+        heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+        heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+        rss: Math.round(memoryUsage.rss / 1024 / 1024),
+        external: Math.round(memoryUsage.external / 1024 / 1024),
         unit: 'MB',
       },
     };
 
-    res.status(dbHealthy ? 200 : 503).json(health);
+    res.status(200).json(health);
+  })
+);
+
+// Readiness probe - is the application ready to serve traffic?
+// Checks all critical dependencies (database, etc.)
+app.get(
+  '/health/ready',
+  asyncHandler(async (req: Request, res: Response) => {
+    const checks: Record<string, any> = {};
+    let isReady = true;
+    const startTime = Date.now();
+
+    // Check database connection
+    try {
+      const dbStart = Date.now();
+      await pool.query('SELECT 1');
+      const poolStats = getPoolStats();
+      checks.database = {
+        status: 'healthy',
+        responseTime: Date.now() - dbStart,
+        pool: {
+          total: poolStats.total,
+          idle: poolStats.idle,
+          waiting: poolStats.waiting,
+          active: poolStats.total - poolStats.idle,
+        },
+      };
+    } catch (error) {
+      isReady = false;
+      checks.database = {
+        status: 'unhealthy',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+
+    // Check memory usage (warn if above 90%)
+    const memoryUsage = process.memoryUsage();
+    const heapUsedPercent = (memoryUsage.heapUsed / memoryUsage.heapTotal) * 100;
+    checks.memory = {
+      status: heapUsedPercent < 90 ? 'healthy' : 'warning',
+      heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+      heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+      heapUsedPercent: Math.round(heapUsedPercent),
+      rss: Math.round(memoryUsage.rss / 1024 / 1024),
+      unit: 'MB',
+    };
+
+    if (heapUsedPercent >= 90) {
+      isReady = false;
+    }
+
+    const health = {
+      success: isReady,
+      status: isReady ? 'ready' : 'not_ready',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: serverConfig.nodeEnv,
+      responseTime: Date.now() - startTime,
+      checks,
+    };
+
+    res.status(isReady ? 200 : 503).json(health);
   })
 );
 
