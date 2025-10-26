@@ -24,6 +24,7 @@ export function useGroceryItems(filters?: FilterState, sort?: SortState) {
     name: item.name,
     quantity: item.quantity,
     gotten: item.gotten,
+    category: item.category as GroceryItem['category'],
     createdAt: item.createdAt,
   }));
 
@@ -44,6 +45,11 @@ export function useGroceryItems(filters?: FilterState, sort?: SortState) {
         items = items.filter(item =>
           item.name.toLowerCase().includes(searchLower)
         );
+      }
+
+      // Filter by categories (show only selected categories)
+      if (filters.categories && filters.categories.length > 0) {
+        items = items.filter(item => filters.categories.includes(item.category));
       }
     }
 
@@ -79,13 +85,14 @@ export function useGroceryItems(filters?: FilterState, sort?: SortState) {
 
 // React hook for grocery mutations
 export function useGroceryMutations() {
-  const addItem = async (name: string, quantity: number): Promise<string> => {
+  const addItem = async (name: string, quantity: number, category: string): Promise<string> => {
     const id = nanoid();
     await zeroInstance.mutate.grocery_items.create({
       id,
       name,
       quantity,
       gotten: false,
+      category,
       createdAt: Date.now(),
     });
     return id;

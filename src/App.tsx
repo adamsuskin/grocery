@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { AddItemForm } from './components/AddItemForm';
 import { GroceryList } from './components/GroceryList';
 import type { FilterState, SortState } from './types';
+import { CATEGORIES } from './types';
 import './App.css';
 
 function App() {
   const [filters, setFilters] = useState<FilterState>({
     searchText: '',
     showGotten: true,
+    categories: [...CATEGORIES], // Show all categories by default
   });
 
   const [sort, setSort] = useState<SortState>({

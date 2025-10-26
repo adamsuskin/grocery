@@ -1,3 +1,17 @@
+// Category types
+export const CATEGORIES = [
+  'Produce',
+  'Dairy',
+  'Meat',
+  'Bakery',
+  'Pantry',
+  'Frozen',
+  'Beverages',
+  'Other',
+] as const;
+
+export type Category = typeof CATEGORIES[number];
+
 // Database types
 export interface Database {
   grocery_items: GroceryItemTable;
@@ -8,6 +22,7 @@ export interface GroceryItemTable {
   name: string;
   quantity: number;
   gotten: number; // SQLite uses INTEGER for boolean (0 = false, 1 = true)
+  category: string;
   created_at: number;
 }
 
@@ -17,6 +32,7 @@ export interface GroceryItem {
   name: string;
   quantity: number;
   gotten: boolean;
+  category: Category;
   createdAt: number;
 }
 
@@ -24,6 +40,7 @@ export interface GroceryItem {
 export interface AddItemInput {
   name: string;
   quantity: number;
+  category: Category;
 }
 
 export interface UpdateItemInput {
@@ -35,11 +52,13 @@ export interface UpdateItemInput {
 export interface FilterState {
   searchText: string;
   showGotten: boolean;
+  categories: Category[];
 }
 
 export interface FilterOptions {
   searchText?: string;
   showGotten?: boolean;
+  categories?: Category[];
 }
 
 export type FilterChangeHandler = (filters: Partial<FilterState>) => void;

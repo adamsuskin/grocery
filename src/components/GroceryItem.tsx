@@ -27,7 +27,12 @@ export function GroceryItem({ item }: GroceryItemProps) {
           onChange={handleToggleGotten}
           className="checkbox"
         />
-        <span className="item-name">{item.name}</span>
+        <div className="item-details">
+          <span className="item-name">{item.name}</span>
+          <span className={`category-badge category-${item.category.toLowerCase()}`}>
+            {item.category}
+          </span>
+        </div>
         <span className="item-quantity">×{item.quantity}</span>
       </div>
       <button onClick={handleDelete} className="btn btn-delete" aria-label="Delete item">

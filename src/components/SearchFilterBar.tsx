@@ -1,5 +1,5 @@
 import { useState, useEffect, ChangeEvent } from 'react';
-import { FilterBarProps } from '../types';
+import { FilterBarProps, CATEGORIES, type Category } from '../types';
 
 export function SearchFilterBar({
   filters,
@@ -31,7 +31,17 @@ export function SearchFilterBar({
     onChange({ showGotten: e.target.checked });
   };
 
-  const hasActiveFilters = filters.searchText !== '' || !filters.showGotten;
+  const handleCategoryToggle = (category: Category) => {
+    const newCategories = filters.categories.includes(category)
+      ? filters.categories.filter((c) => c !== category)
+      : [...filters.categories, category];
+    onChange({ categories: newCategories });
+  };
+
+  const hasActiveFilters =
+    filters.searchText !== '' ||
+    !filters.showGotten ||
+    filters.categories.length !== CATEGORIES.length;
   const showResultsCounter = hasActiveFilters && filteredCount !== totalCount;
 
   return (
@@ -57,6 +67,23 @@ export function SearchFilterBar({
           />
           <span>Show gotten items</span>
         </label>
+      </div>
+
+      <div className="category-filters">
+        <div className="category-filters-label">Categories:</div>
+        <div className="category-chips">
+          {CATEGORIES.map((category) => (
+            <button
+              key={category}
+              onClick={() => handleCategoryToggle(category)}
+              className={`category-chip category-${category.toLowerCase()} ${
+                filters.categories.includes(category) ? 'active' : 'inactive'
+              }`}
+            >
+              {category}
+            </button>
+          ))}
+        </div>
       </div>
 
       {showResultsCounter && (

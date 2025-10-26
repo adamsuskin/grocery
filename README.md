@@ -4,12 +4,13 @@ A collaborative grocery list application built with React, TypeScript, and Vite.
 
 ## Features
 
-- ✅ **Add Items**: Add grocery items with name and quantity
+- ✅ **Add Items**: Add grocery items with name, quantity, and category
+- 🏷️ **Categories**: Organize items into categories (Produce, Dairy, Meat, Bakery, Pantry, Frozen, Beverages, Other)
 - ✅ **Mark as Gotten**: Toggle items as gotten/not gotten
 - ✅ **Delete Items**: Remove items from the list
 - ✅ **View List**: See all items with customizable sorting
 - 🔍 **Search**: Search for items by name with real-time filtering
-- 🎛️ **Filter**: Toggle visibility of gotten items
+- 🎛️ **Filter**: Toggle visibility of gotten items and filter by categories
 - 📊 **Results Counter**: See the number of items matching your filters
 - 🔄 **Sort**: Sort items by name, quantity, or date (ascending/descending)
 - ⚡ **Bulk Operations**: Mark all items as gotten or delete all gotten items at once
@@ -120,7 +121,10 @@ This command starts PostgreSQL, zero-cache, and the Vite dev server all at once.
 
 1. Enter the item name in the text field
 2. Enter the quantity (default is 1)
-3. Click "Add Item"
+3. Select a category from the dropdown (default is "Other")
+4. Click "Add Item"
+
+Each item is automatically assigned a color-coded badge based on its category, making it easy to visually organize your shopping list.
 
 ### Marking Items as Gotten
 
@@ -167,9 +171,17 @@ The app includes powerful search, filter, and sort capabilities to help you orga
 - Clear the search box to show all items again
 
 **Show/Hide Gotten Items:**
-- Use the "Hide gotten items" toggle to filter out items you've already gotten
-- Checked: Only shows items that haven't been gotten yet
-- Unchecked: Shows all items (both gotten and not gotten)
+- Use the "Show gotten items" toggle to filter out items you've already gotten
+- Checked: Shows all items (both gotten and not gotten)
+- Unchecked: Only shows items that haven't been gotten yet
+
+**Filter by Category:**
+- Click on category chips to filter which categories are shown
+- Active categories (shown) are fully colored and opaque
+- Inactive categories (hidden) are grayed out and semi-transparent
+- Click again to toggle categories on/off
+- All categories are shown by default
+- Combine category filters with search and gotten status for powerful filtering
 
 **Sort Options:**
 - **Sort by Name**: Sort items alphabetically (A-Z or Z-A)
@@ -179,8 +191,8 @@ The app includes powerful search, filter, and sort capabilities to help you orga
 - Sorting is applied after filtering, so you can combine search/filter with any sort option
 
 **Filter and Sort Combinations:**
-- Search, filter, and sort work together seamlessly
-- For example: search for "apple", hide gotten items, and sort by quantity to see how many apples you still need to buy
+- Search, category filters, gotten filter, and sort work together seamlessly
+- For example: search for "apple", show only Produce category, hide gotten items, and sort by quantity to see how many apples you still need to buy
 - The results counter shows how many items match your current filters (e.g., "Showing 3 of 10 items")
 
 **Results Counter:**
@@ -212,8 +224,19 @@ interface GroceryItem {
   name: string;        // Item name
   quantity: number;    // Quantity to buy
   gotten: boolean;     // Whether item is gotten
+  category: Category;  // Item category
   createdAt: number;   // Timestamp
 }
+
+type Category =
+  | 'Produce'
+  | 'Dairy'
+  | 'Meat'
+  | 'Bakery'
+  | 'Pantry'
+  | 'Frozen'
+  | 'Beverages'
+  | 'Other';
 ```
 
 ## Browser Compatibility

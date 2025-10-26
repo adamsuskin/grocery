@@ -90,7 +90,7 @@
 
 The application is feature-complete with the following capabilities:
 - ✅ Zero client configured and integrated for real-time sync
-- ✅ Schema defined for grocery_items table
+- ✅ Schema defined for grocery_items table with categories
 - ✅ CRUD operations migrated to Zero API
 - ✅ React hooks updated to use Zero queries
 - ✅ PostgreSQL + zero-cache infrastructure ready
@@ -101,6 +101,9 @@ The application is feature-complete with the following capabilities:
 - ✅ Sorting by name, quantity, and date (ascending/descending)
 - ✅ Sort controls with visual feedback (active state)
 - ✅ Seamless integration of search, filter, and sort features
+- ✅ Item categories with color-coded badges (8 predefined categories)
+- ✅ Category filtering with interactive chips
+- ✅ Bulk operations (mark all as gotten, delete all gotten)
 
 **Next Steps to Run:**
 1. Start PostgreSQL: `pnpm db:up`
@@ -109,6 +112,8 @@ The application is feature-complete with the following capabilities:
 4. Start app: `pnpm dev`
 
 Or use: `pnpm dev:full` to start everything at once
+
+**Note:** After implementing categories, you may need to drop and recreate the database or run a migration to add the category column to existing records.
 
 ## Phase 11: Bulk Operations ✅
 - [x] Update types.ts with BulkOperationsProps interface
@@ -125,6 +130,23 @@ Or use: `pnpm dev:full` to start everything at once
 - [x] Verify build process passes
 - [x] Update README.md with bulk operations documentation
 
+## Phase 12: Item Categories ✅
+- [x] Update database schema to add category field (schema.sql)
+- [x] Update TypeScript types with category field and predefined categories
+- [x] Update Zero schema with category field (version bump to 2)
+- [x] Update store mutations to handle categories (zero-store.ts)
+- [x] Update AddItemForm with category dropdown selector
+- [x] Update GroceryItem component to display category badges
+- [x] Add category filter chips to SearchFilterBar
+- [x] Update App.tsx to initialize category filters
+- [x] Add color-coded category styling (8 categories with unique colors)
+- [x] Implement category filtering logic in zero-store
+- [x] Update old store.ts for backward compatibility
+- [x] Verify TypeScript compilation passes
+- [x] Verify build process passes
+- [x] Update README.md with category documentation
+- [x] Update IMPLEMENTATION_PLAN.md
+
 ## Future Enhancements
 
 ### Zero Advanced Features
@@ -135,11 +157,13 @@ Or use: `pnpm dev:full` to start everything at once
 - [ ] Deploy zero-cache to production
 
 ### Features
-- [ ] Add item categories
-- [ ] Add item notes
+- [x] Add item categories (Produce, Dairy, Meat, Bakery, Pantry, Frozen, Beverages, Other)
+- [ ] Add item notes/description field
 - [ ] Add sharing/collaboration features (share lists with specific users)
 - [ ] Add item history and audit trail
 - [x] Add sorting options (by name, quantity, date)
 - [x] Add bulk operations (mark all as gotten, delete all gotten items)
 - [ ] Add item images or icons
 - [ ] Add price tracking and budget features
+- [ ] Add custom category creation
+- [ ] Add sorting by category
