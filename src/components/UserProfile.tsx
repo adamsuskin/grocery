@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { resetOnboardingTour } from '../hooks/useOnboardingTour';
 import { resetAllCustomCategoriesTours } from '../hooks/useCustomCategoriesTour';
 import { PeriodicSyncSettings } from './PeriodicSyncSettings';
+import { UnitPreferences } from './UnitPreferences';
 import './UserProfile.css';
 
 export interface UserProfileProps {
@@ -12,7 +13,7 @@ export interface UserProfileProps {
 export function UserProfile({ onShowTour }: UserProfileProps = {}) {
   const { user, logout } = useAuth();
   const [showProfileModal, setShowProfileModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'profile' | 'sync'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'sync' | 'units'>('profile');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   if (!user) {
@@ -101,6 +102,12 @@ export function UserProfile({ onShowTour }: UserProfileProps = {}) {
               >
                 Background Sync
               </button>
+              <button
+                className={`profile-tab ${activeTab === 'units' ? 'active' : ''}`}
+                onClick={() => setActiveTab('units')}
+              >
+                Unit Preferences
+              </button>
             </div>
 
             <div className="profile-modal-body">
@@ -173,9 +180,13 @@ export function UserProfile({ onShowTour }: UserProfileProps = {}) {
                     </button>
                   </div>
                 </>
-              ) : (
+              ) : activeTab === 'sync' ? (
                 <div className="sync-settings-container">
                   <PeriodicSyncSettings />
+                </div>
+              ) : (
+                <div className="units-settings-container">
+                  <UnitPreferences />
                 </div>
               )}
             </div>

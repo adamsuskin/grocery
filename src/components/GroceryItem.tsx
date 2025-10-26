@@ -191,7 +191,13 @@ export const GroceryItem = memo(function GroceryItem({ item, canEdit, userPermis
         </div>
         <div className="item-quantity-price">
           <span className="item-quantity" aria-label={`Quantity: ${item.quantity}`}>
-            ×{item.quantity}
+            {item.quantityDecimal ? (
+              // Show more precise decimal quantity if available
+              item.unit ? `${item.quantityDecimal} ${item.unit}` : `×${item.quantityDecimal}`
+            ) : (
+              // Show integer quantity
+              item.unit ? `${item.quantity} ${item.unit}` : `×${item.quantity}`
+            )}
           </span>
           {item.price !== null && item.price !== undefined ? (
             <div className="price-info">

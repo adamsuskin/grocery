@@ -4610,7 +4610,7 @@ Phase 26 adds comprehensive recipe management, meal planning, and shopping list 
 
 **High Priority:**
 - [x] Replace mock hooks with real API integration (Phase 27 - COMPLETE!)
-- [ ] Add unit conversion system
+- [x] Add unit conversion system (Phase 28 - COMPLETE!)
 - [ ] Implement drag & drop in meal planner
 - [ ] Add recipe import from URLs
 
@@ -4745,5 +4745,147 @@ The highest priority remaining items from Phase 26:
 2. Implement enhanced drag & drop in meal planner
 3. Add recipe import from URLs (parse and extract data)
 4. Add nutritional information tracking
+
+---
+
+## Phase 28: Unit Conversion System ✅
+
+**Status:** COMPLETE
+**Completed:** 2025-10-26
+
+### Objective
+Implement a comprehensive unit conversion system for recipe ingredients and grocery items with support for both metric and imperial measurements.
+
+### Implementation Summary
+
+#### Database Changes
+
+1. **New Tables:**
+   - `unit_conversions` - Stores conversion factors between units
+     - 45+ bidirectional conversions for volume, weight, and count
+     - Supports metric ↔ imperial conversions
+   - `user_preferences` - Stores user measurement preferences
+     - Preferred system (metric/imperial/mixed)
+     - Default units for volume and weight
+     - Auto-convert and display format settings
+
+2. **Updated Tables:**
+   - `grocery_items` - Added `unit` and `quantityDecimal` fields
+     - Supports fractional quantities (e.g., 2.5 cups)
+     - Stores measurement units alongside quantities
+
+#### Core Functionality
+
+1. **UnitConverter Class** (`src/utils/unitConversion.ts`)
+   - Bidirectional unit conversion with 45+ conversion factors
+   - Path-based conversion for indirect conversions (e.g., tsp → cup → ml)
+   - Unit normalization (handles plurals and abbreviations)
+   - Smart quantity formatting with proper pluralization
+   - Category detection (volume/weight/count)
+   - Compatible unit discovery
+
+2. **Zero Hooks** (`src/zero-store.ts`)
+   - `useUnitConversions()` - Query all unit conversions
+   - `useUserPreferences(userId)` - Get user measurement preferences
+   - `useUserPreferencesMutations()` - Create/update preferences
+   - `useUnitConverter()` - Get initialized converter with DB conversions
+
+3. **Smart Shopping List Generation**
+   - Automatically converts and aggregates ingredients across units
+   - Combines "2 cups flour" + "8 tbsp flour" = "2.5 cups flour"
+   - Handles incompatible units gracefully (stores in notes)
+   - Preserves precise decimal quantities
+
+4. **Recipe Display Integration**
+   - Shows converted units based on user preferences
+   - Displays both original and converted: "2 cups (473 ml)"
+   - Respects auto-convert preference setting
+   - Smart serving size adjustments with unit conversion
+
+5. **User Interface**
+   - `UnitPreferences` component in UserProfile modal
+   - Settings for preferred measurement system
+   - Default unit selection for volume and weight
+   - Auto-convert toggle and display format options
+   - Clean, accessible design matching app style
+
+#### Files Created/Modified
+
+**New Files:**
+- `server/migrations/011_add_unit_conversion_support.sql`
+- `server/migrations/rollback/011_drop_unit_conversion_support.sql`
+- `server/migrations/README_UNIT_CONVERSION.md`
+- `src/utils/unitConversion.ts`
+- `src/components/UnitPreferences.tsx`
+- `src/components/UnitPreferences.css`
+
+**Modified Files:**
+- `src/types.ts` - Added UnitConversion, UserPreferences, UnitSystem types
+- `src/zero-schema.ts` - Added unit_conversions and user_preferences tables
+- `src/zero-store.ts` - Added 4 new hooks and updated generateShoppingList
+- `src/components/RecipeCard.tsx` - Added unit conversion display
+- `src/components/GroceryItem.tsx` - Added unit and decimal quantity display
+- `src/components/UserProfile.tsx` - Integrated UnitPreferences component
+
+#### Key Features Delivered
+
+✅ **45+ Unit Conversions** - Comprehensive volume and weight conversions
+✅ **User Preferences** - Persistent settings for measurement systems
+✅ **Smart Aggregation** - Intelligently combines ingredients across units
+✅ **Automatic Conversion** - Optional auto-convert in recipe and grocery displays
+✅ **Decimal Precision** - Supports fractional quantities (1.5 cups, 0.25 tsp)
+✅ **Bidirectional** - All conversions work in both directions
+✅ **Type Safe** - Full TypeScript integration throughout
+✅ **Zero Integration** - Real-time reactive updates via Zero
+✅ **Backward Compatible** - All new fields are optional, no breaking changes
+✅ **Extensible** - Easy to add new conversions via database
+
+#### Supported Conversions
+
+**Volume Units:**
+- US: cup, tbsp, tsp, fl-oz, gallon
+- Metric: ml, l
+- All bidirectional with precise conversion factors
+
+**Weight Units:**
+- Imperial: oz, lb
+- Metric: g, kg
+- All bidirectional with precise conversion factors
+
+**Count Units:**
+- piece, whole, clove, bunch, package, dozen
+
+#### User Experience Improvements
+
+1. **Flexible Recipe Scaling:** Users can scale recipes with any serving size, and the system automatically adjusts quantities with proper unit conversions
+2. **Cross-Unit Aggregation:** Shopping lists intelligently combine ingredients even when recipes use different units
+3. **Preference Respect:** Display units match user's preferred measurement system
+4. **Precision:** Decimal quantities prevent rounding errors in recipe calculations
+5. **Transparency:** Shows both original and converted units when different
+
+#### Migration Notes
+
+- Migration file includes comprehensive documentation
+- Rollback support for safe database changes
+- No data loss - all changes are additive
+- Backward compatible with existing data
+- Indexes added for query performance
+
+#### Testing Recommendations
+
+- Verify unit conversions are accurate
+- Test shopping list aggregation with mixed units
+- Confirm user preferences persist and apply correctly
+- Test recipe display with various serving sizes
+- Verify backward compatibility with existing grocery items
+
+### Next Steps
+
+Consider these enhancements for future phases:
+- Temperature conversions (°F ↔ °C)
+- Volume-to-weight conversions for common ingredients (e.g., 1 cup flour ≈ 120g)
+- Regional unit preferences (UK vs US measurements)
+- Custom user-defined conversions
+- Bulk conversion utility for existing data
 
 ---

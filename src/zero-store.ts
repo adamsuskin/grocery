@@ -177,6 +177,8 @@ import type {
   CreateMealPlanInput,
   UpdateMealPlanInput,
   Category,
+  UnitConversion,
+  UserPreferences,
 } from './types';
 import { createConflictResolver, type Conflict } from './utils/conflictResolver';
 import {
@@ -187,6 +189,7 @@ import {
   type OfflineQueueConfig,
 } from './utils/offlineQueue';
 import { ConnectionStatus, SyncState, type SyncStatus } from './types/conflicts';
+import { UnitConverter } from './utils/unitConversion';
 
 /**
  * Authentication configuration for Zero
@@ -2415,46 +2418,73 @@ export function useMealPlanMutations() {
 
     const now = Date.now();
 
-    // Group ingredients by name and sum quantities
-    const ingredientMap = new Map<string, {
+    // Initialize converter
+    const converter = new UnitConverter();
+    // Load conversions from database if available
+    try {
+      const unitConversions = await (zero.query.unit_conversions as any).run();
+      if (unitConversions && unitConversions.length > 0) {
+        converter.loadConversions(unitConversions);
+      }
+    } catch (error) {
+      // If no custom conversions in DB, continue with defaults
+      console.warn('No custom unit conversions found, using defaults');
+    }
+
+    // Aggregate ingredients with unit conversion
+    const aggregatedMap = new Map<string, {
       name: string;
       quantity: number;
       unit: string;
       category: string;
-      notes: string;
+      notes: string[];
     }>();
 
     mealPlans.forEach((mealPlan: any) => {
       const planIngredients = allIngredients.filter((ing: any) => ing.recipeId === mealPlan.recipeId);
-      const servingsMultiplier = mealPlan.servings / (recipes.find((r: any) => r.id === mealPlan.recipeId)?.servings || 1);
+      const recipe = recipes.find((r: any) => r.id === mealPlan.recipeId);
+      const servingsMultiplier = mealPlan.servings / (recipe?.servings || 1);
 
       planIngredients.forEach((ing: any) => {
-        const key = `${ing.name}-${ing.unit}`;
-        const existing = ingredientMap.get(key);
+        const adjustedQuantity = ing.quantity * servingsMultiplier;
 
-        if (existing) {
-          existing.quantity += ing.quantity * servingsMultiplier;
+        // Create key by name only (will aggregate across units)
+        const key = ing.name.toLowerCase().trim();
+
+        if (aggregatedMap.has(key)) {
+          const existing = aggregatedMap.get(key)!;
+          // Convert incoming ingredient to existing unit
+          const converted = converter.convert(adjustedQuantity, ing.unit, existing.unit);
+          if (converted) {
+            existing.quantity += converted.convertedValue;
+          } else {
+            // Can't convert, append as note
+            existing.notes.push(`${adjustedQuantity} ${ing.unit}`);
+          }
         } else {
-          ingredientMap.set(key, {
+          // New ingredient
+          aggregatedMap.set(key, {
             name: ing.name,
-            quantity: ing.quantity * servingsMultiplier,
+            quantity: adjustedQuantity,
             unit: ing.unit,
             category: ing.category || 'Other',
-            notes: ing.notes || '',
+            notes: [],
           });
         }
       });
     });
 
-    // Create grocery items in the specified list
-    const itemPromises = Array.from(ingredientMap.values()).map((item, index) =>
+    // Convert to grocery items with unit field
+    const itemPromises = Array.from(aggregatedMap.values()).map((item, index) =>
       zero.mutate.grocery_items.create({
         id: nanoid(),
         name: item.name,
         quantity: Math.ceil(item.quantity), // Round up
+        quantityDecimal: item.quantity, // Store precise value
+        unit: item.unit, // Store unit
         gotten: false,
-        category: item.category,
-        notes: item.notes,
+        category: item.category as Category,
+        notes: item.notes.length > 0 ? `Also needed: ${item.notes.join(', ')}` : '',
         price: 0,
         user_id: currentUserId,
         list_id: listId,
@@ -2746,4 +2776,121 @@ export function calculatePriceStats(items: GroceryItem[]): PriceStats {
     minPrice,
     maxPrice,
   };
+}
+
+// =============================================================================
+// Unit Conversion and User Preferences Hooks
+// =============================================================================
+
+/**
+ * React hook to get all unit conversions
+ * Returns all available unit conversion definitions from the database
+ *
+ * @returns Array of unit conversions
+ *
+ * @example
+ * ```typescript
+ * const conversions = useUnitConversions();
+ * console.log(`Loaded ${conversions.length} unit conversions`);
+ * ```
+ */
+export function useUnitConversions(): UnitConversion[] {
+  const zero = getZeroInstance();
+  const conversions = useQuery<UnitConversion>(
+    zero.query.unit_conversions
+  );
+  return useMemo(() => conversions ?? [], [conversions]);
+}
+
+/**
+ * React hook to get user preferences for a specific user
+ * Returns the user's measurement and display preferences
+ *
+ * @param userId - User ID to fetch preferences for
+ * @returns User preferences object, or null if not found
+ *
+ * @example
+ * ```typescript
+ * const preferences = useUserPreferences(currentUserId);
+ * console.log(`Preferred system: ${preferences?.preferredSystem}`);
+ * ```
+ */
+export function useUserPreferences(userId: string): UserPreferences | null {
+  const zero = getZeroInstance();
+  const preferences = useQuery<UserPreferences>(
+    zero.query.user_preferences.where('userId', userId)
+  );
+  return useMemo(() => (preferences && preferences.length > 0 ? preferences[0] : null), [preferences]);
+}
+
+/**
+ * React hook for user preferences mutations
+ * Provides functions for creating and updating user preferences
+ *
+ * @returns Object with preference mutation functions
+ *
+ * @example
+ * ```typescript
+ * const { createOrUpdatePreferences } = useUserPreferencesMutations();
+ *
+ * await createOrUpdatePreferences(userId, {
+ *   preferredSystem: 'metric',
+ *   defaultVolumeUnit: 'ml',
+ *   autoConvert: true
+ * });
+ * ```
+ */
+export function useUserPreferencesMutations() {
+  const zero = getZeroInstance();
+
+  const createOrUpdatePreferences = async (userId: string, preferences: Partial<UserPreferences>): Promise<void> => {
+    const existing = await zero.query.user_preferences.where('userId', userId).run();
+    const now = Date.now();
+
+    if (existing && existing.length > 0) {
+      await zero.mutate.user_preferences.update({
+        id: existing[0].id,
+        ...preferences,
+        updatedAt: now,
+      });
+    } else {
+      await zero.mutate.user_preferences.insert({
+        id: nanoid(),
+        userId,
+        preferredSystem: 'imperial',
+        defaultVolumeUnit: 'cup',
+        defaultWeightUnit: 'oz',
+        displayFormat: 'full',
+        autoConvert: true,
+        ...preferences,
+        createdAt: now,
+        updatedAt: now,
+      });
+    }
+  };
+
+  return { createOrUpdatePreferences };
+}
+
+/**
+ * React hook that returns an initialized UnitConverter
+ * Automatically loads all unit conversions from the database into the converter
+ *
+ * @returns Initialized UnitConverter instance with all database conversions loaded
+ *
+ * @example
+ * ```typescript
+ * const converter = useUnitConverter();
+ * const result = converter.convert(2, 'cup', 'ml');
+ * console.log(`${result?.convertedValue} ml`); // 473.176 ml
+ * ```
+ */
+export function useUnitConverter(): UnitConverter {
+  const conversions = useUnitConversions();
+
+  return useMemo(() => {
+    const converter = new UnitConverter();
+    converter.loadConversions(conversions);
+    return converter;
+  }, [conversions]);
 }

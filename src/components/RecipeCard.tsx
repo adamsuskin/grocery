@@ -1,5 +1,6 @@
 import { useState, memo } from 'react';
-import type { Recipe, RecipeDifficulty, PermissionLevel } from '../types';
+import type { Recipe, RecipeDifficulty, PermissionLevel, UserPreferences } from '../types';
+import { useUserPreferences, useUnitConverter, getCurrentUserId } from '../zero-store';
 import './RecipeCard.css';
 
 export interface RecipeCardProps {
@@ -98,6 +99,49 @@ function parseInstructions(instructions: string): string[] {
 }
 
 /**
+ * Get preferred unit based on user preferences and original unit
+ * Maps units to their preferred system equivalents
+ */
+function getPreferredUnit(originalUnit: string, preferences: UserPreferences | null): string {
+  if (!preferences || !preferences.autoConvert) {
+    return originalUnit;
+  }
+
+  const normalizedUnit = originalUnit.toLowerCase().trim();
+  const preferredSystem = preferences.preferredSystem;
+
+  // Volume unit mappings
+  const volumeUnitsMetric = ['ml', 'l', 'milliliter', 'liter', 'millilitre', 'litre'];
+  const volumeUnitsImperial = ['cup', 'tbsp', 'tsp', 'oz', 'fluid ounce', 'tablespoon', 'teaspoon'];
+
+  // Weight unit mappings
+  const weightUnitsMetric = ['g', 'kg', 'gram', 'kilogram'];
+  const weightUnitsImperial = ['oz', 'lb', 'ounce', 'pound'];
+
+  // Determine if we should convert
+  if (preferredSystem === 'metric') {
+    // Convert imperial to metric
+    if (volumeUnitsImperial.includes(normalizedUnit)) {
+      return preferences.defaultVolumeUnit || 'ml';
+    }
+    if (weightUnitsImperial.includes(normalizedUnit)) {
+      return preferences.defaultWeightUnit || 'g';
+    }
+  } else if (preferredSystem === 'imperial') {
+    // Convert metric to imperial
+    if (volumeUnitsMetric.includes(normalizedUnit)) {
+      return preferences.defaultVolumeUnit || 'cup';
+    }
+    if (weightUnitsMetric.includes(normalizedUnit)) {
+      return preferences.defaultWeightUnit || 'oz';
+    }
+  }
+
+  // No conversion needed or mixed mode - return original
+  return originalUnit;
+}
+
+/**
  * RecipeCard Component
  *
  * Displays a recipe with all details including ingredients, instructions,
@@ -119,6 +163,11 @@ export const RecipeCard = memo(function RecipeCard({
   const [servings, setServings] = useState(recipe.servings);
   const [showIngredients, setShowIngredients] = useState(!compact);
   const [showInstructions, setShowInstructions] = useState(!compact);
+
+  // Get user preferences and unit converter
+  const userId = currentUserId || getCurrentUserId();
+  const preferences = useUserPreferences(userId);
+  const converter = useUnitConverter();
 
   const isOwner = currentUserId === recipe.userId;
   const canModify = canEdit || isOwner || userPermission === 'owner' || userPermission === 'editor';
@@ -379,6 +428,32 @@ export const RecipeCard = memo(function RecipeCard({
                   const adjustedQuantity =
                     (ingredient.quantity * servings) / recipe.servings;
 
+                  // Convert units if auto-convert is enabled
+                  let displayText = '';
+                  if (preferences?.autoConvert && ingredient.unit) {
+                    const preferredUnit = getPreferredUnit(ingredient.unit, preferences);
+                    const converted = converter.convert(
+                      adjustedQuantity,
+                      ingredient.unit,
+                      preferredUnit
+                    );
+
+                    if (converted && converted.convertedUnit !== converted.originalUnit) {
+                      // Show both original and converted: "2 cups (473 ml)"
+                      const originalFormatted = adjustedQuantity.toFixed(adjustedQuantity % 1 === 0 ? 0 : 1);
+                      const convertedFormatted = converted.convertedValue.toFixed(
+                        converted.convertedValue % 1 === 0 ? 0 : 1
+                      );
+                      displayText = `${originalFormatted} ${ingredient.unit} (${convertedFormatted} ${preferredUnit})`;
+                    } else {
+                      // No conversion or same unit - show as normal
+                      displayText = `${adjustedQuantity.toFixed(adjustedQuantity % 1 === 0 ? 0 : 1)} ${ingredient.unit}`;
+                    }
+                  } else {
+                    // No preferences or auto-convert disabled - show as normal
+                    displayText = `${adjustedQuantity.toFixed(adjustedQuantity % 1 === 0 ? 0 : 1)} ${ingredient.unit}`;
+                  }
+
                   return (
                     <li key={ingredient.id} className="ingredient-item">
                       <input
@@ -388,8 +463,7 @@ export const RecipeCard = memo(function RecipeCard({
                       />
                       <span className="ingredient-text">
                         <span className="ingredient-quantity">
-                          {adjustedQuantity.toFixed(adjustedQuantity % 1 === 0 ? 0 : 1)}{' '}
-                          {ingredient.unit}
+                          {displayText}
                         </span>
                         <span className="ingredient-name">{ingredient.name}</span>
                         {ingredient.notes && (

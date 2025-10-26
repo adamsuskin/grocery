@@ -121,6 +121,8 @@ export interface GroceryItem {
   createdAt: number;
   updatedAt: number;
   price?: number; // Price per unit
+  unit?: string; // Unit of measurement (e.g., 'cup', 'lb', 'kg')
+  quantityDecimal?: number; // Fractional amounts for more precise quantities
 }
 
 // Input types for mutations
@@ -1398,4 +1400,33 @@ export interface RecipeFilterState {
 export interface RecipeSortState {
   field: 'name' | 'createdAt' | 'prepTime' | 'cookTime';
   direction: 'asc' | 'desc';
+}
+
+// Phase 27: Unit Conversion types
+
+// Unit system type
+export type UnitSystem = 'metric' | 'imperial' | 'mixed';
+
+// Unit conversion
+export interface UnitConversion {
+  id: string;
+  fromUnit: string;
+  toUnit: string;
+  conversionFactor: number;
+  category: 'volume' | 'weight' | 'count';
+  notes?: string;
+  createdAt: number;
+}
+
+// User preferences for unit display
+export interface UserPreferences {
+  id: string;
+  userId: string;
+  preferredSystem: 'metric' | 'imperial' | 'mixed';
+  defaultVolumeUnit: MeasurementUnit;
+  defaultWeightUnit: MeasurementUnit;
+  displayFormat: 'full' | 'abbreviated';
+  autoConvert: boolean;
+  createdAt: number;
+  updatedAt: number;
 }
