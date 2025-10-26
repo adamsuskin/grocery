@@ -21,6 +21,10 @@ import {
 
 // Route imports
 import authRoutes from './auth/routes';
+import listsRoutes from './lists/routes';
+import usersRoutes from './users/routes';
+import activitiesRoutes from './activities/routes';
+import invitesRoutes from './invites/routes';
 import { authErrorHandler } from './auth/middleware';
 
 /**
@@ -176,6 +180,27 @@ app.get('/api', (req: Request, res: Response) => {
         changePassword: 'POST /api/auth/change-password - Change password',
         health: 'GET /api/auth/health - Auth service health',
       },
+      lists: {
+        create: 'POST /api/lists - Create new list',
+        getAll: 'GET /api/lists - Get all lists for current user',
+        getOne: 'GET /api/lists/:id - Get specific list with members',
+        update: 'PUT /api/lists/:id - Update list name',
+        delete: 'DELETE /api/lists/:id - Delete list',
+        addMember: 'POST /api/lists/:id/members - Add member to list',
+        removeMember: 'DELETE /api/lists/:id/members/:userId - Remove member from list',
+        updateMember: 'PUT /api/lists/:id/members/:userId - Update member permission',
+        activities: 'GET /api/lists/:id/activities - Get list activity log',
+        health: 'GET /api/lists/health - Lists service health',
+      },
+      users: {
+        search: 'GET /api/users/search?email=... - Search users by email',
+      },
+      invites: {
+        generate: 'POST /api/lists/:id/invite - Generate invite link',
+        revoke: 'DELETE /api/lists/:id/invite - Revoke invite link',
+        getDetails: 'GET /api/invites/:token - Get invite details (public)',
+        accept: 'POST /api/invites/:token/accept - Accept invite and join list',
+      },
     },
   });
 });
@@ -184,6 +209,10 @@ app.get('/api', (req: Request, res: Response) => {
  * API Routes
  */
 app.use('/api/auth', authRoutes);
+app.use('/api/lists', listsRoutes);
+app.use('/api/lists', activitiesRoutes);
+app.use('/api/users', usersRoutes);
+app.use('/api', invitesRoutes);
 
 /**
  * Error Handling Middleware (must be last)

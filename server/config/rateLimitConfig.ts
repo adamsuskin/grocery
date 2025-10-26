@@ -120,6 +120,19 @@ export const rateLimitConfigs = {
     legacyHeaders: false,
     skipSuccessfulRequests: true,
   } as RateLimitConfig,
+
+  /**
+   * User search endpoint - Prevent abuse of search functionality
+   * 30 attempts per 15 minutes per IP
+   */
+  userSearch: {
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 30,
+    message: 'Too many user search requests. Please try again in 15 minutes.',
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+  } as RateLimitConfig,
 };
 
 /**

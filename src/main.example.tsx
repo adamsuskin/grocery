@@ -16,7 +16,7 @@ import { getZeroInstance } from './zero-store';
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <ZeroProvider zero={getZeroInstance()}>
+      <ZeroProvider zero={getZeroInstance() as any}>
         <App />
       </ZeroProvider>
     </AuthProvider>

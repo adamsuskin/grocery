@@ -251,6 +251,17 @@
   box-shadow: 0 4px 8px rgba(76, 175, 80, 0.3);
 }
 
+.btn-profile-tour {
+  background-color: #2196f3;
+  color: white;
+}
+
+.btn-profile-tour:hover {
+  background-color: #1976d2;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);
+}
+
 .btn-profile-logout {
   background-color: transparent;
   color: var(--danger-color);

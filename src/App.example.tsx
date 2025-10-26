@@ -66,12 +66,14 @@ function App() {
         <main className="main">
           <section className="add-section">
             <h2>Add Item</h2>
-            <AddItemForm />
+            <AddItemForm listId="example-list-id" canEdit={true} />
           </section>
 
           <section className="list-section">
             <h2>Shopping List</h2>
             <GroceryList
+              listId="example-list-id"
+              canEdit={true}
               filters={filters}
               onFilterChange={handleFilterChange}
               sort={sort}

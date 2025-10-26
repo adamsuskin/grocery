@@ -666,6 +666,58 @@ export async function changePassword(
 // API CLIENT INSTANCE (for direct use)
 // =============================================================================
 
+// =============================================================================
+// USER API ENDPOINTS
+// =============================================================================
+
+/**
+ * User search result interface
+ */
+export interface UserSearchResult {
+  id: string;
+  email: string;
+  name: string;
+  created_at: Date;
+}
+
+/**
+ * Searches for users by email
+ *
+ * @param email - Email to search for (partial match)
+ * @returns List of matching users
+ *
+ * @example
+ * ```typescript
+ * const users = await searchUsers('john@example.com');
+ * console.log('Found users:', users);
+ * ```
+ */
+export async function searchUsers(email: string): Promise<UserSearchResult[]> {
+  if (!email || !email.trim()) {
+    throw new AuthError(
+      'Email query parameter is required',
+      AuthErrorType.VALIDATION_ERROR
+    );
+  }
+
+  const response = await get<ApiResponse<{ users: UserSearchResult[] }>>(
+    `/users/search?email=${encodeURIComponent(email.trim())}`
+  );
+
+  if (!response.success || !response.data) {
+    throw new AuthError(
+      response.message || 'Failed to search users',
+      AuthErrorType.VALIDATION_ERROR
+    );
+  }
+
+  return response.data.users;
+}
+
+// =============================================================================
+// API CLIENT INSTANCE (for direct use)
+// =============================================================================
+
 /**
  * API client instance with authentication
  * Provides convenient methods for making authenticated requests
@@ -696,6 +748,11 @@ export const apiClient = {
     getCurrentUser,
     updateProfile,
     changePassword,
+  },
+
+  // User methods
+  users: {
+    search: searchUsers,
   },
 
   // Utility methods

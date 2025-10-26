@@ -1,0 +1,245 @@
+/* List Error Boundary Styles */
+
+.list-error-boundary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  padding: 2rem;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-radius: 12px;
+  border: 2px solid #fecaca;
+  margin: 1rem 0;
+}
+
+.error-boundary-content {
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+  background: white;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(239, 68, 68, 0.1);
+}
+
+.error-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  border-radius: 50%;
+  color: #ef4444;
+}
+
+.error-icon svg {
+  width: 48px;
+  height: 48px;
+  stroke-width: 2;
+}
+
+.error-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #dc2626;
+  margin: 0 0 1rem 0;
+  line-height: 1.3;
+}
+
+.error-message {
+  font-size: 1rem;
+  color: #6b7280;
+  margin: 0 0 2rem 0;
+  line-height: 1.6;
+}
+
+.error-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.error-actions .btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.error-actions .btn-primary {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.error-actions .btn-primary:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.error-actions .btn-secondary {
+  background: white;
+  color: #6b7280;
+  border: 2px solid #e5e7eb;
+}
+
+.error-actions .btn-secondary:hover {
+  background: #f9fafb;
+  border-color: #d1d5db;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(107, 114, 128, 0.15);
+}
+
+.error-actions .btn:active {
+  transform: translateY(0);
+}
+
+.error-details {
+  margin-top: 2rem;
+  text-align: left;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.error-details-summary {
+  font-weight: 600;
+  color: #dc2626;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  user-select: none;
+}
+
+.error-details-summary:hover {
+  background: #fee2e2;
+}
+
+.error-details-content {
+  padding: 1rem 0.5rem 0.5rem;
+}
+
+.error-section {
+  margin-bottom: 1.5rem;
+}
+
+.error-section:last-child {
+  margin-bottom: 0;
+}
+
+.error-section h4 {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #991b1b;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.error-pre {
+  background: white;
+  border: 1px solid #fecaca;
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: #991b1b;
+  font-family: 'Courier New', Courier, monospace;
+  margin: 0;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.error-help {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.error-help-text {
+  font-size: 0.875rem;
+  color: #9ca3af;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .list-error-boundary {
+    padding: 1rem;
+    min-height: 300px;
+  }
+
+  .error-boundary-content {
+    padding: 1.5rem;
+  }
+
+  .error-icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .error-icon svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .error-title {
+    font-size: 1.5rem;
+  }
+
+  .error-message {
+    font-size: 0.9rem;
+  }
+
+  .error-actions {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .error-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .error-pre {
+    font-size: 0.7rem;
+    padding: 0.75rem;
+  }
+}
+
+/* Animation for error appearance */
+@keyframes errorFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.list-error-boundary {
+  animation: errorFadeIn 0.3s ease-out;
+}
+
+/* Print styles - hide error details */
+@media print {
+  .error-details {
+    display: none;
+  }
+}

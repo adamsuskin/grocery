@@ -74,7 +74,7 @@ export class GroceryStore {
     );
   }
 
-  addItem(name: string, quantity: number, category: string = 'Other', notes: string = '', userId: string = 'demo-user'): string {
+  addItem(name: string, quantity: number, category: string = 'Other', notes: string = '', userId: string = 'demo-user', listId: string = ''): string {
     const id = generateId();
     const item: GroceryItem = {
       id,
@@ -84,6 +84,7 @@ export class GroceryStore {
       category: category as GroceryItem['category'],
       notes,
       userId,
+      listId,
       createdAt: Date.now(),
     };
     this.items.set(id, item);

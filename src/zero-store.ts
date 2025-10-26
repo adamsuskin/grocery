@@ -120,7 +120,7 @@ import { useQuery } from '@rocicorp/zero/react';
 import { nanoid } from 'nanoid';
 import { useMemo } from 'react';
 import { schema, type Schema } from './zero-schema';
-import type { GroceryItem, FilterState, SortState } from './types';
+import type { GroceryItem, FilterState, SortState, List, ListMember, PermissionLevel } from './types';
 
 /**
  * Authentication configuration for Zero
@@ -134,7 +134,7 @@ export interface ZeroAuthConfig {
  * Singleton Zero instance that can be reinitialized with authentication
  * Initially created with demo user, but should be reinitialized after authentication
  */
-let zeroInstance: Zero<Schema>;
+let zeroInstance: Zero<any>;
 
 /**
  * Track if Zero has been initialized with real authentication
@@ -324,6 +324,7 @@ export async function refreshZeroAuth(token: string): Promise<void> {
  * Automatically works with the current Zero instance (authenticated or demo)
  * Items are automatically filtered to the current authenticated user
  *
+ * @param listId - Optional list ID to filter items by specific list
  * @param filters - Optional filter configuration for search and categories
  * @param sort - Optional sort configuration
  * @returns Filtered and sorted grocery items for the current user
@@ -332,12 +333,13 @@ export async function refreshZeroAuth(token: string): Promise<void> {
  * ```typescript
  * // In a component:
  * const items = useGroceryItems(
+ *   'list-123',
  *   { showGotten: false, searchText: 'milk', categories: ['dairy'] },
  *   { field: 'name', direction: 'asc' }
  * );
  * ```
  */
-export function useGroceryItems(filters?: FilterState, sort?: SortState) {
+export function useGroceryItems(listId?: string, filters?: FilterState, sort?: SortState) {
   // Always use the current Zero instance (will update when auth changes)
   const zero = getZeroInstance();
 
@@ -345,12 +347,17 @@ export function useGroceryItems(filters?: FilterState, sort?: SortState) {
   // Zero is initialized with the userID, so we can access it directly
   const currentUserId = (zero as any).userID || 'demo-user';
 
-  // Query all grocery items and filter by current user
+  // Query all grocery items and filter by current user and optionally by list
   // Note: Zero's query system will handle user filtering at the database level
   // when proper permissions are configured. For now, we filter client-side.
-  const query = useQuery(
-    zero.query.grocery_items.where('user_id', currentUserId)
-  );
+  let baseQuery = zero.query.grocery_items.where('user_id', currentUserId);
+
+  // Filter by list if listId is provided
+  if (listId) {
+    baseQuery = baseQuery.where('list_id', listId);
+  }
+
+  const query = useQuery(baseQuery as any);
 
   // Map to application types (no initial sorting)
   const allItems: GroceryItem[] = query.map(item => ({
@@ -361,6 +368,7 @@ export function useGroceryItems(filters?: FilterState, sort?: SortState) {
     category: item.category as GroceryItem['category'],
     notes: item.notes,
     userId: item.user_id,
+    listId: item.list_id,
     createdAt: item.createdAt,
   }));
 
@@ -448,8 +456,9 @@ export function useGroceryMutations() {
   /**
    * Add a new grocery item
    * Automatically associates the item with the current authenticated user
+   * @param listId - Optional list ID to associate the item with a specific list
    */
-  const addItem = async (name: string, quantity: number, category: string, notes: string): Promise<string> => {
+  const addItem = async (name: string, quantity: number, category: string, notes: string, listId?: string): Promise<string> => {
     const id = nanoid();
     await zero.mutate.grocery_items.create({
       id,
@@ -459,6 +468,7 @@ export function useGroceryMutations() {
       category,
       notes,
       user_id: currentUserId, // Associate item with current user
+      list_id: listId || '', // Default to empty string if no list specified
       createdAt: Date.now(),
     });
     return id;
@@ -521,4 +531,351 @@ export function useGroceryMutations() {
     markAllGotten,
     deleteAllGotten,
   };
+}
+
+/**
+ * React hook to get all lists accessible by the current user
+ * Returns lists owned by the user or lists they are a member of
+ *
+ * @returns List of grocery lists accessible to the current user
+ *
+ * @example
+ * ```typescript
+ * const lists = useGroceryLists();
+ * ```
+ */
+export function useGroceryLists() {
+  const zero = getZeroInstance();
+  const currentUserId = (zero as any).userID || 'demo-user';
+
+  // Query lists owned by the current user
+  const ownedListsQuery = useQuery(
+    zero.query.lists.where('owner_id', currentUserId)
+  );
+
+  // Query list memberships for the current user
+  const membershipQuery = useQuery(
+    zero.query.list_members.where('user_id', currentUserId)
+  );
+
+  // Get unique list IDs from memberships
+  const memberListIds = useMemo(
+    () => membershipQuery.map(m => m.list_id),
+    [membershipQuery]
+  );
+
+  // Query lists where user is a member (but not owner)
+  const sharedListsQuery = useQuery(
+    zero.query.lists.where('id', 'in', memberListIds)
+  );
+
+  // Combine and deduplicate lists
+  const allLists = useMemo(() => {
+    const listsMap = new Map<string, List>();
+
+    // Add owned lists
+    ownedListsQuery.forEach(list => {
+      listsMap.set(list.id, {
+        id: list.id,
+        name: list.name,
+        ownerId: list.owner_id,
+        color: list.color || '#4CAF50',
+        icon: list.icon || '🛒',
+        createdAt: list.createdAt,
+        updatedAt: list.updatedAt,
+        isArchived: list.is_archived || false,
+        archivedAt: list.archived_at,
+      });
+    });
+
+    // Add shared lists
+    sharedListsQuery.forEach(list => {
+      if (!listsMap.has(list.id)) {
+        listsMap.set(list.id, {
+          id: list.id,
+          name: list.name,
+          ownerId: list.owner_id,
+          color: list.color || '#4CAF50',
+          icon: list.icon || '🛒',
+          createdAt: list.createdAt,
+          updatedAt: list.updatedAt,
+          isArchived: list.is_archived || false,
+          archivedAt: list.archived_at,
+        });
+      }
+    });
+
+    return Array.from(listsMap.values()).sort((a, b) => b.updatedAt - a.updatedAt);
+  }, [ownedListsQuery, sharedListsQuery]);
+
+  return allLists;
+}
+
+/**
+ * React hook to get list members for a specific list
+ *
+ * @param listId - The ID of the list to get members for
+ * @returns List members with their permissions
+ *
+ * @example
+ * ```typescript
+ * const members = useListMembers('list-123');
+ * ```
+ */
+export function useListMembers(listId: string) {
+  const zero = getZeroInstance();
+
+  const membersQuery = useQuery(
+    zero.query.list_members.where('list_id', listId)
+  );
+
+  const members: ListMember[] = useMemo(
+    () => membersQuery.map(member => ({
+      id: member.id,
+      listId: member.list_id,
+      userId: member.user_id,
+      userEmail: member.user_email,
+      userName: member.user_name,
+      permission: member.permission as PermissionLevel,
+      addedAt: member.added_at,
+      addedBy: member.added_by,
+    })),
+    [membersQuery]
+  );
+
+  return members;
+}
+
+/**
+ * React hook for list mutations
+ * Provides functions for creating, updating, and deleting lists
+ *
+ * @returns Object with mutation functions for lists
+ *
+ * @example
+ * ```typescript
+ * const { createList, updateListName, deleteList } = useListMutations();
+ * const listId = await createList('Grocery Shopping');
+ * ```
+ */
+export function useListMutations() {
+  const zero = getZeroInstance();
+  const currentUserId = (zero as any).userID || 'demo-user';
+
+  /**
+   * Create a new list
+   * Automatically sets the current user as the owner
+   */
+  const createList = async (name: string, color?: string, icon?: string): Promise<string> => {
+    const id = nanoid();
+    const now = Date.now();
+
+    await zero.mutate.lists.create({
+      id,
+      name,
+      owner_id: currentUserId,
+      color: color || '#4CAF50',
+      icon: icon || '🛒',
+      createdAt: now,
+      updatedAt: now,
+      is_archived: false,
+      archived_at: 0,
+    });
+
+    // Add owner as a member with owner permission
+    await zero.mutate.list_members.create({
+      id: nanoid(),
+      list_id: id,
+      user_id: currentUserId,
+      permission: 'owner',
+      added_at: now,
+      added_by: currentUserId,
+      user_email: '', // Will be populated by the database
+      user_name: '', // Will be populated by the database
+    });
+
+    return id;
+  };
+
+  /**
+   * Create a new list from a template with pre-populated items
+   * @param name - Name for the new list
+   * @param items - Array of items to add to the list
+   * @param color - Optional color for the list
+   * @param icon - Optional icon for the list
+   * @returns The ID of the newly created list
+   */
+  const createListFromTemplate = async (
+    name: string,
+    items: Array<{ name: string; quantity: number; category: string; notes?: string }>,
+    color?: string,
+    icon?: string
+  ): Promise<string> => {
+    // Create the list
+    const listId = await createList(name, color, icon);
+
+    // Add all items to the list
+    const now = Date.now();
+    const itemPromises = items.map((item, index) =>
+      zero.mutate.grocery_items.create({
+        id: nanoid(),
+        name: item.name,
+        quantity: item.quantity,
+        gotten: false,
+        category: item.category,
+        notes: item.notes || '',
+        user_id: currentUserId,
+        list_id: listId,
+        createdAt: now + index, // Slight offset to maintain order
+      })
+    );
+
+    await Promise.all(itemPromises);
+
+    return listId;
+  };
+
+  /**
+   * Get lists owned by or shared with the current user
+   * Note: Use useGroceryLists hook for reactive list queries
+   */
+  const getMyLists = (): List[] => {
+    // This is handled by the useGroceryLists hook
+    // For mutations, permission checks should be done inline
+    return [];
+  };
+
+  /**
+   * Get a specific list by ID
+   * Note: For reactive queries, use useGroceryLists and filter client-side
+   */
+  const getListById = (_listId: string): List | null => {
+    // List queries should be done with useGroceryLists hook
+    // This is a placeholder for API consistency
+    return null;
+  };
+
+  /**
+   * Update a list's name
+   * Only the owner or editors can update the list
+   * Note: Permission checking should be done at the UI level before calling
+   */
+  const updateListName = async (listId: string, name: string): Promise<void> => {
+    await zero.mutate.lists.update({
+      id: listId,
+      name,
+      updatedAt: Date.now(),
+    });
+  };
+
+  /**
+   * Delete a list
+   * Only the owner can delete the list
+   * Note: Permission checking and cascading deletes should be handled by database triggers
+   */
+  const deleteList = async (listId: string): Promise<void> => {
+    // Database should handle cascading deletes via foreign key constraints
+    await zero.mutate.lists.delete({ id: listId });
+  };
+
+  /**
+   * Add a member to a list with a specific permission level
+   * Only the owner can add members
+   * Note: Permission checking should be done at the UI level
+   */
+  const addListMember = async (
+    listId: string,
+    userId: string,
+    permission: PermissionLevel
+  ): Promise<void> => {
+    await zero.mutate.list_members.create({
+      id: nanoid(),
+      list_id: listId,
+      user_id: userId,
+      permission,
+      added_at: Date.now(),
+      added_by: currentUserId,
+      user_email: '', // Will be populated by the database
+      user_name: '', // Will be populated by the database
+    });
+  };
+
+  /**
+   * Remove a member from a list
+   * Only the owner can remove members
+   * Note: Permission checking should be done at the UI level
+   * @param memberId - The member record ID to delete
+   */
+  const removeListMember = async (memberId: string): Promise<void> => {
+    await zero.mutate.list_members.delete({ id: memberId });
+  };
+
+  /**
+   * Update a member's permission level
+   * Only the owner can update permissions
+   * Note: Permission checking should be done at the UI level
+   * @param memberId - The member record ID to update
+   */
+  const updateMemberPermission = async (
+    memberId: string,
+    permission: PermissionLevel
+  ): Promise<void> => {
+    await zero.mutate.list_members.update({
+      id: memberId,
+      permission,
+    });
+  };
+
+  return {
+    createList,
+    createListFromTemplate,
+    getMyLists,
+    getListById,
+    updateListName,
+    deleteList,
+    addListMember,
+    removeListMember,
+    updateMemberPermission,
+  };
+}
+
+/**
+ * Helper hook to check user's permission level for a list
+ * Use this in components to determine what actions the user can perform
+ *
+ * @param listId - The list ID to check permissions for
+ * @returns Object with permission checking functions
+ *
+ * @example
+ * ```typescript
+ * const { canEdit, canDelete, isOwner } = useListPermission('list-123');
+ * ```
+ */
+export function useListPermission(listId: string) {
+  const zero = getZeroInstance();
+  const currentUserId = (zero as any).userID || 'demo-user';
+
+  // Query the list to check ownership
+  const listQuery = useQuery(zero.query.lists.where('id', listId) as any);
+  const list = listQuery.length > 0 ? listQuery[0] : null;
+
+  // Query user's membership
+  const membershipQuery = useQuery(
+    zero.query.list_members
+      .where('list_id', listId)
+      .where('user_id', currentUserId) as any
+  );
+  const membership = membershipQuery.length > 0 ? membershipQuery[0] : null;
+
+  const isOwner = list?.owner_id === currentUserId;
+  const permission = membership?.permission as PermissionLevel | null;
+
+  return useMemo(() => ({
+    isOwner,
+    permission,
+    canView: isOwner || ['owner', 'editor', 'viewer'].includes(permission || ''),
+    canEdit: isOwner || ['owner', 'editor'].includes(permission || ''),
+    canDelete: isOwner,
+    canManageMembers: isOwner,
+  }), [isOwner, permission]);
 }

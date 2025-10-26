@@ -211,7 +211,7 @@ import { useAuth } from '../context/AuthContext';
  * Enhanced Login Page with Auth Context
  * Automatically redirects after successful login
  */
-function LoginPageWithAuth() {
+export function LoginPageWithAuth() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
@@ -234,7 +234,7 @@ function LoginPageWithAuth() {
  * Protected Route Example
  * Redirects to login if not authenticated
  */
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 

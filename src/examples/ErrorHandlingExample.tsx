@@ -166,7 +166,7 @@ export function ErrorHandlingExample() {
       setLoginData({ email: '', password: '' });
     } catch (error) {
       // Handle error with recovery options
-      const errorInfo = handleAuthError(error, {
+      handleAuthError(error, {
         logToConsole: true,
         onError: (info) => {
           console.log('Login error:', info);
@@ -312,7 +312,7 @@ export function ErrorHandlingExample() {
         <h2>Auto-Clear Error (5 seconds)</h2>
         <p>Error automatically clears after a timeout</p>
 
-        {autoError && <ErrorBanner error={autoError} showCloseButton={false} />}
+        <>{autoError && <ErrorBanner error={autoError} showCloseButton={false} />}</>
 
         <button onClick={simulateServerError} className="btn-example">
           Show Server Error (Auto-clears)

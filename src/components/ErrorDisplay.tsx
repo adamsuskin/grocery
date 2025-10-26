@@ -12,7 +12,6 @@
 
 import { ReactNode, useEffect, useState } from 'react';
 import {
-  AuthErrorInfo,
   ErrorSeverity,
   RecoveryStrategy,
   classifyAuthError,

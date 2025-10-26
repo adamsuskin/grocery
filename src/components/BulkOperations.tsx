@@ -5,7 +5,8 @@ export function BulkOperations({
   itemCount,
   gottenCount,
   onMarkAllGotten,
-  onDeleteAllGotten
+  onDeleteAllGotten,
+  disabled = false
 }: BulkOperationsProps) {
   const [showMarkConfirm, setShowMarkConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -34,8 +35,14 @@ export function BulkOperations({
         <button
           className="bulk-btn bulk-btn-mark"
           onClick={() => setShowMarkConfirm(true)}
-          disabled={ungottenCount === 0}
-          title={ungottenCount === 0 ? 'All items already marked' : `Mark ${ungottenCount} items as gotten`}
+          disabled={disabled || ungottenCount === 0}
+          title={
+            disabled
+              ? 'View-only access'
+              : ungottenCount === 0
+              ? 'All items already marked'
+              : `Mark ${ungottenCount} items as gotten`
+          }
         >
           ✓ Mark All Gotten ({ungottenCount})
         </button>
@@ -43,8 +50,14 @@ export function BulkOperations({
         <button
           className="bulk-btn bulk-btn-delete"
           onClick={() => setShowDeleteConfirm(true)}
-          disabled={gottenCount === 0}
-          title={gottenCount === 0 ? 'No gotten items to delete' : `Delete ${gottenCount} gotten items`}
+          disabled={disabled || gottenCount === 0}
+          title={
+            disabled
+              ? 'View-only access'
+              : gottenCount === 0
+              ? 'No gotten items to delete'
+              : `Delete ${gottenCount} gotten items`
+          }
         >
           🗑️ Delete All Gotten ({gottenCount})
         </button>

@@ -243,6 +243,24 @@ export const profileUpdateRateLimiter: RateLimitRequestHandler = rateLimit({
 });
 
 /**
+ * User search rate limiter - Prevent abuse of search functionality
+ * 30 attempts per 15 minutes per IP
+ */
+export const userSearchRateLimiter: RateLimitRequestHandler = rateLimit({
+  windowMs: rateLimitConfigs.userSearch.windowMs,
+  max: rateLimitConfigs.userSearch.max,
+  message: createRateLimitResponse(rateLimitConfigs.userSearch.message),
+  standardHeaders: rateLimitConfigs.userSearch.standardHeaders,
+  legacyHeaders: rateLimitConfigs.userSearch.legacyHeaders,
+  keyGenerator,
+  handler: async (req, res) => {
+    await onLimitReached('user_search')(req, res);
+    res.status(429).json(createRateLimitResponse(rateLimitConfigs.userSearch.message));
+  },
+  skip: rateLimitConfigs.userSearch.skipSuccessfulRequests ? skipSuccessfulRequests : undefined,
+});
+
+/**
  * Export all rate limiters
  */
 export default {
@@ -253,5 +271,6 @@ export default {
   tokenRefreshRateLimiter,
   generalAuthRateLimiter,
   profileUpdateRateLimiter,
+  userSearchRateLimiter,
   getClientIp,
 };

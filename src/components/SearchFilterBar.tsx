@@ -1,7 +1,7 @@
-import { useState, useEffect, ChangeEvent } from 'react';
+import { useState, useEffect, ChangeEvent, memo } from 'react';
 import { FilterBarProps, CATEGORIES, type Category } from '../types';
 
-export function SearchFilterBar({
+export const SearchFilterBar = memo(function SearchFilterBar({
   filters,
   onChange,
   totalCount,
@@ -93,4 +93,4 @@ export function SearchFilterBar({
       )}
     </div>
   );
-}
+});

@@ -1,0 +1,35 @@
+{
+  "name": "Weekly Groceries",
+  "items": [
+    {
+      "name": "Milk",
+      "quantity": 2,
+      "category": "Dairy",
+      "notes": "Whole milk"
+    },
+    {
+      "name": "Eggs",
+      "quantity": 12,
+      "category": "Dairy",
+      "notes": ""
+    },
+    {
+      "name": "Apples",
+      "quantity": 6,
+      "category": "Produce",
+      "notes": "Gala or Fuji"
+    },
+    {
+      "name": "Bread",
+      "quantity": 1,
+      "category": "Bakery",
+      "notes": "Whole wheat"
+    },
+    {
+      "name": "Chicken Breast",
+      "quantity": 2,
+      "category": "Meat",
+      "notes": ""
+    }
+  ]
+}

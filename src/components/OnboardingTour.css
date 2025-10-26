@@ -1,0 +1,321 @@
+/* Onboarding Tour Styles */
+
+.onboarding-tour {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Overlay - semi-transparent background */
+.tour-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  pointer-events: all;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Highlight spotlight - white border around target element */
+.tour-highlight {
+  position: absolute;
+  border: 3px solid #4caf50;
+  border-radius: 8px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+  z-index: 10000;
+  animation: highlightPulse 2s ease-in-out infinite;
+  transition: all 0.3s ease-out;
+}
+
+@keyframes highlightPulse {
+  0%, 100% {
+    border-color: #4caf50;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 20px rgba(76, 175, 80, 0.5);
+  }
+  50% {
+    border-color: #66bb6a;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 30px rgba(76, 175, 80, 0.8);
+  }
+}
+
+/* Tooltip container */
+.tour-tooltip {
+  position: absolute;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 420px;
+  width: calc(100vw - 40px);
+  pointer-events: all;
+  z-index: 10001;
+  animation: tooltipSlideIn 0.3s ease-out;
+}
+
+@keyframes tooltipSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Center positioned tooltip */
+.tour-tooltip-center {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  max-width: 500px;
+}
+
+/* Tooltip header */
+.tour-tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tour-tooltip-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.tour-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.75rem;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.tour-close-btn:hover {
+  background-color: #f3f4f6;
+  color: #1f2937;
+}
+
+/* Tooltip body */
+.tour-tooltip-body {
+  padding: 20px 24px;
+}
+
+.tour-tooltip-description {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: #4b5563;
+  white-space: pre-line;
+}
+
+/* Tooltip footer */
+.tour-tooltip-footer {
+  padding: 16px 24px 20px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Progress dots */
+.tour-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.tour-progress-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background-color: #d1d5db;
+  cursor: pointer;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.tour-progress-dot:hover {
+  background-color: #9ca3af;
+  transform: scale(1.2);
+}
+
+.tour-progress-dot.active {
+  background-color: #4caf50;
+  width: 24px;
+  border-radius: 4px;
+}
+
+.tour-progress-dot.completed {
+  background-color: #81c784;
+}
+
+/* Tooltip actions */
+.tour-tooltip-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.tour-navigation {
+  display: flex;
+  gap: 8px;
+}
+
+/* Tour buttons */
+.tour-btn {
+  padding: 10px 20px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tour-btn:focus {
+  outline: 2px solid #4caf50;
+  outline-offset: 2px;
+}
+
+.tour-btn-primary {
+  background-color: #4caf50;
+  color: white;
+}
+
+.tour-btn-primary:hover {
+  background-color: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.tour-btn-secondary {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+.tour-btn-secondary:hover {
+  background-color: #e5e7eb;
+  color: #1f2937;
+}
+
+.tour-btn-skip {
+  background-color: transparent;
+  color: #6b7280;
+  padding: 10px 16px;
+}
+
+.tour-btn-skip:hover {
+  background-color: #f3f4f6;
+  color: #4b5563;
+}
+
+/* Step counter */
+.tour-step-counter {
+  position: absolute;
+  top: 20px;
+  right: 60px;
+  font-size: 0.85rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+/* Responsive design */
+@media (max-width: 600px) {
+  .tour-tooltip {
+    max-width: calc(100vw - 32px);
+    border-radius: 10px;
+  }
+
+  .tour-tooltip-center {
+    max-width: calc(100vw - 32px);
+  }
+
+  .tour-tooltip-header {
+    padding: 16px 20px 12px;
+  }
+
+  .tour-tooltip-title {
+    font-size: 1.1rem;
+  }
+
+  .tour-tooltip-body {
+    padding: 16px 20px;
+  }
+
+  .tour-tooltip-description {
+    font-size: 0.95rem;
+  }
+
+  .tour-tooltip-footer {
+    padding: 12px 20px 16px;
+  }
+
+  .tour-tooltip-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .tour-navigation {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .tour-btn {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+  }
+
+  .tour-btn-skip {
+    width: 100%;
+    text-align: center;
+  }
+
+  .tour-step-counter {
+    right: 56px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Animation for button press */
+.tour-btn:active {
+  transform: scale(0.98);
+}
+
+/* Ensure highlighted elements are accessible */
+.tour-highlight + * {
+  position: relative;
+  z-index: 10001;
+}

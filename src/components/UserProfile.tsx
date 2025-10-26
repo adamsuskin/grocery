@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { resetOnboardingTour } from '../hooks/useOnboardingTour';
 import './UserProfile.css';
 
-export function UserProfile() {
+export interface UserProfileProps {
+  onShowTour?: () => void;
+}
+
+export function UserProfile({ onShowTour }: UserProfileProps = {}) {
   const { user, logout } = useAuth();
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -117,6 +122,18 @@ export function UserProfile() {
                 >
                   Edit Profile
                 </button>
+                {onShowTour && (
+                  <button
+                    className="btn-profile-action btn-profile-tour"
+                    onClick={() => {
+                      resetOnboardingTour();
+                      setShowProfileModal(false);
+                      onShowTour();
+                    }}
+                  >
+                    Show Onboarding Tour
+                  </button>
+                )}
                 <button
                   className="btn-profile-action btn-profile-logout"
                   onClick={handleLogout}

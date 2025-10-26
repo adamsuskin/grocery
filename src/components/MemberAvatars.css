@@ -1,0 +1,204 @@
+/**
+ * MemberAvatars Component Styles
+ * Stacked avatars with overlap effect
+ */
+
+.member-avatars {
+  display: inline-flex;
+  align-items: center;
+}
+
+.member-avatars-list {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.member-avatar-wrapper {
+  position: relative;
+  transition: transform 0.2s ease, z-index 0.2s ease;
+}
+
+/* Overlap effect - each avatar slightly overlaps the previous one */
+.member-avatar-wrapper:not(:first-child) {
+  margin-left: -8px;
+}
+
+/* Small size adjustments */
+.member-avatars-small .member-avatar-wrapper:not(:first-child) {
+  margin-left: -6px;
+}
+
+/* Large size adjustments */
+.member-avatars-large .member-avatar-wrapper:not(:first-child) {
+  margin-left: -12px;
+}
+
+/* Hover effect - lift the avatar on hover */
+.member-avatar-wrapper:hover {
+  transform: translateY(-2px);
+  z-index: 999 !important;
+}
+
+/* Overflow indicator (+N more) */
+.member-avatar-overflow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  color: #555;
+  font-weight: 600;
+  font-size: 10px;
+  user-select: none;
+  flex-shrink: 0;
+  position: relative;
+  /* Match the overlap effect */
+  margin-left: -8px;
+  /* Match avatar styling */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  transition: all 0.2s ease;
+}
+
+/* Size variants for overflow indicator */
+.member-avatars-small .member-avatar-overflow {
+  width: 24px;
+  height: 24px;
+  font-size: 9px;
+  border-width: 1px;
+  margin-left: -6px;
+}
+
+.member-avatars-medium .member-avatar-overflow {
+  width: 32px;
+  height: 32px;
+  font-size: 11px;
+}
+
+.member-avatars-large .member-avatar-overflow {
+  width: 48px;
+  height: 48px;
+  font-size: 14px;
+  margin-left: -12px;
+}
+
+/* Clickable overflow indicator */
+.member-avatar-overflow.clickable {
+  cursor: pointer;
+  background-color: #d0d0d0;
+}
+
+.member-avatar-overflow.clickable:hover {
+  background-color: #c0c0c0;
+  transform: translateY(-2px) scale(1.05);
+  z-index: 999 !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15), 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.member-avatar-overflow.clickable:active {
+  transform: translateY(0) scale(1);
+}
+
+/* Focus state for accessibility */
+.member-avatar-overflow.clickable:focus-visible {
+  outline: 2px solid var(--primary-color, #007bff);
+  outline-offset: 2px;
+}
+
+.overflow-text {
+  line-height: 1;
+  pointer-events: none;
+}
+
+/* Animation when avatars are added/removed */
+@keyframes fadeInSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.member-avatar-wrapper {
+  animation: fadeInSlide 0.3s ease;
+}
+
+/* Tooltip container */
+.member-avatar-tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+/* Tooltip styling */
+.member-avatar-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+.member-avatar-tooltip-container:hover .member-avatar-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.member-avatar-tooltip-content {
+  background-color: #1a1a1a;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  font-size: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.member-avatar-tooltip-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.member-avatar-tooltip-email {
+  font-size: 11px;
+  color: #b0b0b0;
+}
+
+.member-avatar-tooltip-permission {
+  display: flex;
+  justify-content: center;
+  margin-top: 2px;
+}
+
+/* Tooltip arrow */
+.member-avatar-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1a1a1a;
+}
+
+/* Dark mode adjustments */
+@media (prefers-color-scheme: dark) {
+  .member-avatar-tooltip-content {
+    background-color: #2a2a2a;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+
+  .member-avatar-tooltip::after {
+    border-top-color: #2a2a2a;
+  }
+}
