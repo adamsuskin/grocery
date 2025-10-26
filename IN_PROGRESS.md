@@ -1,3 +1,6 @@
 # Currently In Progress
 
-Nothing currently in progress. All phases completed!
+## Zero/Replicache Integration
+Implementing real-time multi-device synchronization using Zero from Rocicorp.
+
+Started: Now

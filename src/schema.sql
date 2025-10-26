@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS grocery_items (
   id TEXT PRIMARY KEY,
   name TEXT NOT NULL,
   quantity INTEGER NOT NULL,
-  gotten INTEGER NOT NULL DEFAULT 0,
+  gotten BOOLEAN NOT NULL DEFAULT false,
   created_at INTEGER NOT NULL
 );
 
