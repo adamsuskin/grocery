@@ -4,9 +4,11 @@
  * This service worker provides:
  * - Offline support with intelligent caching strategies
  * - Background sync for offline mutations
+ * - Periodic background sync for content updates
  * - Push notification support
  * - Automatic updates with skip waiting
  * - Cache versioning and cleanup
+ * - Battery-aware and network-aware syncing
  *
  * Uses Workbox for cache management and strategies
  */
@@ -349,6 +351,40 @@ self.addEventListener('message', (event) => {
         });
     }
   }
+
+  if (event.data && event.data.type === 'TRIGGER_SYNC') {
+    // Manually trigger a periodic sync
+    event.waitUntil(
+      (async () => {
+        try {
+          console.log('[ServiceWorker] Manual sync triggered');
+          const result = await syncContent();
+
+          // Post message back to the client
+          const clients = await self.clients.matchAll();
+          clients.forEach((client) => {
+            client.postMessage({
+              type: 'SYNC_COMPLETE',
+              success: result.success,
+              timestamp: Date.now(),
+              error: result.error,
+            });
+          });
+        } catch (error) {
+          console.error('[ServiceWorker] Manual sync failed:', error);
+          const clients = await self.clients.matchAll();
+          clients.forEach((client) => {
+            client.postMessage({
+              type: 'SYNC_COMPLETE',
+              success: false,
+              timestamp: Date.now(),
+              error: error instanceof Error ? error.message : 'Unknown error',
+            });
+          });
+        }
+      })()
+    );
+  }
 });
 
 /**
@@ -369,6 +405,302 @@ self.addEventListener('sync', (event) => {
             tag: event.tag,
           });
         });
+      })()
+    );
+  }
+});
+
+/**
+ * Helper Functions for Periodic Background Sync
+ */
+
+/**
+ * Check battery level and charging status
+ * Returns true if conditions are favorable for sync
+ */
+async function checkBatteryConditions(): Promise<boolean> {
+  try {
+    // Check if Battery API is available
+    if ('getBattery' in navigator) {
+      const battery = await (navigator as any).getBattery();
+      const isCharging = battery.charging;
+      const batteryLevel = battery.level;
+
+      console.log('[ServiceWorker] Battery status:', {
+        level: `${(batteryLevel * 100).toFixed(0)}%`,
+        charging: isCharging,
+      });
+
+      // Sync if charging or battery level is above 20%
+      if (isCharging || batteryLevel > 0.2) {
+        return true;
+      }
+
+      console.log('[ServiceWorker] Battery too low for sync:', `${(batteryLevel * 100).toFixed(0)}%`);
+      return false;
+    }
+
+    // Battery API not available, assume conditions are OK
+    console.log('[ServiceWorker] Battery API not available, proceeding with sync');
+    return true;
+  } catch (error) {
+    console.warn('[ServiceWorker] Failed to check battery status:', error);
+    // On error, assume conditions are OK
+    return true;
+  }
+}
+
+/**
+ * Check network conditions
+ * Returns true if network quality is sufficient for sync
+ */
+function checkNetworkConditions(): boolean {
+  try {
+    // Check if Network Information API is available
+    const connection = (navigator as any).connection ||
+                       (navigator as any).mozConnection ||
+                       (navigator as any).webkitConnection;
+
+    if (!connection) {
+      console.log('[ServiceWorker] Network Information API not available, proceeding with sync');
+      return true;
+    }
+
+    const { effectiveType, saveData, downlink } = connection;
+
+    console.log('[ServiceWorker] Network status:', {
+      effectiveType,
+      saveData,
+      downlink: `${downlink} Mbps`,
+    });
+
+    // Respect data saver mode
+    if (saveData) {
+      console.log('[ServiceWorker] Data saver mode enabled, skipping sync');
+      return false;
+    }
+
+    // Check for slow connections (2g)
+    if (effectiveType === 'slow-2g' || effectiveType === '2g') {
+      console.log('[ServiceWorker] Network too slow for sync:', effectiveType);
+      return false;
+    }
+
+    // Check downlink speed if available (require at least 0.5 Mbps)
+    if (downlink !== undefined && downlink < 0.5) {
+      console.log('[ServiceWorker] Downlink too slow for sync:', downlink);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.warn('[ServiceWorker] Failed to check network conditions:', error);
+    // On error, assume conditions are OK
+    return true;
+  }
+}
+
+/**
+ * Check storage quota
+ * Returns true if sufficient storage is available
+ */
+async function checkStorageQuota(): Promise<boolean> {
+  try {
+    if ('storage' in navigator && 'estimate' in navigator.storage) {
+      const estimate = await navigator.storage.estimate();
+      const usage = estimate.usage || 0;
+      const quota = estimate.quota || 0;
+      const percentUsed = quota > 0 ? (usage / quota) * 100 : 0;
+
+      console.log('[ServiceWorker] Storage status:', {
+        usage: `${(usage / 1024 / 1024).toFixed(2)} MB`,
+        quota: `${(quota / 1024 / 1024).toFixed(2)} MB`,
+        percentUsed: `${percentUsed.toFixed(1)}%`,
+      });
+
+      // Only sync if less than 90% of storage is used
+      if (percentUsed < 90) {
+        return true;
+      }
+
+      console.log('[ServiceWorker] Storage quota too high for sync:', `${percentUsed.toFixed(1)}%`);
+      return false;
+    }
+
+    // Storage API not available, assume conditions are OK
+    console.log('[ServiceWorker] Storage API not available, proceeding with sync');
+    return true;
+  } catch (error) {
+    console.warn('[ServiceWorker] Failed to check storage quota:', error);
+    // On error, assume conditions are OK
+    return true;
+  }
+}
+
+/**
+ * Sync content from Zero API
+ * Fetches latest data and updates cache
+ */
+async function syncContent(): Promise<{ success: boolean; error?: string }> {
+  try {
+    console.log('[ServiceWorker] Starting content sync');
+
+    // Fetch latest data from Zero sync API
+    const syncEndpoints = [
+      '/api/zero/pull',
+      '/api/zero/changes',
+      '/sync/latest',
+    ];
+
+    let syncData = null;
+    let syncUrl = null;
+
+    // Try each endpoint until one succeeds
+    for (const endpoint of syncEndpoints) {
+      try {
+        const response = await fetch(endpoint, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+
+        if (response.ok) {
+          syncData = await response.json();
+          syncUrl = endpoint;
+          console.log('[ServiceWorker] Successfully fetched from:', endpoint);
+          break;
+        }
+      } catch (error) {
+        console.log('[ServiceWorker] Failed to fetch from:', endpoint, error);
+        // Continue to next endpoint
+      }
+    }
+
+    if (!syncData || !syncUrl) {
+      throw new Error('Failed to fetch sync data from any endpoint');
+    }
+
+    // Update API cache with fresh content
+    const cache = await caches.open(API_CACHE);
+    const response = new Response(JSON.stringify(syncData), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'max-age=300', // 5 minutes
+        'X-Sync-Timestamp': new Date().toISOString(),
+      },
+    });
+
+    await cache.put(syncUrl, response);
+    console.log('[ServiceWorker] Updated cache with fresh content');
+
+    // Also update any related cached API responses
+    const cacheKeys = await cache.keys();
+    const apiKeys = cacheKeys.filter((request) =>
+      request.url.includes('/api/') || request.url.includes('/sync')
+    );
+
+    console.log('[ServiceWorker] Found', apiKeys.length, 'cached API responses to refresh');
+
+    // Refresh up to 10 cached API responses
+    const refreshPromises = apiKeys.slice(0, 10).map(async (request) => {
+      try {
+        const freshResponse = await fetch(request.url, {
+          credentials: 'include',
+        });
+        if (freshResponse.ok) {
+          await cache.put(request, freshResponse.clone());
+          console.log('[ServiceWorker] Refreshed cache for:', request.url);
+        }
+      } catch (error) {
+        console.log('[ServiceWorker] Failed to refresh:', request.url, error);
+      }
+    });
+
+    await Promise.allSettled(refreshPromises);
+
+    console.log('[ServiceWorker] Content sync completed successfully');
+    return { success: true };
+  } catch (error) {
+    console.error('[ServiceWorker] Content sync failed:', error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+    };
+  }
+}
+
+/**
+ * Periodic Background Sync Event
+ * Triggered periodically to sync content in the background
+ */
+self.addEventListener('periodicsync', (event: any) => {
+  console.log('[ServiceWorker] Periodic sync event:', event.tag);
+
+  if (event.tag === 'grocery-list-sync' || event.tag === 'content-sync') {
+    event.waitUntil(
+      (async () => {
+        try {
+          console.log('[ServiceWorker] Starting periodic content sync');
+
+          // Check battery conditions
+          const batteryOk = await checkBatteryConditions();
+          if (!batteryOk) {
+            console.log('[ServiceWorker] Skipping sync due to low battery');
+            return;
+          }
+
+          // Check network conditions
+          const networkOk = checkNetworkConditions();
+          if (!networkOk) {
+            console.log('[ServiceWorker] Skipping sync due to poor network or data saver mode');
+            return;
+          }
+
+          // Check storage quota
+          const storageOk = await checkStorageQuota();
+          if (!storageOk) {
+            console.log('[ServiceWorker] Skipping sync due to low storage');
+            return;
+          }
+
+          // All conditions met, perform sync
+          console.log('[ServiceWorker] All conditions met, proceeding with sync');
+          const result = await syncContent();
+
+          // Post message to all clients about sync completion
+          const clients = await self.clients.matchAll();
+          clients.forEach((client) => {
+            client.postMessage({
+              type: 'PERIODIC_SYNC_COMPLETE',
+              tag: event.tag,
+              success: result.success,
+              timestamp: new Date().toISOString(),
+              error: result.error,
+            });
+          });
+
+          if (result.success) {
+            console.log('[ServiceWorker] Periodic sync completed successfully');
+          } else {
+            console.error('[ServiceWorker] Periodic sync completed with errors:', result.error);
+          }
+        } catch (error) {
+          console.error('[ServiceWorker] Periodic sync error:', error);
+
+          // Notify clients about error
+          const clients = await self.clients.matchAll();
+          clients.forEach((client) => {
+            client.postMessage({
+              type: 'PERIODIC_SYNC_COMPLETE',
+              tag: event.tag,
+              success: false,
+              timestamp: new Date().toISOString(),
+              error: error instanceof Error ? error.message : 'Unknown error',
+            });
+          });
+        }
       })()
     );
   }

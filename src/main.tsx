@@ -6,6 +6,7 @@ import { ListProvider } from './contexts/ListContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { SyncProvider } from './contexts/SyncContext';
 import { ServiceWorkerProvider, useServiceWorker } from './contexts/ServiceWorkerContext';
+import { PeriodicSyncProvider } from './contexts/PeriodicSyncContext';
 import App from './App';
 import './index.css';
 import { getZeroInstance } from './zero-store';
@@ -38,18 +39,20 @@ function ServiceWorkerRegistrar() {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ServiceWorkerProvider>
-      <AuthProvider>
-        <ZeroProvider zero={getZeroInstance() as any}>
-          <SyncProvider>
-            <ListProvider>
-              <NotificationProvider>
-                <ServiceWorkerRegistrar />
-                <App />
-              </NotificationProvider>
-            </ListProvider>
-          </SyncProvider>
-        </ZeroProvider>
-      </AuthProvider>
+      <PeriodicSyncProvider>
+        <AuthProvider>
+          <ZeroProvider zero={getZeroInstance() as any}>
+            <SyncProvider>
+              <ListProvider>
+                <NotificationProvider>
+                  <ServiceWorkerRegistrar />
+                  <App />
+                </NotificationProvider>
+              </ListProvider>
+            </SyncProvider>
+          </ZeroProvider>
+        </AuthProvider>
+      </PeriodicSyncProvider>
     </ServiceWorkerProvider>
   </StrictMode>
 );

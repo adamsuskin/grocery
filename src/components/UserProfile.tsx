@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { resetOnboardingTour } from '../hooks/useOnboardingTour';
+import { PeriodicSyncSettings } from './PeriodicSyncSettings';
 import './UserProfile.css';
 
 export interface UserProfileProps {
@@ -10,6 +11,7 @@ export interface UserProfileProps {
 export function UserProfile({ onShowTour }: UserProfileProps = {}) {
   const { user, logout } = useAuth();
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<'profile' | 'sync'>('profile');
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   if (!user) {
@@ -75,73 +77,96 @@ export function UserProfile({ onShowTour }: UserProfileProps = {}) {
         <div className="profile-modal-overlay" onClick={() => setShowProfileModal(false)}>
           <div className="profile-modal" onClick={(e) => e.stopPropagation()}>
             <div className="profile-modal-header">
-              <h2>User Profile</h2>
+              <h2>Settings</h2>
               <button
                 className="profile-modal-close"
                 onClick={() => setShowProfileModal(false)}
-                aria-label="Close profile"
+                aria-label="Close settings"
               >
                 ×
               </button>
             </div>
 
+            <div className="profile-modal-tabs">
+              <button
+                className={`profile-tab ${activeTab === 'profile' ? 'active' : ''}`}
+                onClick={() => setActiveTab('profile')}
+              >
+                Profile
+              </button>
+              <button
+                className={`profile-tab ${activeTab === 'sync' ? 'active' : ''}`}
+                onClick={() => setActiveTab('sync')}
+              >
+                Background Sync
+              </button>
+            </div>
+
             <div className="profile-modal-body">
-              <div className="profile-avatar-large">
-                {getInitials(user.name)}
-              </div>
+              {activeTab === 'profile' ? (
+                <>
+                  <div className="profile-avatar-large">
+                    {getInitials(user.name)}
+                  </div>
 
-              <div className="profile-info-section">
-                <div className="profile-info-item">
-                  <label className="profile-info-label">Name</label>
-                  <div className="profile-info-value">{user.name}</div>
+                  <div className="profile-info-section">
+                    <div className="profile-info-item">
+                      <label className="profile-info-label">Name</label>
+                      <div className="profile-info-value">{user.name}</div>
+                    </div>
+
+                    <div className="profile-info-item">
+                      <label className="profile-info-label">Email</label>
+                      <div className="profile-info-value">{user.email}</div>
+                    </div>
+
+                    <div className="profile-info-item">
+                      <label className="profile-info-label">Account Created</label>
+                      <div className="profile-info-value">{formatDate(user.createdAt)}</div>
+                    </div>
+
+                    <div className="profile-info-item">
+                      <label className="profile-info-label">User ID</label>
+                      <div className="profile-info-value profile-id">{user.id}</div>
+                    </div>
+                  </div>
+
+                  <div className="profile-actions">
+                    <button
+                      className="btn-profile-action btn-profile-edit"
+                      onClick={() => {
+                        // TODO: Implement edit functionality
+                        alert('Edit profile functionality coming soon!');
+                      }}
+                    >
+                      Edit Profile
+                    </button>
+                    {onShowTour && (
+                      <button
+                        className="btn-profile-action btn-profile-tour"
+                        onClick={() => {
+                          resetOnboardingTour();
+                          setShowProfileModal(false);
+                          onShowTour();
+                        }}
+                      >
+                        Show Onboarding Tour
+                      </button>
+                    )}
+                    <button
+                      className="btn-profile-action btn-profile-logout"
+                      onClick={handleLogout}
+                      disabled={isLoggingOut}
+                    >
+                      {isLoggingOut ? 'Logging out...' : 'Logout'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="sync-settings-container">
+                  <PeriodicSyncSettings />
                 </div>
-
-                <div className="profile-info-item">
-                  <label className="profile-info-label">Email</label>
-                  <div className="profile-info-value">{user.email}</div>
-                </div>
-
-                <div className="profile-info-item">
-                  <label className="profile-info-label">Account Created</label>
-                  <div className="profile-info-value">{formatDate(user.createdAt)}</div>
-                </div>
-
-                <div className="profile-info-item">
-                  <label className="profile-info-label">User ID</label>
-                  <div className="profile-info-value profile-id">{user.id}</div>
-                </div>
-              </div>
-
-              <div className="profile-actions">
-                <button
-                  className="btn-profile-action btn-profile-edit"
-                  onClick={() => {
-                    // TODO: Implement edit functionality
-                    alert('Edit profile functionality coming soon!');
-                  }}
-                >
-                  Edit Profile
-                </button>
-                {onShowTour && (
-                  <button
-                    className="btn-profile-action btn-profile-tour"
-                    onClick={() => {
-                      resetOnboardingTour();
-                      setShowProfileModal(false);
-                      onShowTour();
-                    }}
-                  >
-                    Show Onboarding Tour
-                  </button>
-                )}
-                <button
-                  className="btn-profile-action btn-profile-logout"
-                  onClick={handleLogout}
-                  disabled={isLoggingOut}
-                >
-                  {isLoggingOut ? 'Logging out...' : 'Logout'}
-                </button>
-              </div>
+              )}
             </div>
           </div>
         </div>

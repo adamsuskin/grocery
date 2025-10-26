@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import './SyncStatus.css';
+import { usePeriodicSync } from '../hooks/usePeriodicSync';
 
 interface SyncStatusProps {
   isOnline: boolean;
@@ -10,6 +11,7 @@ interface SyncStatusProps {
 }
 
 type ConnectionQuality = 'good' | 'poor';
+type SyncType = 'manual' | 'periodic' | 'auto';
 
 export function SyncStatus({
   isOnline,
@@ -21,6 +23,10 @@ export function SyncStatus({
   const [isExpanded, setIsExpanded] = useState(false);
   const [connectionQuality, setConnectionQuality] = useState<ConnectionQuality>('good');
   const [shouldAutoHide, setShouldAutoHide] = useState(false);
+  const [currentSyncType, setCurrentSyncType] = useState<SyncType>('auto');
+
+  // Use periodic sync hook
+  const periodicSync = usePeriodicSync();
 
   // Determine connection quality based on sync time
   useEffect(() => {
@@ -78,6 +84,38 @@ export function SyncStatus({
     return `${days}d ago`;
   };
 
+  // Format countdown time
+  const formatCountdown = (seconds: number | null): string => {
+    if (seconds === null) return 'N/A';
+    if (seconds <= 0) return 'Any moment';
+
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    } else if (minutes > 0) {
+      return `${minutes}m ${secs}s`;
+    } else {
+      return `${secs}s`;
+    }
+  };
+
+  // Detect sync type based on context
+  useEffect(() => {
+    if (isSyncing) {
+      // Check if this is a periodic sync or manual sync
+      if (periodicSync.isActive && periodicSync.timeUntilNextSync === 0) {
+        setCurrentSyncType('periodic');
+      } else {
+        setCurrentSyncType('manual');
+      }
+    } else {
+      setCurrentSyncType('auto');
+    }
+  }, [isSyncing, periodicSync.isActive, periodicSync.timeUntilNextSync]);
+
   // Don't render if should auto-hide
   if (shouldAutoHide && !isExpanded) {
     return null;
@@ -104,10 +142,23 @@ export function SyncStatus({
           <div className="status-dot"></div>
         </div>
 
+        {/* Periodic sync indicator */}
+        {periodicSync.isActive && !isSyncing && queuedCount === 0 && (
+          <span className="periodic-sync-badge" title="Periodic sync enabled">
+            <span className="periodic-sync-icon">🔄</span>
+          </span>
+        )}
+
         {(isSyncing || queuedCount > 0) && (
           <span className="sync-status-text">
-            {isSyncing ? `Syncing${queuedCount > 0 ? ` ${queuedCount} items` : ''}...` :
-             queuedCount > 0 ? `${queuedCount} queued` : ''}
+            {isSyncing ? (
+              <>
+                {currentSyncType === 'periodic' && <span className="sync-type-label">[Periodic] </span>}
+                {`Syncing${queuedCount > 0 ? ` ${queuedCount} items` : ''}...`}
+              </>
+            ) : (
+              queuedCount > 0 ? `${queuedCount} queued` : ''
+            )}
           </span>
         )}
 
@@ -186,6 +237,48 @@ export function SyncStatus({
               <span className="detail-value">{formatLastSync(lastSyncTime)}</span>
             </div>
 
+            {/* Periodic Sync Section */}
+            {periodicSync.isSupported && (
+              <>
+                <div className="detail-row periodic-sync-row">
+                  <span className="detail-label">Periodic sync:</span>
+                  <span className="detail-value">
+                    {periodicSync.isActive ? (
+                      <span className="periodic-status-badge active">
+                        🔄 Enabled
+                      </span>
+                    ) : (
+                      <span className="periodic-status-badge inactive">
+                        Disabled
+                      </span>
+                    )}
+                  </span>
+                </div>
+
+                {periodicSync.isActive && (
+                  <>
+                    {/* Next Periodic Sync */}
+                    <div className="detail-row">
+                      <span className="detail-label">Next sync in:</span>
+                      <span className="detail-value countdown">
+                        {formatCountdown(periodicSync.timeUntilNextSync)}
+                      </span>
+                    </div>
+
+                    {/* Last Periodic Sync */}
+                    {periodicSync.lastSyncTime && (
+                      <div className="detail-row">
+                        <span className="detail-label">Last periodic:</span>
+                        <span className="detail-value">
+                          {formatLastSync(periodicSync.lastSyncTime)}
+                        </span>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+
             {/* Retry Button */}
             {(!isOnline || queuedCount > 0) && (
               <button
@@ -213,9 +306,19 @@ export function SyncStatus({
                 Some changes are waiting to sync. Click "Retry Sync" if needed.
               </p>
             )}
-            {isOnline && queuedCount === 0 && !isSyncing && (
+            {isOnline && queuedCount === 0 && !isSyncing && periodicSync.isActive && (
+              <p className="help-text success periodic">
+                All changes are synced! Periodic sync will check for updates automatically.
+              </p>
+            )}
+            {isOnline && queuedCount === 0 && !isSyncing && !periodicSync.isActive && (
               <p className="help-text success">
                 All changes are synced!
+              </p>
+            )}
+            {periodicSync.isSupported && !periodicSync.isActive && (
+              <p className="help-text info">
+                Enable periodic sync to automatically sync data in the background, even when the app is closed.
               </p>
             )}
           </div>

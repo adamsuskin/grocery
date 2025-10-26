@@ -82,6 +82,35 @@
   white-space: nowrap;
 }
 
+/* Periodic Sync Badge (Compact View) */
+.periodic-sync-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  animation: rotate 3s linear infinite;
+}
+
+.periodic-sync-icon {
+  display: inline-block;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Sync Type Label */
+.sync-type-label {
+  color: #2196f3;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
 /* Expand Icon */
 .expand-icon {
   font-size: 0.7rem;
@@ -232,6 +261,42 @@
   font-weight: 600;
 }
 
+/* Periodic Sync Row */
+.periodic-sync-row {
+  border-top: 1px solid var(--border-color);
+  padding-top: 12px;
+  margin-top: 8px;
+}
+
+/* Periodic Status Badge */
+.periodic-status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.periodic-status-badge.active {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.periodic-status-badge.inactive {
+  background-color: #f5f5f5;
+  color: #757575;
+}
+
+/* Countdown Timer */
+.countdown {
+  color: #2196f3;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5px;
+}
+
 /* Retry Button */
 .btn-retry-sync {
   width: 100%;
@@ -290,6 +355,18 @@
   background-color: #e8f5e9;
   color: #2e7d32;
   border-left: 3px solid #4caf50;
+}
+
+.help-text.success.periodic {
+  background-color: #e3f2fd;
+  color: #1565c0;
+  border-left: 3px solid #2196f3;
+}
+
+.help-text.info {
+  background-color: #e3f2fd;
+  color: #0d47a1;
+  border-left: 3px solid #2196f3;
 }
 
 /* Responsive Design */
@@ -366,6 +443,14 @@
   }
 
   .status-yellow .status-dot {
+    animation: none;
+  }
+
+  .periodic-sync-badge {
+    animation: none;
+  }
+
+  .periodic-sync-icon {
     animation: none;
   }
 }
