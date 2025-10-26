@@ -23,6 +23,7 @@ export interface GroceryItemTable {
   quantity: number;
   gotten: number; // SQLite uses INTEGER for boolean (0 = false, 1 = true)
   category: string;
+  notes: string;
   created_at: number;
 }
 
@@ -33,6 +34,7 @@ export interface GroceryItem {
   quantity: number;
   gotten: boolean;
   category: Category;
+  notes: string;
   createdAt: number;
 }
 
@@ -41,6 +43,7 @@ export interface AddItemInput {
   name: string;
   quantity: number;
   category: Category;
+  notes: string;
 }
 
 export interface UpdateItemInput {

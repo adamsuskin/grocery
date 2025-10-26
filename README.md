@@ -4,8 +4,9 @@ A collaborative grocery list application built with React, TypeScript, and Vite.
 
 ## Features
 
-- ✅ **Add Items**: Add grocery items with name, quantity, and category
+- ✅ **Add Items**: Add grocery items with name, quantity, category, and optional notes
 - 🏷️ **Categories**: Organize items into categories (Produce, Dairy, Meat, Bakery, Pantry, Frozen, Beverages, Other)
+- 📝 **Notes**: Add optional notes to items (brand preferences, location in store, etc.)
 - ✅ **Mark as Gotten**: Toggle items as gotten/not gotten
 - ✅ **Delete Items**: Remove items from the list
 - ✅ **View List**: See all items with customizable sorting
@@ -122,9 +123,28 @@ This command starts PostgreSQL, zero-cache, and the Vite dev server all at once.
 1. Enter the item name in the text field
 2. Enter the quantity (default is 1)
 3. Select a category from the dropdown (default is "Other")
-4. Click "Add Item"
+4. Optionally, add notes in the textarea (e.g., "Organic", "Brand: XYZ", "Aisle 3")
+5. Click "Add Item"
 
 Each item is automatically assigned a color-coded badge based on its category, making it easy to visually organize your shopping list.
+
+**Notes Field:**
+- The notes field is optional and can be left blank
+- Use it to add extra context like:
+  - Brand preferences ("Brand: Organic Valley")
+  - Location in store ("Aisle 5, bottom shelf")
+  - Special instructions ("Get the ripe ones")
+  - Alternatives ("Or get pears if apples not available")
+- Notes are displayed in a collapsible section on each item (see "Viewing Notes" below)
+
+### Viewing Notes
+
+If an item has notes, you'll see a notes icon (📋) next to the category badge:
+- Click the notes icon to expand and view the notes
+- The icon changes to 📝 when notes are visible
+- Click again to collapse the notes
+- Notes are displayed in a highlighted section below the item details
+- The notes section slides in smoothly with an animation
 
 ### Marking Items as Gotten
 
@@ -225,6 +245,7 @@ interface GroceryItem {
   quantity: number;    // Quantity to buy
   gotten: boolean;     // Whether item is gotten
   category: Category;  // Item category
+  notes: string;       // Optional notes/description
   createdAt: number;   // Timestamp
 }
 

@@ -25,6 +25,7 @@ export function useGroceryItems(filters?: FilterState, sort?: SortState) {
     quantity: item.quantity,
     gotten: item.gotten,
     category: item.category as GroceryItem['category'],
+    notes: item.notes,
     createdAt: item.createdAt,
   }));
 
@@ -85,7 +86,7 @@ export function useGroceryItems(filters?: FilterState, sort?: SortState) {
 
 // React hook for grocery mutations
 export function useGroceryMutations() {
-  const addItem = async (name: string, quantity: number, category: string): Promise<string> => {
+  const addItem = async (name: string, quantity: number, category: string, notes: string): Promise<string> => {
     const id = nanoid();
     await zeroInstance.mutate.grocery_items.create({
       id,
@@ -93,6 +94,7 @@ export function useGroceryMutations() {
       quantity,
       gotten: false,
       category,
+      notes,
       createdAt: Date.now(),
     });
     return id;

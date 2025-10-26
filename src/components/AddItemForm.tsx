@@ -6,6 +6,7 @@ export function AddItemForm() {
   const [name, setName] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [category, setCategory] = useState<Category>('Other');
+  const [notes, setNotes] = useState('');
   const { addItem } = useGroceryMutations();
 
   const handleSubmit = async (e: FormEvent) => {
@@ -18,12 +19,13 @@ export function AddItemForm() {
       return;
     }
 
-    await addItem(trimmedName, qty, category);
+    await addItem(trimmedName, qty, category, notes);
 
     // Reset form
     setName('');
     setQuantity('1');
     setCategory('Other');
+    setNotes('');
   };
 
   return (
@@ -61,6 +63,15 @@ export function AddItemForm() {
             </option>
           ))}
         </select>
+      </div>
+      <div className="form-group">
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Notes (optional)"
+          className="input"
+          rows={3}
+        />
       </div>
       <button type="submit" className="btn btn-primary">
         Add Item

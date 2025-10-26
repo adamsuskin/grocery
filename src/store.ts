@@ -74,7 +74,7 @@ export class GroceryStore {
     );
   }
 
-  addItem(name: string, quantity: number, category: string = 'Other'): string {
+  addItem(name: string, quantity: number, category: string = 'Other', notes: string = ''): string {
     const id = generateId();
     const item: GroceryItem = {
       id,
@@ -82,6 +82,7 @@ export class GroceryStore {
       quantity,
       gotten: false,
       category: category as GroceryItem['category'],
+      notes,
       createdAt: Date.now(),
     };
     this.items.set(id, item);
@@ -136,7 +137,7 @@ export function useGroceryStore() {
 
   return {
     items,
-    addItem: (name: string, quantity: number, category?: string) => getStore().addItem(name, quantity, category),
+    addItem: (name: string, quantity: number, category?: string, notes?: string) => getStore().addItem(name, quantity, category, notes),
     markItemGotten: (id: string, gotten: boolean) => getStore().markItemGotten(id, gotten),
     deleteItem: (id: string) => getStore().deleteItem(id),
   };

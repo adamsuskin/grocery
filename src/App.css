@@ -356,12 +356,12 @@ section h2 {
 
 .grocery-item {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
   padding: 12px;
   border: 1px solid var(--border-color);
   border-radius: 4px;
   transition: background-color 0.2s;
+  gap: 8px;
 }
 
 .grocery-item:hover {
@@ -382,6 +382,8 @@ section h2 {
   align-items: center;
   gap: 12px;
   flex: 1;
+  width: 100%;
+  justify-content: space-between;
 }
 
 .checkbox {
@@ -422,6 +424,58 @@ section h2 {
 
 .btn-delete:hover {
   opacity: 1;
+}
+
+/* Notes Feature */
+.notes-toggle {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: 8px;
+}
+
+.notes-toggle:hover {
+  background-color: #f0f0f0;
+  border-color: var(--primary-color);
+}
+
+.notes-content {
+  width: 100%;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border-left: 3px solid var(--primary-color);
+  font-size: 0.9rem;
+  color: var(--text-color);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+}
+
+textarea.input {
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
 }
 
 /* Bulk Operations */

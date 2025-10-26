@@ -1,5 +1,5 @@
 export const schema = {
-  version: 2,
+  version: 3,
   tables: {
     grocery_items: {
       tableName: 'grocery_items',
@@ -10,6 +10,7 @@ export const schema = {
         quantity: { type: 'number' },
         gotten: { type: 'boolean' },
         category: { type: 'string' },
+        notes: { type: 'string' },
         createdAt: { type: 'number' },
       },
       relationships: {},

@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS grocery_items (
   quantity INTEGER NOT NULL,
   gotten BOOLEAN NOT NULL DEFAULT false,
   category TEXT NOT NULL DEFAULT 'Other',
+  notes TEXT,
   created_at INTEGER NOT NULL
 );
 

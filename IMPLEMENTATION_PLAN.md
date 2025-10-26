@@ -90,7 +90,7 @@
 
 The application is feature-complete with the following capabilities:
 - ✅ Zero client configured and integrated for real-time sync
-- ✅ Schema defined for grocery_items table with categories
+- ✅ Schema defined for grocery_items table with categories and notes
 - ✅ CRUD operations migrated to Zero API
 - ✅ React hooks updated to use Zero queries
 - ✅ PostgreSQL + zero-cache infrastructure ready
@@ -104,6 +104,7 @@ The application is feature-complete with the following capabilities:
 - ✅ Item categories with color-coded badges (8 predefined categories)
 - ✅ Category filtering with interactive chips
 - ✅ Bulk operations (mark all as gotten, delete all gotten)
+- ✅ Item notes field with expandable/collapsible display
 
 **Next Steps to Run:**
 1. Start PostgreSQL: `pnpm db:up`
@@ -147,6 +148,21 @@ Or use: `pnpm dev:full` to start everything at once
 - [x] Update README.md with category documentation
 - [x] Update IMPLEMENTATION_PLAN.md
 
+## Phase 13: Item Notes/Description Field ✅
+- [x] Update database schema to add notes field (schema.sql)
+- [x] Update TypeScript types with notes field and AddItemInput (types.ts)
+- [x] Update Zero schema with notes field and version bump to 3 (zero-schema.ts)
+- [x] Update zero-store.ts mutations to handle notes parameter
+- [x] Update old store.ts for backward compatibility with notes
+- [x] Update AddItemForm component with notes textarea
+- [x] Update GroceryItem component with expandable/collapsible notes display
+- [x] Add CSS styling for notes toggle button and content section
+- [x] Add slide-down animation for notes expansion
+- [x] Verify TypeScript compilation passes
+- [x] Verify build process passes
+- [x] Update README.md with notes field documentation
+- [x] Update IMPLEMENTATION_PLAN.md
+
 ## Future Enhancements
 
 ### Zero Advanced Features
@@ -158,7 +174,7 @@ Or use: `pnpm dev:full` to start everything at once
 
 ### Features
 - [x] Add item categories (Produce, Dairy, Meat, Bakery, Pantry, Frozen, Beverages, Other)
-- [ ] Add item notes/description field
+- [x] Add item notes/description field
 - [ ] Add sharing/collaboration features (share lists with specific users)
 - [ ] Add item history and audit trail
 - [x] Add sorting options (by name, quantity, date)

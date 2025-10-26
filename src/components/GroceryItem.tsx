@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { GroceryItem as GroceryItemType } from '../types';
 import { useGroceryMutations } from '../hooks/useGroceryItems';
 
@@ -7,6 +8,7 @@ interface GroceryItemProps {
 
 export function GroceryItem({ item }: GroceryItemProps) {
   const { markItemGotten, deleteItem } = useGroceryMutations();
+  const [showNotes, setShowNotes] = useState(false);
 
   const handleToggleGotten = () => {
     markItemGotten(item.id, !item.gotten);
@@ -32,9 +34,23 @@ export function GroceryItem({ item }: GroceryItemProps) {
           <span className={`category-badge category-${item.category.toLowerCase()}`}>
             {item.category}
           </span>
+          {item.notes && (
+            <button
+              onClick={() => setShowNotes(!showNotes)}
+              className="notes-toggle"
+              aria-label="Toggle notes"
+            >
+              {showNotes ? '📝' : '📋'}
+            </button>
+          )}
         </div>
         <span className="item-quantity">×{item.quantity}</span>
       </div>
+      {item.notes && showNotes && (
+        <div className={`notes-content ${showNotes ? 'notes-expanded' : ''}`}>
+          {item.notes}
+        </div>
+      )}
       <button onClick={handleDelete} className="btn btn-delete" aria-label="Delete item">
         🗑️
       </button>
