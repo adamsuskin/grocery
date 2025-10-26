@@ -128,13 +128,13 @@ export function MealPlanner({ userId, listId, onGenerateList }: MealPlannerProps
 
     const plannedDate = getStartOfDay(selectorState.date);
 
-    await createMealPlan(
-      recipe.id,
+    await createMealPlan({
+      recipeId: recipe.id,
       plannedDate,
-      selectorState.mealType,
+      mealType: selectorState.mealType,
       servings,
-      listId
-    );
+      listId,
+    });
 
     setSelectorState({ isOpen: false, date: null, mealType: null });
   };
@@ -178,6 +178,7 @@ export function MealPlanner({ userId, listId, onGenerateList }: MealPlannerProps
     // Update the meal plan to the new date and meal type
     const newPlannedDate = getStartOfDay(date);
     await updateMealPlan(draggedMealPlan.id, {
+      id: draggedMealPlan.id,
       plannedDate: newPlannedDate,
       mealType,
     });

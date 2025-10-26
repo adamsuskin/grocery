@@ -1760,26 +1760,70 @@ export function useRecipeIngredients(recipeId: string) {
 }
 
 /**
- * React hook to get meal plans for a user with optional date filtering
+ * React hook to get meal plans for a user with date and optional list filtering
+ * Automatically joins with recipes table to populate recipe data
  *
  * @param userId - User ID to filter meal plans
- * @param startDate - Optional start date (unix timestamp)
- * @param endDate - Optional end date (unix timestamp)
- * @returns Array of meal plans
+ * @param startDate - Start date (unix timestamp) for filtering
+ * @param endDate - End date (unix timestamp) for filtering
+ * @param listId - Optional list ID to filter meal plans by specific list
+ * @returns Array of meal plans with recipe data populated, sorted by plannedDate ascending
  *
  * @example
  * ```typescript
  * const mealPlans = useMealPlans(userId, startOfWeek, endOfWeek);
+ * const listMealPlans = useMealPlans(userId, startOfWeek, endOfWeek, 'list-123');
  * ```
  */
-export function useMealPlans(userId: string, startDate?: number, endDate?: number) {
+export function useMealPlans(
+  userId: string,
+  startDate: number,
+  endDate: number,
+  listId?: string
+): MealPlan[] {
   const zero = getZeroInstance();
 
+  // Query meal plans filtered by userId
   let query = zero.query.meal_plans.where('userId', userId);
 
   const mealPlansQuery = useQuery(query);
 
+  // Get unique recipe IDs from meal plans
+  const recipeIds = useMemo(
+    () => [...new Set(mealPlansQuery.map((plan: any) => plan.recipeId))],
+    [mealPlansQuery]
+  );
+
+  // Fetch recipes for the meal plans
+  const recipesQuery = useQuery(
+    recipeIds.length > 0 ? zero.query.recipes.where('id', 'IN', recipeIds) : [] as any
+  );
+
+  // Process and filter meal plans
   const mealPlans: MealPlan[] = useMemo(() => {
+    // Create recipe map for quick lookup
+    const recipeMap = new Map<string, Recipe>();
+    recipesQuery.forEach((recipe: any) => {
+      recipeMap.set(recipe.id, {
+        id: recipe.id,
+        name: recipe.name,
+        description: recipe.description,
+        instructions: recipe.instructions,
+        prepTime: recipe.prepTime,
+        cookTime: recipe.cookTime,
+        servings: recipe.servings,
+        difficulty: recipe.difficulty as RecipeDifficulty | undefined,
+        cuisineType: recipe.cuisineType as CuisineType | undefined,
+        imageUrl: recipe.imageUrl,
+        userId: recipe.userId,
+        listId: recipe.listId,
+        isPublic: recipe.isPublic,
+        createdAt: recipe.createdAt,
+        updatedAt: recipe.updatedAt,
+      });
+    });
+
+    // Map meal plans and populate with recipe data
     let plans = mealPlansQuery.map((plan: any) => ({
       id: plan.id,
       userId: plan.userId,
@@ -1792,19 +1836,20 @@ export function useMealPlans(userId: string, startDate?: number, endDate?: numbe
       isCooked: plan.isCooked,
       createdAt: plan.createdAt,
       updatedAt: plan.updatedAt,
+      recipe: recipeMap.get(plan.recipeId), // Populate recipe data
     }));
 
-    // Apply date filtering client-side
-    if (startDate !== undefined) {
-      plans = plans.filter(p => p.plannedDate >= startDate);
-    }
-    if (endDate !== undefined) {
-      plans = plans.filter(p => p.plannedDate <= endDate);
+    // Filter by date range
+    plans = plans.filter(p => p.plannedDate >= startDate && p.plannedDate <= endDate);
+
+    // Filter by listId if provided
+    if (listId) {
+      plans = plans.filter(p => p.listId === listId);
     }
 
-    // Sort by planned date
+    // Sort by planned date ascending (earliest first)
     return plans.sort((a, b) => a.plannedDate - b.plannedDate);
-  }, [mealPlansQuery, startDate, endDate]);
+  }, [mealPlansQuery, recipesQuery, startDate, endDate, listId]);
 
   return mealPlans;
 }
@@ -1866,10 +1911,10 @@ export function useMealPlansByDate(userId: string, date: number) {
 }
 
 /**
- * React hook to get recipe collections for a user
+ * React hook to get recipe collections for a user with recipe counts
  *
  * @param userId - User ID to filter collections
- * @returns Array of recipe collections
+ * @returns Array of recipe collections with recipe counts, sorted by createdAt descending
  *
  * @example
  * ```typescript
@@ -1883,18 +1928,34 @@ export function useRecipeCollections(userId: string) {
     zero.query.recipe_collections.where('userId', userId)
   );
 
-  const collections: RecipeCollection[] = useMemo(
-    () => collectionsQuery.map((collection: any) => ({
-      id: collection.id,
-      userId: collection.userId,
-      name: collection.name,
-      description: collection.description,
-      isPublic: collection.isPublic,
-      createdAt: collection.createdAt,
-      updatedAt: collection.updatedAt,
-    })).sort((a, b) => b.updatedAt - a.updatedAt),
-    [collectionsQuery]
+  // Get all collection items to calculate recipe counts
+  const collectionItemsQuery = useQuery(
+    zero.query.recipe_collection_items as any
   );
+
+  const collections: RecipeCollection[] = useMemo(() => {
+    // Create a map of collection ID to recipe count
+    const recipeCountMap = new Map<string, number>();
+
+    collectionItemsQuery.forEach((item: any) => {
+      const count = recipeCountMap.get(item.collectionId) || 0;
+      recipeCountMap.set(item.collectionId, count + 1);
+    });
+
+    // Map collections with recipe counts
+    return collectionsQuery
+      .map((collection: any) => ({
+        id: collection.id,
+        userId: collection.userId,
+        name: collection.name,
+        description: collection.description,
+        isPublic: collection.isPublic,
+        createdAt: collection.createdAt,
+        updatedAt: collection.updatedAt,
+        recipeCount: recipeCountMap.get(collection.id) || 0,
+      }))
+      .sort((a, b) => b.createdAt - a.createdAt); // Sort by createdAt descending (newest first)
+  }, [collectionsQuery, collectionItemsQuery]);
 
   return collections;
 }
@@ -2242,12 +2303,17 @@ export function useRecipeMutations() {
 /**
  * React hook for meal plan mutations
  * Provides functions for creating, updating, and deleting meal plans
+ * All mutations use the current user ID from Zero instance
  *
  * @returns Object with meal plan mutation functions
  *
  * @example
  * ```typescript
- * const { createMealPlan, updateMealPlan, deleteMealPlan } = useMealPlanMutations();
+ * const { createMealPlan, updateMealPlan, deleteMealPlan, markMealCooked, generateShoppingList } = useMealPlanMutations();
+ * const id = await createMealPlan({ recipeId: 'recipe-123', plannedDate: Date.now(), mealType: 'dinner' });
+ * await updateMealPlan('plan-id', { servings: 4 });
+ * await markMealCooked('plan-id', true);
+ * const listId = await generateShoppingList(['plan-1', 'plan-2'], 'list-123');
  * ```
  */
 export function useMealPlanMutations() {
@@ -2256,8 +2322,10 @@ export function useMealPlanMutations() {
 
   /**
    * Create a new meal plan
+   * @param input - Meal plan creation input
+   * @returns Promise resolving to the created meal plan ID
    */
-  const createMealPlan = async (input: CreateMealPlanInput): Promise<MealPlan> => {
+  const createMealPlan = async (input: CreateMealPlanInput): Promise<string> => {
     const id = nanoid();
     const now = Date.now();
 
@@ -2275,103 +2343,66 @@ export function useMealPlanMutations() {
       updatedAt: now,
     });
 
-    return {
-      id,
-      userId: currentUserId,
-      listId: input.listId,
-      recipeId: input.recipeId,
-      plannedDate: input.plannedDate,
-      mealType: input.mealType,
-      servings: input.servings || 1,
-      notes: input.notes,
-      isCooked: false,
-      createdAt: now,
-      updatedAt: now,
-    };
+    return id;
   };
 
   /**
    * Update an existing meal plan
+   * @param id - Meal plan ID to update
+   * @param updates - Fields to update
+   * @returns Promise resolving when update is complete
    */
-  const updateMealPlan = async (input: UpdateMealPlanInput): Promise<MealPlan> => {
+  const updateMealPlan = async (id: string, updates: UpdateMealPlanInput): Promise<void> => {
     const now = Date.now();
-    const updates: any = {
-      id: input.id,
+    const updateData: any = {
+      id,
       updatedAt: now,
     };
 
-    if (input.listId !== undefined) updates.listId = input.listId;
-    if (input.recipeId !== undefined) updates.recipeId = input.recipeId;
-    if (input.plannedDate !== undefined) updates.plannedDate = input.plannedDate;
-    if (input.mealType !== undefined) updates.mealType = input.mealType;
-    if (input.servings !== undefined) updates.servings = input.servings;
-    if (input.notes !== undefined) updates.notes = input.notes;
-    if (input.isCooked !== undefined) updates.isCooked = input.isCooked;
+    if (updates.listId !== undefined) updateData.listId = updates.listId;
+    if (updates.recipeId !== undefined) updateData.recipeId = updates.recipeId;
+    if (updates.plannedDate !== undefined) updateData.plannedDate = updates.plannedDate;
+    if (updates.mealType !== undefined) updateData.mealType = updates.mealType;
+    if (updates.servings !== undefined) updateData.servings = updates.servings;
+    if (updates.notes !== undefined) updateData.notes = updates.notes;
+    if (updates.isCooked !== undefined) updateData.isCooked = updates.isCooked;
 
-    await zero.mutate.meal_plans.update(updates);
-
-    // Return updated meal plan (simplified)
-    return {
-      id: input.id,
-      userId: currentUserId,
-      listId: input.listId,
-      recipeId: input.recipeId || '',
-      plannedDate: input.plannedDate || Date.now(),
-      mealType: input.mealType || 'dinner',
-      servings: input.servings || 1,
-      notes: input.notes,
-      isCooked: input.isCooked || false,
-      createdAt: 0,
-      updatedAt: now,
-    };
+    await zero.mutate.meal_plans.update(updateData);
   };
 
   /**
    * Delete a meal plan
+   * @param id - Meal plan ID to delete
+   * @returns Promise resolving when deletion is complete
    */
-  const deleteMealPlan = async (mealPlanId: string): Promise<void> => {
-    await zero.mutate.meal_plans.delete({ id: mealPlanId });
+  const deleteMealPlan = async (id: string): Promise<void> => {
+    await zero.mutate.meal_plans.delete({ id });
   };
 
   /**
-   * Mark a meal as cooked
+   * Toggle isCooked status for a meal plan
+   * @param id - Meal plan ID to update
+   * @param isCooked - New isCooked status
+   * @returns Promise resolving when update is complete
    */
-  const markMealCooked = async (mealPlanId: string): Promise<MealPlan> => {
+  const markMealCooked = async (id: string, isCooked: boolean): Promise<void> => {
     const now = Date.now();
 
     await zero.mutate.meal_plans.update({
-      id: mealPlanId,
-      isCooked: true,
+      id,
+      isCooked,
       updatedAt: now,
     });
-
-    // Fetch and return updated meal plan
-    const mealPlans = await (zero.query.meal_plans.where('id', mealPlanId) as any).run();
-    if (mealPlans.length === 0) {
-      throw new Error('Meal plan not found');
-    }
-
-    const mealPlan = mealPlans[0];
-    return {
-      id: mealPlan.id,
-      userId: mealPlan.userId,
-      listId: mealPlan.listId,
-      recipeId: mealPlan.recipeId,
-      plannedDate: mealPlan.plannedDate,
-      mealType: mealPlan.mealType,
-      servings: mealPlan.servings,
-      notes: mealPlan.notes,
-      isCooked: true,
-      createdAt: mealPlan.createdAt,
-      updatedAt: now,
-    };
   };
 
   /**
    * Generate a shopping list from meal plans
-   * Creates a new list with grocery items for the selected meal plans
+   * Creates grocery items for all ingredients from the specified meal plans
+   * @param mealPlanIds - Array of meal plan IDs to generate shopping list from
+   * @param listId - List ID where grocery items will be added
+   * @returns Promise resolving when all items are created
    */
-  const generateShoppingList = async (mealPlanIds: string[]): Promise<string> => {
+  const generateShoppingList = async (mealPlanIds: string[], listId: string): Promise<void> => {
     // Fetch meal plans
     const mealPlans = await (zero.query.meal_plans.where('id', 'IN', mealPlanIds) as any).run();
 
@@ -2382,36 +2413,7 @@ export function useMealPlanMutations() {
     const recipes = await (zero.query.recipes.where('id', 'IN', recipeIds) as any).run();
     const allIngredients = await (zero.query.recipe_ingredients.where('recipeId', 'IN', recipeIds) as any).run();
 
-    // Create new list
-    const listId = nanoid();
     const now = Date.now();
-
-    await zero.mutate.lists.create({
-      id: listId,
-      name: `Meal Plan - ${new Date().toLocaleDateString()}`,
-      owner_id: currentUserId,
-      color: '#4CAF50',
-      icon: '🍽️',
-      budget: 0,
-      currency: 'USD',
-      createdAt: now,
-      updatedAt: now,
-      is_archived: false,
-      archived_at: 0,
-    });
-
-    // Add owner as member
-    await zero.mutate.list_members.create({
-      id: nanoid(),
-      list_id: listId,
-      user_id: currentUserId,
-      permission: 'owner',
-      added_at: now,
-      added_by: currentUserId,
-      user_email: '',
-      user_name: '',
-      updated_at: now,
-    });
 
     // Group ingredients by name and sum quantities
     const ingredientMap = new Map<string, {
@@ -2444,7 +2446,7 @@ export function useMealPlanMutations() {
       });
     });
 
-    // Create grocery items
+    // Create grocery items in the specified list
     const itemPromises = Array.from(ingredientMap.values()).map((item, index) =>
       zero.mutate.grocery_items.create({
         id: nanoid(),
@@ -2462,8 +2464,6 @@ export function useMealPlanMutations() {
     );
 
     await Promise.all(itemPromises);
-
-    return listId;
   };
 
   return {
@@ -2492,8 +2492,13 @@ export function useRecipeCollectionMutations() {
 
   /**
    * Create a new recipe collection
+   * @returns The ID of the newly created collection
    */
-  const createCollection = async (name: string, description?: string): Promise<RecipeCollection> => {
+  const createCollection = async (
+    name: string,
+    description?: string,
+    isPublic?: boolean
+  ): Promise<string> => {
     const id = nanoid();
     const now = Date.now();
 
@@ -2502,20 +2507,12 @@ export function useRecipeCollectionMutations() {
       userId: currentUserId,
       name,
       description: description || '',
-      isPublic: false,
+      isPublic: isPublic || false,
       createdAt: now,
       updatedAt: now,
     });
 
-    return {
-      id,
-      userId: currentUserId,
-      name,
-      description,
-      isPublic: false,
-      createdAt: now,
-      updatedAt: now,
-    };
+    return id;
   };
 
   /**
@@ -2523,35 +2520,32 @@ export function useRecipeCollectionMutations() {
    */
   const updateCollection = async (
     id: string,
-    name: string,
-    description?: string
-  ): Promise<RecipeCollection> => {
+    updates: {
+      name?: string;
+      description?: string;
+      isPublic?: boolean;
+    }
+  ): Promise<void> => {
     const now = Date.now();
-
-    await zero.mutate.recipe_collections.update({
+    const updateData: any = {
       id,
-      name,
-      description: description || '',
-      updatedAt: now,
-    });
-
-    return {
-      id,
-      userId: currentUserId,
-      name,
-      description,
-      isPublic: false,
-      createdAt: 0,
       updatedAt: now,
     };
+
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.isPublic !== undefined) updateData.isPublic = updates.isPublic;
+
+    await zero.mutate.recipe_collections.update(updateData);
   };
 
   /**
    * Delete a recipe collection
+   * Collection items will cascade delete automatically
    */
-  const deleteCollection = async (collectionId: string): Promise<void> => {
+  const deleteCollection = async (id: string): Promise<void> => {
     // Delete collection items first
-    const items = await (zero.query.recipe_collection_items.where('collectionId', collectionId) as any).run();
+    const items = await (zero.query.recipe_collection_items.where('collectionId', id) as any).run();
     const deleteItemPromises = items.map((item: any) =>
       zero.mutate.recipe_collection_items.delete({
         collectionId: item.collectionId,
@@ -2561,7 +2555,7 @@ export function useRecipeCollectionMutations() {
     await Promise.all(deleteItemPromises);
 
     // Delete collection
-    await zero.mutate.recipe_collections.delete({ id: collectionId });
+    await zero.mutate.recipe_collections.delete({ id });
   };
 
   /**
