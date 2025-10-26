@@ -510,7 +510,7 @@ export function useGroceryItems(listId?: string, filters?: FilterState, sort?: S
   const query = useQuery(baseQuery as any);
 
   // Map to application types (no initial sorting)
-  const allItems: GroceryItem[] = query.map(item => ({
+  const allItems: GroceryItem[] = (query as any[]).map((item: any) => ({
     id: item.id,
     name: item.name,
     quantity: item.quantity,
@@ -825,7 +825,7 @@ export function useGroceryLists() {
 
   // Query lists where user is a member (but not owner)
   const sharedListsQuery = useQuery(
-    zero.query.lists.where('id', 'in', memberListIds)
+    zero.query.lists.where('id', 'IN', memberListIds)
   );
 
   // Combine and deduplicate lists

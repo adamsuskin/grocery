@@ -1268,10 +1268,11 @@ Added "Category" as a fourth sort option to complement existing sorting by name,
 - **Better Organization**: Complements existing category filter chips for comprehensive category-based organization
 
 #### Known Issues
-- ⚠️ Pre-existing TypeScript compilation errors in `zero-store.ts` related to Zero schema type definitions
-- These errors exist in the codebase from earlier phases and are unrelated to the category sorting implementation
-- The actual category sorting code is type-safe and follows TypeScript best practices
-- A separate task should address the Zero type definition issues (likely requires updating @rocicorp/zero or schema definitions)
+- ✅ FIXED: TypeScript compilation errors in `zero-store.ts` related to Zero schema type definitions
+  - Fixed relationship format in zero-schema.ts (sourceField/destField → source/dest.field)
+  - Fixed operator case sensitivity ('in' → 'IN')
+  - Fixed type assertions in query results
+  - All TypeScript errors resolved as of this update
 
 ### Files Modified
 - `src/types.ts` - 1 line changed (added 'category' to SortField)
@@ -1286,6 +1287,89 @@ Added "Category" as a fourth sort option to complement existing sorting by name,
 - Test combination with filters (search, category chips, gotten status)
 - Verify sort persistence across filter changes
 
+## Phase 18: TypeScript Compilation Fixes ✅
+
+**Completed:** TypeScript compilation errors fixed
+**Status:** Complete and verified
+
+### What Was Fixed
+
+Fixed critical TypeScript compilation errors that were blocking the build process:
+
+#### Issues Resolved
+1. **Zero Schema Relationship Format** - Updated relationship definitions to match Zero's expected type structure
+2. **Query Operator Case Sensitivity** - Fixed 'in' operator to uppercase 'IN'
+3. **Type Assertions** - Added proper type assertions for query results
+4. **Unused Type Directives** - Removed unnecessary @ts-expect-error comments
+
+#### Code Changes
+- ✅ Updated `src/zero-schema.ts` - Fixed all relationship definitions (5 tables)
+  - Changed `sourceField: ['id']` → `source: 'id' as const`
+  - Changed `destField: ['user_id']` → `dest: { field: 'user_id' as const, schema: () => ... }`
+  - Changed string references to lazy function references for circular dependencies
+  - Added `as const` assertions for type literals
+- ✅ Updated `src/zero-store.ts` - Fixed operator and type issues (2 locations)
+  - Line 513: Added proper type assertion for query results mapping
+  - Line 828: Changed `'in'` → `'IN'` (operators are case-sensitive)
+- ✅ Updated `src/contexts/NotificationContext.tsx` - Removed unused directives (2 locations)
+  - Removed unnecessary @ts-expect-error comments that were no longer needed
+
+#### Technical Details
+
+**Zero Relationship Type Structure:**
+```typescript
+// OLD (incorrect)
+relationships: {
+  groceryItems: {
+    sourceField: ['id'],
+    destField: ['user_id'],
+    destSchema: 'grocery_items',
+  }
+}
+
+// NEW (correct)
+relationships: {
+  groceryItems: {
+    source: 'id' as const,
+    dest: {
+      field: 'user_id' as const,
+      schema: () => schema.tables.grocery_items
+    }
+  }
+}
+```
+
+**Zero Query Operators:**
+Available operators in @rocicorp/zero v0.1.2024100802:
+- `'='`, `'!='`, `'<'`, `'<='`, `'>'`, `'>='`
+- `'IN'`, `'NOT IN'` (must be uppercase)
+- `'LIKE'`, `'ILIKE'`
+
+#### Verification
+- ✅ TypeScript compilation passes (`pnpm type-check`)
+- ✅ Build process succeeds (`pnpm build`)
+- ✅ No TypeScript errors or warnings
+- ✅ Bundle size: 856 KB (reasonable for feature-rich app)
+
+#### Files Modified
+- `src/zero-schema.ts` - 161 lines (complete rewrite of relationships)
+- `src/zero-store.ts` - 2 lines changed
+- `src/contexts/NotificationContext.tsx` - 2 lines changed
+
+#### Lessons Learned
+
+**Technical Insights:**
+1. **Zero Schema Evolution**: The @rocicorp/zero API changed relationship format between versions. Always check type definitions when upgrading.
+2. **Type Safety Critical**: Proper TypeScript types catch bugs at compile time rather than runtime.
+3. **Case Sensitivity**: SQL-like operators in Zero are case-sensitive ('IN' not 'in').
+4. **Circular References**: Use lazy functions `() => schema.tables.xxx` for tables that reference each other.
+5. **Const Assertions**: Using `as const` ensures TypeScript treats values as literal types, improving type checking.
+
+**Best Practices:**
+6. **Regular Type Checks**: Run `pnpm type-check` frequently during development to catch issues early.
+7. **Read Type Definitions**: When encountering type errors, inspect node_modules type definitions for the correct format.
+8. **Remove Dead Code**: Unused @ts-expect-error directives become errors, indicating the underlying issue was fixed.
+
 ## Future Enhancements
 
 ### Zero Advanced Features
@@ -1293,6 +1377,7 @@ Added "Category" as a fourth sort option to complement existing sorting by name,
 - [x] Implement user-specific permissions ✅ (Phase 15 Complete!)
 - [x] Add relationships between tables (users, grocery_items, lists) ✅ (Phase 15 Complete!)
 - [x] Implement offline conflict resolution ✅ (Phase 16 Complete!)
+- [x] Fix TypeScript compilation errors ✅ (Phase 18 Complete!)
 - [ ] Deploy zero-cache to production
 - [ ] Implement service workers for background sync
 - [ ] Add server-side timestamps for canonical ordering

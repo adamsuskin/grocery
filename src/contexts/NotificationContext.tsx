@@ -69,13 +69,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   // Query list memberships for the current user
   // This allows us to detect when user is added/removed from lists or permissions change
   const membershipQuery = useQuery(
-    // @ts-expect-error - Zero SDK type issue with query types (known issue, safe to ignore)
     user ? zero.query.list_members.where('user_id', user.id) : zero.query.list_members.where('id', 'never-match')
   );
 
   // Query all lists to get list names for notifications
   const listsQuery = useQuery(
-    // @ts-expect-error - Zero SDK type issue with query types (known issue, safe to ignore)
     zero.query.lists
   );
 

@@ -1,31 +1,24 @@
 # Currently In Progress
 
-## Task: Complete List Templates Feature
+## Fix TypeScript Compilation Errors in zero-store.ts
 
-**Started:** 2024
-**Assigned to:** Claude Agent
+**Priority:** Critical (blocking build)
+**Started:** Now
+**Assignee:** Claude Agent
 
-### Overview
-Implement predefined list templates that users can use to quickly create common grocery lists (Weekly Groceries, Party Supplies, BBQ, Breakfast Items, etc.).
+### Issue
+Zero schema type definitions are incompatible with the expected Schema type from @rocicorp/zero.
+Multiple TypeScript errors related to relationship type incompatibility.
 
-### Status
-The types and basic UI hooks exist, but the templates data and full integration need to be completed.
-
-### Subtasks
-- [ ] Verify existing template types and interfaces
-- [ ] Create comprehensive template library with common shopping lists
-- [ ] Implement template preview functionality
-- [ ] Add template customization (allow users to modify before creating)
-- [ ] Update UI to prominently feature templates
-- [ ] Add ability to save custom templates
-- [ ] Test template creation flow
-- [ ] Update documentation
+### Tasks
+- [ ] Review Zero documentation for correct schema definition format
+- [ ] Update zero-schema.ts to match Zero's expected types
+- [ ] Fix relationship definitions in schema
+- [ ] Verify TypeScript compilation passes
+- [ ] Verify build process succeeds
+- [ ] Update IMPLEMENTATION_PLAN.md when complete
 
 ### Files to Modify
-- `src/data/listTemplates.ts` - Main template definitions
-- `src/components/TemplateSelector.tsx` - Template selection UI
-- `src/components/ListSelector.tsx` - Integration point
-- `src/types.ts` - Verify/update template types
-- `src/zero-store.ts` - Template creation mutations
-- `README.md` - Documentation
-
+- src/zero-schema.ts
+- src/zero-store.ts (possibly)
+- tsconfig.json (if needed)
