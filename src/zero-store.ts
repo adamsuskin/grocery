@@ -3,7 +3,7 @@ import { useQuery } from '@rocicorp/zero/react';
 import { nanoid } from 'nanoid';
 import { useMemo } from 'react';
 import { schema, type Schema } from './zero-schema';
-import type { GroceryItem, FilterState } from './types';
+import type { GroceryItem, FilterState, SortState } from './types';
 
 // Create singleton Zero instance
 export const zeroInstance = new Zero<Schema>({
@@ -14,46 +14,67 @@ export const zeroInstance = new Zero<Schema>({
   kvStore: 'idb', // IndexedDB persistence
 });
 
-// React hook to get all grocery items with optional filtering
-export function useGroceryItems(filters?: FilterState) {
+// React hook to get all grocery items with optional filtering and sorting
+export function useGroceryItems(filters?: FilterState, sort?: SortState) {
   const query = useQuery(zeroInstance.query.grocery_items);
 
-  // Sort by createdAt descending and map to application types
-  const allItems: GroceryItem[] = query
-    .sort((a, b) => b.createdAt - a.createdAt)
-    .map(item => ({
-      id: item.id,
-      name: item.name,
-      quantity: item.quantity,
-      gotten: item.gotten,
-      createdAt: item.createdAt,
-    }));
+  // Map to application types (no initial sorting)
+  const allItems: GroceryItem[] = query.map(item => ({
+    id: item.id,
+    name: item.name,
+    quantity: item.quantity,
+    gotten: item.gotten,
+    createdAt: item.createdAt,
+  }));
 
-  // Apply filters with memoization for performance
-  const filteredItems = useMemo(() => {
-    if (!filters) {
-      return allItems;
-    }
-
+  // Apply filters and sorting with memoization for performance
+  const processedItems = useMemo(() => {
     let items = allItems;
 
-    // Filter by gotten status
-    if (!filters.showGotten) {
-      items = items.filter(item => !item.gotten);
+    // Apply filters
+    if (filters) {
+      // Filter by gotten status
+      if (!filters.showGotten) {
+        items = items.filter(item => !item.gotten);
+      }
+
+      // Filter by search text
+      if (filters.searchText.trim() !== '') {
+        const searchLower = filters.searchText.toLowerCase();
+        items = items.filter(item =>
+          item.name.toLowerCase().includes(searchLower)
+        );
+      }
     }
 
-    // Filter by search text
-    if (filters.searchText.trim() !== '') {
-      const searchLower = filters.searchText.toLowerCase();
-      items = items.filter(item =>
-        item.name.toLowerCase().includes(searchLower)
-      );
+    // Apply sorting
+    if (sort) {
+      items = [...items].sort((a, b) => {
+        let comparison = 0;
+
+        switch (sort.field) {
+          case 'name':
+            comparison = a.name.localeCompare(b.name);
+            break;
+          case 'quantity':
+            comparison = a.quantity - b.quantity;
+            break;
+          case 'date':
+            comparison = a.createdAt - b.createdAt;
+            break;
+        }
+
+        return sort.direction === 'asc' ? comparison : -comparison;
+      });
+    } else {
+      // Default sort: newest first
+      items = [...items].sort((a, b) => b.createdAt - a.createdAt);
     }
 
     return items;
-  }, [allItems, filters]);
+  }, [allItems, filters, sort]);
 
-  return filteredItems;
+  return processedItems;
 }
 
 // React hook for grocery mutations

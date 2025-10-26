@@ -72,6 +72,20 @@
 - [x] Update documentation in README.md
 - [x] Update IMPLEMENTATION_PLAN.md
 
+## Phase 10: Sorting Options ✅
+- [x] Add sorting types to types.ts (SortField, SortDirection, SortState)
+- [x] Update zero-store.ts to handle sorting logic
+- [x] Create SortControls component with buttons for sort field and direction
+- [x] Add sort state management in App component
+- [x] Update GroceryList component to use sort controls
+- [x] Implement sort by name (ascending/descending)
+- [x] Implement sort by quantity (ascending/descending)
+- [x] Implement sort by date (ascending/descending)
+- [x] Add CSS styling for sort controls
+- [x] Test all sorting combinations with filters
+- [x] Update README.md with sorting documentation
+- [x] Verify TypeScript compilation and build process
+
 ## Current Status
 
 The application is feature-complete with the following capabilities:
@@ -84,6 +98,9 @@ The application is feature-complete with the following capabilities:
 - ✅ Search and filter functionality implemented
 - ✅ Debounced search for optimal performance
 - ✅ Results counter showing filtered items
+- ✅ Sorting by name, quantity, and date (ascending/descending)
+- ✅ Sort controls with visual feedback (active state)
+- ✅ Seamless integration of search, filter, and sort features
 
 **Next Steps to Run:**
 1. Start PostgreSQL: `pnpm db:up`
@@ -107,7 +124,7 @@ Or use: `pnpm dev:full` to start everything at once
 - [ ] Add item notes
 - [ ] Add sharing/collaboration features (share lists with specific users)
 - [ ] Add item history and audit trail
-- [ ] Add sorting options (by name, quantity, date)
+- [x] Add sorting options (by name, quantity, date)
 - [ ] Add bulk operations (mark all as gotten, delete all gotten items)
 - [ ] Add item images or icons
 - [ ] Add price tracking and budget features

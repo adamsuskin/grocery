@@ -50,3 +50,19 @@ export interface FilterBarProps {
   totalCount: number;
   filteredCount: number;
 }
+
+// Sort types
+export type SortField = 'name' | 'quantity' | 'date';
+export type SortDirection = 'asc' | 'desc';
+
+export interface SortState {
+  field: SortField;
+  direction: SortDirection;
+}
+
+export type SortChangeHandler = (sort: SortState) => void;
+
+export interface SortControlsProps {
+  sort: SortState;
+  onChange: SortChangeHandler;
+}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { AddItemForm } from './components/AddItemForm';
 import { GroceryList } from './components/GroceryList';
-import type { FilterState } from './types';
+import type { FilterState, SortState } from './types';
 import './App.css';
 
 function App() {
@@ -10,8 +10,17 @@ function App() {
     showGotten: true,
   });
 
+  const [sort, setSort] = useState<SortState>({
+    field: 'date',
+    direction: 'desc',
+  });
+
   const handleFilterChange = (newFilters: Partial<FilterState>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
+  };
+
+  const handleSortChange = (newSort: SortState) => {
+    setSort(newSort);
   };
 
   return (
@@ -29,7 +38,12 @@ function App() {
 
         <section className="list-section">
           <h2>Shopping List</h2>
-          <GroceryList filters={filters} onFilterChange={handleFilterChange} />
+          <GroceryList
+            filters={filters}
+            onFilterChange={handleFilterChange}
+            sort={sort}
+            onSortChange={handleSortChange}
+          />
         </section>
       </main>
     </div>

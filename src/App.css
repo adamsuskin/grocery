@@ -118,6 +118,66 @@ section h2 {
   background-color: var(--primary-hover);
 }
 
+/* Sort Controls */
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  flex-wrap: wrap;
+}
+
+.sort-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin: 0;
+}
+
+.sort-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-sort {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  transition: all 0.2s;
+}
+
+.btn-sort:hover {
+  background-color: #f0f0f0;
+  border-color: var(--primary-color);
+}
+
+.btn-sort.active {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.btn-direction {
+  padding: 6px 12px;
+  font-size: 1.2rem;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  color: var(--text-color);
+  min-width: 40px;
+  transition: all 0.2s;
+}
+
+.btn-direction:hover {
+  background-color: #f0f0f0;
+  border-color: var(--primary-color);
+}
+
 /* Search Filter Bar */
 .search-filter-bar {
   display: flex;

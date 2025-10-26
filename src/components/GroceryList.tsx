@@ -1,18 +1,21 @@
 import { useGroceryItems } from '../hooks/useGroceryItems';
 import { GroceryItem } from './GroceryItem';
 import { SearchFilterBar } from './SearchFilterBar';
-import type { FilterState, FilterChangeHandler } from '../types';
+import { SortControls } from './SortControls';
+import type { FilterState, FilterChangeHandler, SortState, SortChangeHandler } from '../types';
 
 interface GroceryListProps {
   filters: FilterState;
   onFilterChange: FilterChangeHandler;
+  sort: SortState;
+  onSortChange: SortChangeHandler;
 }
 
-export function GroceryList({ filters, onFilterChange }: GroceryListProps) {
-  // Get filtered items
-  const filteredItems = useGroceryItems(filters);
+export function GroceryList({ filters, onFilterChange, sort, onSortChange }: GroceryListProps) {
+  // Get filtered and sorted items
+  const filteredItems = useGroceryItems(filters, sort);
 
-  // Get total count (unfiltered)
+  // Get total count (unfiltered, default sort)
   const allItems = useGroceryItems();
   const totalCount = allItems.length;
   const filteredCount = filteredItems.length;
@@ -38,6 +41,8 @@ export function GroceryList({ filters, onFilterChange }: GroceryListProps) {
         totalCount={totalCount}
         filteredCount={filteredCount}
       />
+
+      <SortControls sort={sort} onChange={onSortChange} />
 
       {filteredCount === 0 ? (
         <div className="empty-state">
