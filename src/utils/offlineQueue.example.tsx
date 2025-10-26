@@ -152,6 +152,7 @@ export function QueueAwareItemForm() {
             notes,
             userId,
             listId,
+            updatedAt: Date.now(),
           })
         );
       }
@@ -166,6 +167,7 @@ export function QueueAwareItemForm() {
           notes,
           userId,
           listId,
+          updatedAt: Date.now(),
         })
       );
       console.log('Item queued for sync');

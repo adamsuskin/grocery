@@ -29,6 +29,7 @@ export interface GroceryItemTable {
   user_id: string;
   list_id: string;
   created_at: number;
+  updated_at: number;
   price: number | null; // Price per unit
 }
 
@@ -53,6 +54,7 @@ export interface ListMemberTable {
   permission: string;
   added_at: number;
   added_by: string;
+  updated_at: number;
 }
 
 // Application types (with proper boolean)
@@ -66,6 +68,7 @@ export interface GroceryItem {
   userId: string;
   listId: string;
   createdAt: number;
+  updatedAt: number;
   price?: number; // Price per unit
 }
 
@@ -262,6 +265,7 @@ export interface ListMember {
   permission: ListPermission;
   addedAt: number;
   addedBy: string;
+  updatedAt: number;
 }
 
 /**

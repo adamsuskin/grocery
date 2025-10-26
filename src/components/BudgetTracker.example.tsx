@@ -22,7 +22,7 @@ const sampleItems: GroceryItem[] = [
     userId: 'user1',
     listId: 'list1',
     createdAt: Date.now(),
-    // @ts-ignore - Adding price field for demonstration
+    updatedAt: Date.now(),
     price: 3.99
   },
   {
@@ -35,7 +35,7 @@ const sampleItems: GroceryItem[] = [
     userId: 'user1',
     listId: 'list1',
     createdAt: Date.now(),
-    // @ts-ignore - Adding price field for demonstration
+    updatedAt: Date.now(),
     price: 2.49
   },
   {
@@ -48,7 +48,7 @@ const sampleItems: GroceryItem[] = [
     userId: 'user1',
     listId: 'list1',
     createdAt: Date.now(),
-    // @ts-ignore - Adding price field for demonstration
+    updatedAt: Date.now(),
     price: 0.99
   },
   {
@@ -61,7 +61,7 @@ const sampleItems: GroceryItem[] = [
     userId: 'user1',
     listId: 'list1',
     createdAt: Date.now(),
-    // @ts-ignore - Adding price field for demonstration
+    updatedAt: Date.now(),
     price: 8.99
   },
   {
@@ -73,7 +73,8 @@ const sampleItems: GroceryItem[] = [
     notes: '',
     userId: 'user1',
     listId: 'list1',
-    createdAt: Date.now()
+    createdAt: Date.now(),
+    updatedAt: Date.now()
     // No price set - demonstrates handling of items without prices
   }
 ];

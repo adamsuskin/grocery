@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS list_members (
   joined_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   invited_by UUID REFERENCES users(id) ON DELETE SET NULL,
   last_accessed_at TIMESTAMP WITH TIME ZONE,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 
   -- Primary key: composite of list_id and user_id
   PRIMARY KEY (list_id, user_id),
@@ -123,6 +124,7 @@ CREATE INDEX IF NOT EXISTS idx_list_members_user_id ON list_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_list_members_list_id ON list_members(list_id);
 CREATE INDEX IF NOT EXISTS idx_list_members_permission ON list_members(list_id, permission_level);
 CREATE INDEX IF NOT EXISTS idx_list_members_joined_at ON list_members(joined_at DESC);
+CREATE INDEX IF NOT EXISTS idx_list_members_updated_at ON list_members(updated_at DESC);
 
 COMMENT ON TABLE list_members IS 'Junction table for list sharing with permission levels';
 COMMENT ON COLUMN list_members.list_id IS 'Foreign key to lists table';
@@ -131,6 +133,7 @@ COMMENT ON COLUMN list_members.permission_level IS 'Access level: owner (full co
 COMMENT ON COLUMN list_members.joined_at IS 'When the user was added to the list';
 COMMENT ON COLUMN list_members.invited_by IS 'User who invited this member (NULL if self-joined or owner)';
 COMMENT ON COLUMN list_members.last_accessed_at IS 'Last time the user viewed this list';
+COMMENT ON COLUMN list_members.updated_at IS 'When the member record was last updated';
 
 -- =====================================================
 -- PHASE 6: Create Grocery Items Table
@@ -145,6 +148,7 @@ CREATE TABLE IF NOT EXISTS grocery_items (
   category VARCHAR(50) NOT NULL DEFAULT 'Other',
   notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   list_id UUID NOT NULL REFERENCES lists(id) ON DELETE CASCADE,
 
@@ -155,6 +159,7 @@ CREATE TABLE IF NOT EXISTS grocery_items (
 
 -- Create indexes for grocery_items table
 CREATE INDEX IF NOT EXISTS idx_grocery_items_created_at ON grocery_items(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_grocery_items_updated_at ON grocery_items(updated_at DESC);
 CREATE INDEX IF NOT EXISTS idx_grocery_items_user_id ON grocery_items(user_id);
 CREATE INDEX IF NOT EXISTS idx_grocery_items_list_id ON grocery_items(list_id);
 
@@ -172,6 +177,8 @@ COMMENT ON COLUMN grocery_items.quantity IS 'Number of items needed';
 COMMENT ON COLUMN grocery_items.gotten IS 'Whether the item has been purchased';
 COMMENT ON COLUMN grocery_items.category IS 'Item category for organization';
 COMMENT ON COLUMN grocery_items.notes IS 'Optional notes or description';
+COMMENT ON COLUMN grocery_items.created_at IS 'When the item was created';
+COMMENT ON COLUMN grocery_items.updated_at IS 'When the item was last updated';
 COMMENT ON COLUMN grocery_items.user_id IS 'User who created the item';
 COMMENT ON COLUMN grocery_items.list_id IS 'List this item belongs to';
 
@@ -188,6 +195,18 @@ CREATE TRIGGER update_users_updated_at
 -- Trigger to automatically update updated_at on lists table
 CREATE TRIGGER update_lists_updated_at
   BEFORE UPDATE ON lists
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger to automatically update updated_at on grocery_items table
+CREATE TRIGGER update_grocery_items_updated_at
+  BEFORE UPDATE ON grocery_items
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger to automatically update updated_at on list_members table
+CREATE TRIGGER update_list_members_updated_at
+  BEFORE UPDATE ON list_members
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 

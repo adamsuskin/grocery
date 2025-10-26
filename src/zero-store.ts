@@ -521,6 +521,7 @@ export function useGroceryItems(listId?: string, filters?: FilterState, sort?: S
     userId: item.user_id,
     listId: item.list_id,
     createdAt: item.createdAt,
+    updatedAt: item.updatedAt || item.createdAt,
   }));
 
   // Apply filters and sorting with memoization for performance
@@ -615,6 +616,7 @@ export function useGroceryMutations() {
    */
   const addItem = async (name: string, quantity: number, category: string, notes: string, listId?: string, price?: number): Promise<string> => {
     const id = nanoid();
+    const now = Date.now();
     await zero.mutate.grocery_items.create({
       id,
       name,
@@ -625,7 +627,8 @@ export function useGroceryMutations() {
       price: price || 0,
       user_id: currentUserId, // Associate item with current user
       list_id: listId || '', // Default to empty string if no list specified
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     });
     return id;
   };
@@ -667,6 +670,7 @@ export function useGroceryMutations() {
       await zero.mutate.grocery_items.update({
         id,
         gotten,
+        updatedAt: Date.now(),
       });
     } catch (error) {
       console.error('[Zero] Error marking item gotten:', error);
@@ -724,6 +728,7 @@ export function useGroceryMutations() {
       await zero.mutate.grocery_items.update({
         id,
         ...updates,
+        updatedAt: Date.now(),
       });
     } catch (error) {
       console.error('[Zero] Error updating item:', error);
@@ -761,11 +766,13 @@ export function useGroceryMutations() {
   const markAllGotten = async (items: GroceryItem[]): Promise<void> => {
     // Update all items that aren't already marked as gotten
     // Items are already filtered by user in the query, so this is safe
+    const now = Date.now();
     const updatePromises = items
       .filter(item => !item.gotten)
       .map(item => zero.mutate.grocery_items.update({
         id: item.id,
         gotten: true,
+        updatedAt: now,
       }));
 
     await Promise.all(updatePromises);
@@ -905,6 +912,7 @@ export function useListMembers(listId: string) {
       permission: member.permission as PermissionLevel,
       addedAt: member.added_at,
       addedBy: member.added_by,
+      updatedAt: member.updated_at || member.added_at,
     })),
     [membersQuery]
   );
@@ -960,6 +968,7 @@ export function useListMutations() {
       added_by: currentUserId,
       user_email: '', // Will be populated by the database
       user_name: '', // Will be populated by the database
+      updated_at: now,
     });
 
     return id;
@@ -996,6 +1005,7 @@ export function useListMutations() {
         user_id: currentUserId,
         list_id: listId,
         createdAt: now + index, // Slight offset to maintain order
+        updatedAt: now + index,
       })
     );
 
@@ -1073,15 +1083,17 @@ export function useListMutations() {
     userId: string,
     permission: PermissionLevel
   ): Promise<void> => {
+    const now = Date.now();
     await zero.mutate.list_members.create({
       id: nanoid(),
       list_id: listId,
       user_id: userId,
       permission,
-      added_at: Date.now(),
+      added_at: now,
       added_by: currentUserId,
       user_email: '', // Will be populated by the database
       user_name: '', // Will be populated by the database
+      updated_at: now,
     });
   };
 

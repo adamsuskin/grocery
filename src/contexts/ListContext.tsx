@@ -154,6 +154,7 @@ export function ListProvider({ children }: { children: React.ReactNode }) {
           permission: 'owner',
           addedAt: user.createdAt,
           addedBy: user.id,
+          updatedAt: user.createdAt,
         },
       ],
       createdAt: user.createdAt,

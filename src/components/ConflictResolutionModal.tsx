@@ -105,6 +105,7 @@ export function ConflictResolutionModal({
       userId: conflict.remote.userId, // Preserve remote user info
       listId: conflict.remote.listId,
       createdAt: conflict.local.createdAt,
+      updatedAt: Date.now(), // Set current timestamp for resolved item
     };
   }, [selection, conflict]);
 

@@ -27,6 +27,7 @@ export function ConflictResolutionExample() {
       userId: 'user-abc',
       listId: 'list-456',
       createdAt: Date.now() - 10000,
+      updatedAt: Date.now() - 5000,
     },
     remote: {
       id: 'item-123',
@@ -38,6 +39,7 @@ export function ConflictResolutionExample() {
       userId: 'user-xyz',
       listId: 'list-456',
       createdAt: Date.now() - 10000,
+      updatedAt: Date.now() - 3000,
     },
   };
 
@@ -232,6 +234,7 @@ export function ComplexConflictExample() {
       userId: 'user-abc',
       listId: 'list-456',
       createdAt: Date.now() - 5000,
+      updatedAt: Date.now() - 4000,
     },
     remote: {
       id: 'item-789',
@@ -243,6 +246,7 @@ export function ComplexConflictExample() {
       userId: 'user-xyz',
       listId: 'list-456',
       createdAt: Date.now() - 5000,
+      updatedAt: Date.now() - 2000,
     },
   };
 

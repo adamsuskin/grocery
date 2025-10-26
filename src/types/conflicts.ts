@@ -15,7 +15,7 @@ import { GroceryItem } from '../types';
 /**
  * Available strategies for resolving conflicts between local and remote versions
  *
- * - LastWriteWins: The most recent timestamp wins (simplest but may lose data)
+ * - LastWriteWins: The most recent updatedAt timestamp wins (simplest but may lose data)
  * - Manual: User must manually choose which version to keep
  * - FieldMerge: Intelligently merge changes field-by-field
  * - Custom: Application-specific resolution logic
@@ -101,7 +101,7 @@ export interface ChangeMetadata {
   /** Display name of user who made the change */
   userName: string;
 
-  /** Timestamp when change was made (Unix timestamp in ms) */
+  /** Timestamp when change was made (Unix timestamp in ms, typically from updatedAt field) */
   timestamp: number;
 
   /** Device/client identifier where change originated */

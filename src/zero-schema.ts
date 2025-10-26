@@ -1,5 +1,5 @@
 export const schema = {
-  version: 8,
+  version: 9,
   tables: {
     users: {
       tableName: 'users' as const,
@@ -86,6 +86,7 @@ export const schema = {
         permission: { type: 'string' as const },
         added_at: { type: 'number' as const },
         added_by: { type: 'string' as const },
+        updated_at: { type: 'number' as const },
       },
       relationships: {
         list: {
@@ -118,6 +119,7 @@ export const schema = {
         user_id: { type: 'string' as const },
         list_id: { type: 'string' as const },
         createdAt: { type: 'number' as const },
+        updatedAt: { type: 'number' as const },
       },
       relationships: {
         user: {

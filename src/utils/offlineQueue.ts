@@ -735,6 +735,7 @@ export class OfflineQueueManager {
           user_id: userId,
           list_id: listId || '',
           createdAt: createdAt || Date.now(),
+          updatedAt: Date.now(),
         });
         break;
       }
@@ -744,6 +745,7 @@ export class OfflineQueueManager {
         await zero.mutate.grocery_items.update({
           id,
           ...updates,
+          updatedAt: Date.now(),
         });
         break;
       }
@@ -753,6 +755,7 @@ export class OfflineQueueManager {
         await zero.mutate.grocery_items.update({
           id,
           gotten,
+          updatedAt: Date.now(),
         });
         break;
       }

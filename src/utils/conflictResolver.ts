@@ -101,6 +101,9 @@ export class ConflictResolver {
    * A conflict exists if both versions have been modified and have differences
    * in conflictable fields.
    *
+   * Uses updatedAt timestamps (with fallback to createdAt) to determine the
+   * recency of changes for conflict resolution strategies.
+   *
    * @param local - The local version of the item
    * @param remote - The remote version of the item
    * @returns Conflict object if conflict detected, null otherwise
@@ -133,8 +136,9 @@ export class ConflictResolver {
           field,
           localValue: local[field],
           remoteValue: remote[field],
-          localTimestamp: local.createdAt,
-          remoteTimestamp: remote.createdAt,
+          // Use updatedAt for conflict timestamps, fall back to createdAt if not available
+          localTimestamp: local.updatedAt || local.createdAt,
+          remoteTimestamp: remote.updatedAt || remote.createdAt,
         });
       }
     }
@@ -243,7 +247,10 @@ export class ConflictResolver {
     }
 
     // Rule 2: If timestamps differ by more than 5 minutes, use last-write-wins
-    const timeDiff = Math.abs(conflict.local.createdAt - conflict.remote.createdAt);
+    // Use updatedAt for recency comparison, fall back to createdAt
+    const localTime = conflict.local.updatedAt || conflict.local.createdAt;
+    const remoteTime = conflict.remote.updatedAt || conflict.remote.createdAt;
+    const timeDiff = Math.abs(localTime - remoteTime);
     const fiveMinutes = 5 * 60 * 1000;
 
     if (timeDiff > fiveMinutes) {
@@ -280,6 +287,9 @@ export class ConflictResolver {
    * This method is useful for creating a merged version that takes the best
    * parts of both versions.
    *
+   * Uses updatedAt timestamps (with fallback to createdAt) to determine which
+   * version is more recent for field-level merge decisions.
+   *
    * @param local - The local version of the item
    * @param remote - The remote version of the item
    * @returns Merged GroceryItem
@@ -300,8 +310,10 @@ export class ConflictResolver {
 
     const merged: GroceryItem = { ...local };
 
-    // Use the more recent timestamp for most fields
-    const useRemote = compareTimestamps(local.createdAt, remote.createdAt) < 0;
+    // Use the more recent updatedAt timestamp for most fields (fall back to createdAt)
+    const localTime = local.updatedAt || local.createdAt;
+    const remoteTime = remote.updatedAt || remote.createdAt;
+    const useRemote = compareTimestamps(localTime, remoteTime) < 0;
 
     // Merge each field
     for (const field of this.conflictableFields) {
@@ -341,15 +353,17 @@ export class ConflictResolver {
 
   /**
    * Resolves conflict using Last-Write-Wins strategy.
-   * The item with the most recent timestamp wins.
+   * The item with the most recent updatedAt timestamp wins.
+   * Falls back to createdAt if updatedAt is not available.
    *
    * @private
    */
   private resolveLastWriteWins(conflict: Conflict): GroceryItem {
-    const comparison = compareTimestamps(
-      conflict.local.createdAt,
-      conflict.remote.createdAt
-    );
+    // Use updatedAt for recency comparison, fall back to createdAt
+    const localTime = conflict.local.updatedAt || conflict.local.createdAt;
+    const remoteTime = conflict.remote.updatedAt || conflict.remote.createdAt;
+
+    const comparison = compareTimestamps(localTime, remoteTime);
 
     if (comparison > 0) {
       return { ...conflict.local };
@@ -670,12 +684,12 @@ export function createConflictResolver(): ConflictResolver {
  *
  *   describe('resolveConflict', () => {
  *     it('should resolve using last-write-wins strategy', () => {
- *       const local = { ...baseItem, quantity: 2, createdAt: 2000 };
- *       const remote = { ...baseItem, quantity: 3, createdAt: 1000 };
+ *       const local = { ...baseItem, quantity: 2, updatedAt: 2000 };
+ *       const remote = { ...baseItem, quantity: 3, updatedAt: 1000 };
  *       const conflict = resolver.detectConflict(local, remote);
  *
  *       const resolved = resolver.resolveConflict(conflict!, 'last-write-wins');
- *       expect(resolved.quantity).toBe(2); // Local is newer
+ *       expect(resolved.quantity).toBe(2); // Local is newer (more recent updatedAt)
  *     });
  *
  *     it('should resolve using prefer-local strategy', () => {
@@ -719,13 +733,13 @@ export function createConflictResolver(): ConflictResolver {
  *     });
  *
  *     it('should auto-resolve when timestamps differ significantly', () => {
- *       const local = { ...baseItem, quantity: 2, createdAt: 1000 };
- *       const remote = { ...baseItem, quantity: 3, createdAt: 1000 + 10 * 60 * 1000 };
+ *       const local = { ...baseItem, quantity: 2, updatedAt: 1000 };
+ *       const remote = { ...baseItem, quantity: 3, updatedAt: 1000 + 10 * 60 * 1000 };
  *       const conflict = resolver.detectConflict(local, remote);
  *
  *       const resolved = resolver.autoResolve(conflict!);
  *       expect(resolved).not.toBeNull();
- *       expect(resolved?.quantity).toBe(3); // Remote is newer
+ *       expect(resolved?.quantity).toBe(3); // Remote is newer (more recent updatedAt)
  *     });
  *
  *     it('should return null for name conflicts', () => {

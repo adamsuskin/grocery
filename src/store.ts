@@ -43,7 +43,16 @@ export class GroceryStore {
     if (stored) {
       try {
         const items: GroceryItem[] = JSON.parse(stored);
-        this.items = new Map(items.map((item) => [item.id, item]));
+        // Ensure backward compatibility: add updatedAt if missing
+        this.items = new Map(
+          items.map((item) => [
+            item.id,
+            {
+              ...item,
+              updatedAt: item.updatedAt ?? item.createdAt ?? Date.now(),
+            },
+          ])
+        );
       } catch (e) {
         console.error('Failed to load items:', e);
       }
@@ -76,6 +85,7 @@ export class GroceryStore {
 
   addItem(name: string, quantity: number, category: string = 'Other', notes: string = '', userId: string = 'demo-user', listId: string = ''): string {
     const id = generateId();
+    const now = Date.now();
     const item: GroceryItem = {
       id,
       name,
@@ -85,7 +95,8 @@ export class GroceryStore {
       notes,
       userId,
       listId,
-      createdAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     };
     this.items.set(id, item);
     this.save();
@@ -96,7 +107,7 @@ export class GroceryStore {
   markItemGotten(id: string, gotten: boolean): void {
     const item = this.items.get(id);
     if (item) {
-      this.items.set(id, { ...item, gotten });
+      this.items.set(id, { ...item, gotten, updatedAt: Date.now() });
       this.save();
       this.notifyListeners();
     }
