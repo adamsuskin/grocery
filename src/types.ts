@@ -30,3 +30,23 @@ export interface UpdateItemInput {
   id: string;
   gotten: boolean;
 }
+
+// Filter types
+export interface FilterState {
+  searchText: string;
+  showGotten: boolean;
+}
+
+export interface FilterOptions {
+  searchText?: string;
+  showGotten?: boolean;
+}
+
+export type FilterChangeHandler = (filters: Partial<FilterState>) => void;
+
+export interface FilterBarProps {
+  filters: FilterState;
+  onChange: FilterChangeHandler;
+  totalCount: number;
+  filteredCount: number;
+}

@@ -8,6 +8,9 @@ A collaborative grocery list application built with React, TypeScript, and Vite.
 - ✅ **Mark as Gotten**: Toggle items as gotten/not gotten
 - ✅ **Delete Items**: Remove items from the list
 - ✅ **View List**: See all items sorted by creation time (newest first)
+- 🔍 **Search**: Search for items by name with real-time filtering
+- 🎛️ **Filter**: Toggle visibility of gotten items
+- 📊 **Results Counter**: See the number of items matching your filters
 - 🔄 **Real-time Sync**: Changes sync automatically across all devices and users
 - 💾 **Persistent**: Data stored in PostgreSQL with local caching
 - 📱 **Responsive**: Works on desktop and mobile
@@ -124,6 +127,32 @@ Click the checkbox next to an item to toggle its "gotten" status. Gotten items w
 ### Deleting Items
 
 Click the trash icon (🗑️) next to an item to delete it. A confirmation dialog will appear.
+
+### Search and Filter
+
+The app includes powerful search and filter capabilities to help you quickly find items:
+
+**Search by Name:**
+- Type in the search box at the top of the list to filter items by name
+- Search is case-insensitive and matches partial names
+- Results update in real-time as you type (debounced for performance)
+- Clear the search box to show all items again
+
+**Show/Hide Gotten Items:**
+- Use the "Hide gotten items" toggle to filter out items you've already gotten
+- Checked: Only shows items that haven't been gotten yet
+- Unchecked: Shows all items (both gotten and not gotten)
+
+**Filter Combinations:**
+- Search and the gotten items filter work together
+- For example, you can search for "apple" while hiding gotten items to find only apples you still need to buy
+- The results counter shows how many items match your current filters (e.g., "Showing 3 of 10 items")
+
+**Results Counter:**
+- Displays at the top of the list when filters are active
+- Shows the number of visible items vs. total items
+- Updates automatically as you add, remove, or modify items
+- Helps you quickly see how many items match your search and filter criteria
 
 ### Real-Time Collaboration
 
