@@ -1,12 +1,12 @@
 /**
  * Activities routes
- * API endpoints for list activity retrieval
+ * API endpoints for list activity retrieval and creation
  */
 
 import { Router } from 'express';
-import { getListActivities } from './controller';
+import { getListActivities, createActivity } from './controller';
 import { authenticateToken } from '../auth/middleware';
-import { checkListViewer } from '../middleware/listPermissions';
+import { checkListViewer, checkListEditor } from '../middleware/listPermissions';
 import { validateIdParam } from '../middleware/validateRequest';
 import { asyncHandler } from '../middleware/errorHandler';
 
@@ -30,6 +30,22 @@ router.get(
   validateIdParam('id'),
   checkListViewer,
   asyncHandler(getListActivities)
+);
+
+/**
+ * @route   POST /api/lists/:id/activities
+ * @desc    Create a new activity for a list
+ * @access  Private (must be list editor or owner)
+ * @param   id - List UUID
+ * @body    { action: ActivityAction, details?: Record<string, any> }
+ * @returns { success: boolean, data: { id: string } }
+ */
+router.post(
+  '/:id/activities',
+  authenticateToken,
+  validateIdParam('id'),
+  checkListEditor,
+  asyncHandler(createActivity)
 );
 
 export default router;

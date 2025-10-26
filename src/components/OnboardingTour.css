@@ -319,3 +319,84 @@
   position: relative;
   z-index: 10001;
 }
+
+/* Custom Categories Tour Specific Styles */
+.custom-categories-tour .tour-tooltip-actions {
+  flex-direction: column;
+  gap: 12px;
+}
+
+.custom-categories-tour .tour-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+}
+
+.custom-categories-tour .tour-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #6b7280;
+  cursor: pointer;
+  user-select: none;
+}
+
+.custom-categories-tour .tour-checkbox input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.custom-categories-tour .tour-checkbox span {
+  white-space: nowrap;
+}
+
+.custom-categories-tour .tour-navigation {
+  width: 100%;
+  justify-content: flex-end;
+}
+
+/* Allow interaction with highlighted elements */
+.custom-categories-tour .tour-highlight.interactive {
+  pointer-events: none;
+}
+
+/* Highlight color variation for custom categories tour */
+.custom-categories-tour .tour-highlight {
+  border-color: #8b5cf6;
+}
+
+@keyframes customCategoriesHighlightPulse {
+  0%, 100% {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 20px rgba(139, 92, 246, 0.5);
+  }
+  50% {
+    border-color: #a78bfa;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6), 0 0 30px rgba(139, 92, 246, 0.8);
+  }
+}
+
+.custom-categories-tour .tour-highlight {
+  animation: customCategoriesHighlightPulse 2s ease-in-out infinite;
+}
+
+/* Mobile responsive adjustments for custom categories tour */
+@media (max-width: 600px) {
+  .custom-categories-tour .tour-options {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .custom-categories-tour .tour-checkbox {
+    order: -1;
+    margin-bottom: 8px;
+  }
+
+  .custom-categories-tour .tour-btn-skip {
+    width: 100%;
+  }
+}

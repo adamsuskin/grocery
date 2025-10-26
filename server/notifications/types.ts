@@ -31,6 +31,22 @@ export enum NotificationType {
 
   // Sync events
   SYNC_CONFLICT = 'sync_conflict',
+
+  // Category events
+  CATEGORY_CREATED = 'category_created',
+  CATEGORY_EDITED = 'category_edited',
+  CATEGORY_DELETED = 'category_deleted',
+  CATEGORY_LOCKED = 'category_locked',
+  CATEGORY_UNLOCKED = 'category_unlocked',
+
+  // Category suggestion events
+  CATEGORY_SUGGESTED = 'category_suggested',
+  CATEGORY_SUGGESTION_APPROVED = 'category_suggestion_approved',
+  CATEGORY_SUGGESTION_REJECTED = 'category_suggestion_rejected',
+
+  // Category discussion events
+  CATEGORY_COMMENT_ADDED = 'category_comment_added',
+  CATEGORY_VOTED = 'category_voted',
 }
 
 /**
@@ -128,6 +144,36 @@ export interface ConflictNotificationData {
   listName: string;
   itemId: string;
   itemName: string;
+}
+
+export interface CategoryNotificationData {
+  listId: string;
+  listName: string;
+  categoryName: string;
+  categoryId: string;
+  actorName: string;
+  actorId: string;
+}
+
+export interface CategorySuggestionNotificationData {
+  listId: string;
+  listName: string;
+  suggestionId: string;
+  categoryName: string;
+  suggestedBy: string;
+  suggesterName: string;
+  reviewedBy?: string;
+  reviewerName?: string;
+}
+
+export interface CategoryCommentNotificationData {
+  listId: string;
+  listName: string;
+  categoryId: string;
+  categoryName: string;
+  commentText: string;
+  actorName: string;
+  actorId: string;
 }
 
 /**

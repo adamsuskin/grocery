@@ -15,6 +15,8 @@ export type ActivityAction =
   | 'list_created'
   | 'list_renamed'
   | 'list_deleted'
+  | 'list_archived'
+  | 'list_unarchived'
   | 'list_shared'
   | 'member_added'
   | 'member_removed'
@@ -26,7 +28,13 @@ export type ActivityAction =
   | 'item_checked'
   | 'item_unchecked'
   | 'items_cleared'
-  | 'items_bulk_deleted';
+  | 'items_bulk_deleted'
+  | 'category_created'
+  | 'category_updated'
+  | 'category_archived'
+  | 'category_restored'
+  | 'category_deleted'
+  | 'category_merged';
 
 /**
  * Activity entity
@@ -146,6 +154,81 @@ export async function logActivity(
 }
 
 /**
+ * Create a new activity entry
+ * @route POST /api/lists/:id/activities
+ */
+export async function createActivity(req: AuthRequest, res: Response): Promise<void> {
+  const { id } = req.params;
+  const userId = req.user!.userId;
+  const { action, details } = req.body;
+
+  // Validate action
+  const validActions: ActivityAction[] = [
+    'list_created',
+    'list_renamed',
+    'list_deleted',
+    'list_archived',
+    'list_unarchived',
+    'list_shared',
+    'member_added',
+    'member_removed',
+    'member_permission_changed',
+    'ownership_transferred',
+    'item_added',
+    'item_updated',
+    'item_deleted',
+    'item_checked',
+    'item_unchecked',
+    'items_cleared',
+    'items_bulk_deleted',
+    'category_created',
+    'category_updated',
+    'category_archived',
+    'category_restored',
+    'category_deleted',
+    'category_merged',
+  ];
+
+  if (!action || !validActions.includes(action)) {
+    res.status(400).json({
+      success: false,
+      message: 'Invalid activity action',
+    });
+    return;
+  }
+
+  // Check if list exists
+  const listResult = await pool.query(
+    'SELECT * FROM lists WHERE id = $1',
+    [id]
+  );
+
+  if (listResult.rows.length === 0) {
+    throw new NotFoundError('List not found');
+  }
+
+  // Check if user has access to the list
+  const memberResult = await pool.query(
+    'SELECT * FROM list_members WHERE list_id = $1 AND user_id = $2',
+    [id, userId]
+  );
+
+  if (memberResult.rows.length === 0) {
+    throw new NotFoundError('You do not have access to this list');
+  }
+
+  // Log the activity
+  const activityId = await logActivity(id, userId, action, details);
+
+  res.status(201).json({
+    success: true,
+    data: {
+      id: activityId,
+    },
+  });
+}
+
+/**
  * Format activity message for display
  * This creates human-readable messages for activities
  */
@@ -197,6 +280,29 @@ export function formatActivityMessage(activity: ActivityWithUser): string {
 
     case 'items_bulk_deleted':
       return `${userName} deleted ${activity.details?.count} items`;
+
+    case 'category_created':
+      return `${userName} created category "${activity.details?.category_name}"`;
+
+    case 'category_updated':
+      if (activity.details?.changes && Array.isArray(activity.details.changes)) {
+        const changeFields = activity.details.changes.map((c: any) => c.field).join(', ');
+        return `${userName} updated category "${activity.details?.category_name}" (${changeFields})`;
+      }
+      return `${userName} updated category "${activity.details?.category_name}"`;
+
+    case 'category_archived':
+      return `${userName} archived category "${activity.details?.category_name}"`;
+
+    case 'category_restored':
+      return `${userName} restored category "${activity.details?.category_name}"`;
+
+    case 'category_deleted':
+      return `${userName} deleted category "${activity.details?.category_name}"`;
+
+    case 'category_merged':
+      const sourceCount = activity.details?.source_categories?.length || 0;
+      return `${userName} merged ${sourceCount} categories into "${activity.details?.category_name}"`;
 
     default:
       return `${userName} performed an action`;

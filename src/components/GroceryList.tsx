@@ -79,6 +79,7 @@ export function GroceryList({ listId, canEdit, filters, onFilterChange, sort, on
         onChange={onFilterChange}
         totalCount={totalCount}
         filteredCount={filteredCount}
+        listId={listId}
       />
 
       <SortControls sort={sort} onChange={onSortChange} />

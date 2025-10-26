@@ -504,3 +504,120 @@ export async function notifyListMembers(
     return { success: false, sent: 0, failed: 0 };
   }
 }
+
+/**
+ * Helper: Create notification for category events
+ */
+export function createCategoryNotification(
+  type: NotificationType,
+  data: any
+): NotificationPayload {
+  let title = '';
+  let body = '';
+
+  switch (type) {
+    case NotificationType.CATEGORY_CREATED:
+      title = `New category in ${data.listName}`;
+      body = `${data.actorName} created category "${data.categoryName}"`;
+      break;
+    case NotificationType.CATEGORY_EDITED:
+      title = `Category updated in ${data.listName}`;
+      body = `${data.actorName} edited category "${data.categoryName}"`;
+      break;
+    case NotificationType.CATEGORY_DELETED:
+      title = `Category removed from ${data.listName}`;
+      body = `${data.actorName} deleted category "${data.categoryName}"`;
+      break;
+    case NotificationType.CATEGORY_LOCKED:
+      title = `Category locked in ${data.listName}`;
+      body = `${data.actorName} locked category "${data.categoryName}"`;
+      break;
+    case NotificationType.CATEGORY_UNLOCKED:
+      title = `Category unlocked in ${data.listName}`;
+      body = `${data.actorName} unlocked category "${data.categoryName}"`;
+      break;
+    default:
+      title = `Category update in ${data.listName}`;
+      body = `${data.actorName} made changes to "${data.categoryName}"`;
+  }
+
+  return {
+    type,
+    title,
+    body,
+    icon: '/icon-192.png',
+    badge: '/badge-72.png',
+    tag: `category-${data.categoryId}`,
+    data: {
+      listId: data.listId,
+      categoryId: data.categoryId,
+      actorId: data.actorId,
+    },
+  };
+}
+
+/**
+ * Helper: Create notification for category suggestion events
+ */
+export function createCategorySuggestionNotification(
+  type: NotificationType,
+  data: any
+): NotificationPayload {
+  let title = '';
+  let body = '';
+
+  switch (type) {
+    case NotificationType.CATEGORY_SUGGESTED:
+      title = `New category suggestion in ${data.listName}`;
+      body = `${data.suggesterName} suggested category "${data.categoryName}"`;
+      break;
+    case NotificationType.CATEGORY_SUGGESTION_APPROVED:
+      title = `Category suggestion approved`;
+      body = `Your suggestion "${data.categoryName}" was approved for ${data.listName}`;
+      break;
+    case NotificationType.CATEGORY_SUGGESTION_REJECTED:
+      title = `Category suggestion declined`;
+      body = `Your suggestion "${data.categoryName}" was not approved for ${data.listName}`;
+      break;
+    default:
+      title = `Category suggestion update`;
+      body = `Update on your category suggestion "${data.categoryName}"`;
+  }
+
+  return {
+    type,
+    title,
+    body,
+    icon: '/icon-192.png',
+    badge: '/badge-72.png',
+    tag: `suggestion-${data.suggestionId}`,
+    data: {
+      listId: data.listId,
+      suggestionId: data.suggestionId,
+      suggestedBy: data.suggestedBy,
+      reviewedBy: data.reviewedBy,
+    },
+    requireInteraction: type === NotificationType.CATEGORY_SUGGESTED,
+  };
+}
+
+/**
+ * Helper: Create notification for category comment events
+ */
+export function createCategoryCommentNotification(
+  data: any
+): NotificationPayload {
+  return {
+    type: NotificationType.CATEGORY_COMMENT_ADDED,
+    title: `New comment on category "${data.categoryName}"`,
+    body: `${data.actorName}: ${data.commentText.substring(0, 100)}${data.commentText.length > 100 ? '...' : ''}`,
+    icon: '/icon-192.png',
+    badge: '/badge-72.png',
+    tag: `category-comment-${data.categoryId}`,
+    data: {
+      listId: data.listId,
+      categoryId: data.categoryId,
+      actorId: data.actorId,
+    },
+  };
+}

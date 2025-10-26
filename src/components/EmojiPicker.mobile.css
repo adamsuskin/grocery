@@ -1,0 +1,345 @@
+/* Mobile-optimized Emoji Picker */
+
+.emoji-picker-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+/* Label */
+.emoji-picker-label-mobile {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-color);
+  display: block;
+}
+
+.optional-text {
+  font-weight: 400;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Input row */
+.emoji-picker-input-row-mobile {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Emoji preview */
+.emoji-preview-mobile {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+  background: #f9f9f9;
+  flex-shrink: 0;
+}
+
+.emoji-character-mobile {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.emoji-placeholder-mobile {
+  font-size: 24px;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* Text input wrapper */
+.emoji-input-wrapper-mobile {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.emoji-input-mobile {
+  width: 100%;
+  padding: 14px 48px 14px 16px; /* Space for clear button */
+  font-size: 16px; /* Prevent iOS zoom */
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  outline: none;
+  transition: all 0.2s;
+  background: white;
+  min-height: 48px;
+  box-sizing: border-box;
+}
+
+.emoji-input-mobile:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+}
+
+.emoji-input-mobile:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Clear button */
+.emoji-clear-btn-mobile {
+  position: absolute;
+  right: 52px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+  line-height: 1;
+}
+
+.emoji-clear-btn-mobile:active {
+  background-color: #e0e0e0;
+  color: var(--text-color);
+  transform: scale(0.9);
+}
+
+/* Toggle grid button */
+.emoji-toggle-btn-mobile {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 2px solid var(--border-color);
+  background: white;
+  color: var(--text-color);
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.emoji-toggle-btn-mobile:active {
+  background: #f5f5f5;
+  transform: scale(0.95);
+}
+
+.emoji-toggle-btn-mobile:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Emoji grid (collapsible) */
+.emoji-grid-mobile {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  padding: 16px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  animation: slideDown 0.2s ease-out;
+  max-height: 280px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 280px;
+  }
+}
+
+/* Emoji button */
+.emoji-btn-mobile {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  min-height: 52px; /* Touch target */
+  min-width: 52px;
+}
+
+.emoji-btn-mobile:active {
+  background: #fff;
+  border-color: var(--primary-color);
+  transform: scale(0.92);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.emoji-btn-mobile.selected {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+  transform: scale(1.05);
+}
+
+.emoji-btn-mobile:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+/* Tablet responsive */
+@media (min-width: 600px) and (max-width: 1024px) {
+  .emoji-grid-mobile {
+    grid-template-columns: repeat(8, 1fr);
+  }
+
+  .emoji-preview-mobile {
+    width: 72px;
+    height: 72px;
+  }
+
+  .emoji-character-mobile {
+    font-size: 36px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 400px) {
+  .emoji-grid-mobile {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .emoji-btn-mobile {
+    font-size: 24px;
+  }
+
+  .emoji-preview-mobile {
+    width: 56px;
+    height: 56px;
+  }
+
+  .emoji-character-mobile {
+    font-size: 28px;
+  }
+}
+
+/* Touch-optimized for devices without hover */
+@media (hover: none) and (pointer: coarse) {
+  .emoji-btn-mobile {
+    min-height: 56px;
+    min-width: 56px;
+  }
+
+  .emoji-toggle-btn-mobile,
+  .emoji-input-mobile {
+    min-height: 52px;
+  }
+
+  .emoji-preview-mobile {
+    min-width: 64px;
+    min-height: 64px;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .emoji-btn-mobile {
+    border-width: 3px;
+  }
+
+  .emoji-btn-mobile.selected {
+    border-width: 3px;
+  }
+
+  .emoji-preview-mobile {
+    border-width: 3px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .emoji-grid-mobile {
+    animation: none;
+  }
+
+  .emoji-btn-mobile,
+  .emoji-toggle-btn-mobile,
+  .emoji-input-mobile,
+  .emoji-clear-btn-mobile {
+    transition: none;
+  }
+
+  .emoji-btn-mobile:active,
+  .emoji-toggle-btn-mobile:active {
+    transform: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .emoji-preview-mobile,
+  .emoji-grid-mobile {
+    background: #2a2a2a;
+    border-color: #444;
+  }
+
+  .emoji-btn-mobile {
+    background: #333;
+  }
+
+  .emoji-input-mobile {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+
+  .emoji-toggle-btn-mobile {
+    background: #2a2a2a;
+    border-color: #444;
+    color: #e0e0e0;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  .emoji-picker-mobile {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}
+
+/* Scrollbar styling for mobile */
+.emoji-grid-mobile::-webkit-scrollbar {
+  width: 6px;
+}
+
+.emoji-grid-mobile::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.emoji-grid-mobile::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+}
+
+.emoji-grid-mobile::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}

@@ -543,9 +543,17 @@ export function useGroceryItems(listId?: string, filters?: FilterState, sort?: S
         );
       }
 
-      // Filter by categories (show only selected categories)
+      // Filter by categories with advanced modes
       if (filters.categories && filters.categories.length > 0) {
-        items = items.filter(item => filters.categories.includes(item.category));
+        const categoryMode = filters.categoryMode || 'include';
+
+        if (categoryMode === 'include') {
+          // Include only items in selected categories
+          items = items.filter(item => filters.categories.includes(item.category));
+        } else if (categoryMode === 'exclude') {
+          // Exclude items in selected categories
+          items = items.filter(item => !filters.categories.includes(item.category));
+        }
       }
     }
 
@@ -921,6 +929,39 @@ export function useListMembers(listId: string) {
 }
 
 /**
+ * React hook to get custom categories for a specific list
+ *
+ * @param listId - The ID of the list to get custom categories for
+ * @returns Array of custom category names for the list
+ *
+ * @example
+ * ```typescript
+ * const customCategories = useCustomCategories('list-123');
+ * ```
+ */
+export function useCustomCategories(listId: string | null) {
+  const zero = getZeroInstance();
+
+  // Return empty array if no listId provided
+  const query = listId
+    ? zero.query.custom_categories.where('list_id', listId)
+    : null;
+
+  const categoriesQuery = useQuery(query as any);
+
+  // Map to category names sorted by creation date
+  const customCategories: string[] = useMemo(() => {
+    if (!listId || !categoriesQuery) return [];
+
+    return (categoriesQuery as any[])
+      .sort((a, b) => a.createdAt - b.createdAt)
+      .map(cat => cat.name);
+  }, [listId, categoriesQuery]);
+
+  return customCategories;
+}
+
+/**
  * React hook for list mutations
  * Provides functions for creating, updating, and deleting lists
  *
@@ -980,16 +1021,42 @@ export function useListMutations() {
    * @param items - Array of items to add to the list
    * @param color - Optional color for the list
    * @param icon - Optional icon for the list
+   * @param customCategories - Optional array of custom categories to create for this list
    * @returns The ID of the newly created list
    */
   const createListFromTemplate = async (
     name: string,
     items: Array<{ name: string; quantity: number; category: string; notes?: string }>,
     color?: string,
-    icon?: string
+    icon?: string,
+    customCategories?: Array<{ name: string; color?: string; icon?: string }>
   ): Promise<string> => {
     // Create the list
     const listId = await createList(name, color, icon);
+
+    // Create custom categories if provided
+    if (customCategories && customCategories.length > 0) {
+      const now = Date.now();
+      const categoryPromises = customCategories.map((category, index) =>
+        zero.mutate.custom_categories.create({
+          id: nanoid(),
+          name: category.name,
+          list_id: listId,
+          created_by: currentUserId,
+          color: category.color || '',
+          icon: category.icon || '',
+          createdAt: now + index,
+          updatedAt: now + index,
+        })
+      );
+
+      try {
+        await Promise.all(categoryPromises);
+      } catch (error) {
+        console.error('[createListFromTemplate] Error creating custom categories:', error);
+        // Continue even if custom category creation fails
+      }
+    }
 
     // Add all items to the list
     const now = Date.now();

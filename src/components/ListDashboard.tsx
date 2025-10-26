@@ -118,6 +118,12 @@ export function ListDashboard({ onSelectList }: ListDashboardProps) {
     }
   };
 
+  const handleManageCategories = (listId: string) => {
+    // Navigate to list view where CustomCategoryManager modal can be opened
+    // For now, just show a placeholder alert
+    alert('Manage Categories feature will open the CustomCategoryManager modal. This requires integration with the list view.');
+  };
+
   return (
     <div className="list-dashboard">
       <div className="dashboard-header">
@@ -251,6 +257,7 @@ export function ListDashboard({ onSelectList }: ListDashboardProps) {
                 onDuplicate={handleDuplicateList}
                 onArchive={handleArchiveList}
                 onPin={handlePinList}
+                onManageCategories={handleManageCategories}
               />
             ))}
           </div>
@@ -276,6 +283,7 @@ export function ListDashboard({ onSelectList }: ListDashboardProps) {
                 onDuplicate={handleDuplicateList}
                 onArchive={handleArchiveList}
                 onPin={handlePinList}
+                onManageCategories={handleManageCategories}
               />
             ))}
           </div>
@@ -313,9 +321,10 @@ interface ListCardProps {
   onDuplicate?: (listId: string) => void;
   onArchive?: (listId: string) => void;
   onPin?: (listId: string, isPinned: boolean) => void;
+  onManageCategories?: (listId: string) => void;
 }
 
-function ListCard({ list, currentUserId, isPinned, onSelect, onExport, onShare, onDuplicate, onArchive, onPin }: ListCardProps) {
+function ListCard({ list, currentUserId, isPinned, onSelect, onExport, onShare, onDuplicate, onArchive, onPin, onManageCategories }: ListCardProps) {
   // Ensure list has required properties for ListActions
   const normalizedList = {
     ...list,
@@ -390,6 +399,7 @@ function ListCard({ list, currentUserId, isPinned, onSelect, onExport, onShare, 
           onDuplicate={onDuplicate}
           onArchive={onArchive}
           onPin={onPin}
+          onManageCategories={onManageCategories}
         />
       </div>
 

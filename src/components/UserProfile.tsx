@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { resetOnboardingTour } from '../hooks/useOnboardingTour';
+import { resetAllCustomCategoriesTours } from '../hooks/useCustomCategoriesTour';
 import { PeriodicSyncSettings } from './PeriodicSyncSettings';
 import './UserProfile.css';
 
@@ -150,9 +151,19 @@ export function UserProfile({ onShowTour }: UserProfileProps = {}) {
                           onShowTour();
                         }}
                       >
-                        Show Onboarding Tour
+                        Replay Onboarding Tour
                       </button>
                     )}
+                    <button
+                      className="btn-profile-action btn-profile-tour"
+                      onClick={() => {
+                        resetAllCustomCategoriesTours();
+                        setShowProfileModal(false);
+                        alert('Custom categories tours have been reset. They will show again when you open the category manager or add items.');
+                      }}
+                    >
+                      Replay Custom Categories Tours
+                    </button>
                     <button
                       className="btn-profile-action btn-profile-logout"
                       onClick={handleLogout}

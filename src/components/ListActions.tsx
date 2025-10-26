@@ -13,6 +13,8 @@ export interface ListActionsProps {
   onDuplicate?: (listId: string) => void;
   onArchive?: (listId: string) => void;
   onPin?: (listId: string, isPinned: boolean) => void;
+  onManageCategories?: (listId: string) => void;
+  onViewStatistics?: (listId: string) => void;
 }
 
 /**
@@ -21,7 +23,7 @@ export interface ListActionsProps {
  * Provides a dropdown menu with quick actions for managing lists.
  * Actions are shown based on user permissions:
  * - Owner: All actions available
- * - Editor: Limited actions (pin, export, share)
+ * - Editor: Limited actions (pin, export, share, manage categories)
  * - Viewer: Read-only actions (pin, export)
  *
  * Actions:
@@ -30,6 +32,7 @@ export interface ListActionsProps {
  * - Archive: Hide list from main view
  * - Export: Export list to various formats
  * - Share: Manage list sharing and permissions
+ * - Manage Categories: Customize categories for the list (owner/editor only)
  * - Delete: Permanently remove list (owner only)
  */
 export function ListActions({
@@ -42,6 +45,8 @@ export function ListActions({
   onDuplicate,
   onArchive,
   onPin,
+  onManageCategories,
+  onViewStatistics,
 }: ListActionsProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -166,6 +171,20 @@ export function ListActions({
     }
   };
 
+  const handleManageCategories = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onManageCategories) {
+      handleAction(() => onManageCategories(list.id));
+    }
+  };
+
+  const handleViewStatistics = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onViewStatistics) {
+      handleAction(() => onViewStatistics(list.id));
+    }
+  };
+
   return (
     <div className="list-actions" onClick={(e) => e.stopPropagation()}>
       <button
@@ -263,6 +282,52 @@ export function ListActions({
               <span>Share List</span>
             </button>
           )}
+
+          {/* Manage Categories - Editor and Owner */}
+          {(canEdit || isOwner) && (
+            <button
+              className="list-action-item"
+              onClick={handleManageCategories}
+              role="menuitem"
+              disabled={loading || !onManageCategories}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+                <line x1="7" y1="7" x2="7.01" y2="7" />
+              </svg>
+              <span>Manage Categories</span>
+            </button>
+          )}
+
+          {/* View Statistics - All users */}
+          <button
+            className="list-action-item"
+            onClick={handleViewStatistics}
+            role="menuitem"
+            disabled={loading || !onViewStatistics}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M3 3v18h18" />
+              <path d="M18 17V9" />
+              <path d="M13 17V5" />
+              <path d="M8 17v-3" />
+            </svg>
+            <span>View Statistics</span>
+          </button>
 
           <div className="list-action-divider" />
 

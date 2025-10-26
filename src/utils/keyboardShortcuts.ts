@@ -10,16 +10,20 @@ export type ShortcutKey =
   | 'ctrl+s'
   | 'ctrl+l'
   | 'ctrl+r'
+  | 'ctrl+k'
+  | 'ctrl+shift+c'
   | 'escape'
   | '?'
   | 'arrowup'
   | 'arrowdown'
-  | 'enter';
+  | 'enter'
+  | 'delete'
+  | 'backspace';
 
 export interface KeyboardShortcut {
   key: ShortcutKey;
   description: string;
-  category: 'List Operations' | 'Navigation' | 'General' | 'Sync';
+  category: 'List Operations' | 'Navigation' | 'General' | 'Sync' | 'Category Management';
   handler: () => void;
   enabled?: boolean;
   // Prevent default browser behavior
@@ -39,10 +43,15 @@ export function getShortcutKey(event: KeyboardEvent): ShortcutKey | null {
 
   // Check for modifier combinations
   if (event.ctrlKey || event.metaKey) {
+    // Ctrl+Shift combinations
+    if (event.shiftKey && key === 'c') return 'ctrl+shift+c';
+
+    // Ctrl combinations
     if (key === 'n') return 'ctrl+n';
     if (key === 's') return 'ctrl+s';
     if (key === 'l') return 'ctrl+l';
     if (key === 'r') return 'ctrl+r';
+    if (key === 'k') return 'ctrl+k';
   }
 
   // Single keys
@@ -51,6 +60,8 @@ export function getShortcutKey(event: KeyboardEvent): ShortcutKey | null {
   if (key === 'arrowup') return 'arrowup';
   if (key === 'arrowdown') return 'arrowdown';
   if (key === 'enter') return 'enter';
+  if (key === 'delete') return 'delete';
+  if (key === 'backspace') return 'backspace';
 
   return null;
 }
@@ -117,6 +128,7 @@ export function createShortcutHandler(config: ShortcutConfig) {
 export function formatShortcutKey(key: ShortcutKey): string {
   const isMac = typeof navigator !== 'undefined' && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
   const ctrlKey = isMac ? '⌘' : 'Ctrl';
+  const shiftKey = isMac ? '⇧' : 'Shift';
 
   switch (key) {
     case 'ctrl+n':
@@ -125,6 +137,12 @@ export function formatShortcutKey(key: ShortcutKey): string {
       return `${ctrlKey}+S`;
     case 'ctrl+l':
       return `${ctrlKey}+L`;
+    case 'ctrl+r':
+      return `${ctrlKey}+R`;
+    case 'ctrl+k':
+      return `${ctrlKey}+K`;
+    case 'ctrl+shift+c':
+      return `${ctrlKey}+${shiftKey}+C`;
     case 'escape':
       return 'Esc';
     case '?':
@@ -135,6 +153,10 @@ export function formatShortcutKey(key: ShortcutKey): string {
       return '↓';
     case 'enter':
       return 'Enter';
+    case 'delete':
+      return 'Del';
+    case 'backspace':
+      return isMac ? '⌫' : 'Backspace';
     default:
       return key;
   }
@@ -207,6 +229,10 @@ export function getShortcutTooltip(shortcut: ShortcutKey): string {
       return `${formatted} - Share current list`;
     case 'ctrl+l':
       return `${formatted} - Open list selector`;
+    case 'ctrl+k':
+      return `${formatted} - Manage categories`;
+    case 'ctrl+shift+c':
+      return `${formatted} - Focus category dropdown`;
     case 'escape':
       return `${formatted} - Close modal`;
     case '?':
@@ -215,7 +241,10 @@ export function getShortcutTooltip(shortcut: ShortcutKey): string {
     case 'arrowdown':
       return `${formatted} - Navigate list`;
     case 'enter':
-      return `${formatted} - Select item`;
+      return `${formatted} - Select/Submit`;
+    case 'delete':
+    case 'backspace':
+      return `${formatted} - Delete selected item`;
     default:
       return formatted;
   }

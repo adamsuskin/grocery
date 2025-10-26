@@ -1,17 +1,56 @@
 import { useState, memo } from 'react';
-import type { GroceryItem as GroceryItemType } from '../types';
+import type { GroceryItem as GroceryItemType, PermissionLevel } from '../types';
 import { useGroceryMutations } from '../hooks/useGroceryItems';
+import { useCustomCategories } from '../hooks/useCustomCategories';
+import { CATEGORIES } from '../types';
+import { CategoryContextMenu, type CategoryAction } from './CategoryContextMenu';
+import { useLongPress } from '../hooks/useLongPress';
 
 interface GroceryItemProps {
   item: GroceryItemType;
   canEdit: boolean;
+  userPermission?: PermissionLevel;
 }
 
-export const GroceryItem = memo(function GroceryItem({ item, canEdit }: GroceryItemProps) {
+/**
+ * Calculate contrast color (white or black) based on background color
+ * for optimal readability
+ */
+function getContrastColor(hexColor: string): string {
+  // Remove # if present
+  const hex = hexColor.replace('#', '');
+
+  // Convert to RGB
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  // Calculate relative luminance
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+  // Return black for light backgrounds, white for dark backgrounds
+  return luminance > 0.5 ? '#000000' : '#FFFFFF';
+}
+
+export const GroceryItem = memo(function GroceryItem({ item, canEdit, userPermission = 'viewer' }: GroceryItemProps) {
   const { markItemGotten, deleteItem, updateItem } = useGroceryMutations();
   const [showNotes, setShowNotes] = useState(false);
   const [isEditingPrice, setIsEditingPrice] = useState(false);
   const [priceInput, setPriceInput] = useState(item.price?.toFixed(2) || '');
+  const [contextMenu, setContextMenu] = useState<{
+    position: { x: number; y: number };
+  } | null>(null);
+
+  // Get custom categories for this list
+  const customCategories = useCustomCategories(item.listId);
+
+  // Check if this is a predefined category or custom category
+  const isPredefinedCategory = CATEGORIES.includes(item.category as any);
+
+  // Find custom category data if it exists
+  const categoryObj = customCategories.find(c => c.name === item.category);
+  const categoryColor = categoryObj?.color;
+  const categoryIcon = categoryObj?.icon;
 
   const handleToggleGotten = () => {
     if (!canEdit) return;
@@ -68,6 +107,42 @@ export const GroceryItem = memo(function GroceryItem({ item, canEdit }: GroceryI
     return formatPrice(total);
   };
 
+  const handleCategoryContextMenu = (e: React.MouseEvent) => {
+    // Only show context menu if there's a custom category
+    if (!categoryObj) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu({
+      position: { x: e.clientX, y: e.clientY },
+    });
+  };
+
+  const handleContextMenuAction = (action: CategoryAction) => {
+    // For now, these actions would need to be handled by a parent component
+    // or we'd need to add callbacks to the props
+    console.log(`Category action: ${action} for category ${categoryObj?.name}`);
+
+    // You could add callbacks here or emit events
+    // For example: onCategoryAction?.(action, categoryObj);
+  };
+
+  // Long-press handlers for mobile
+  const categoryLongPressHandlers = useLongPress({
+    onLongPress: (e) => {
+      if (!categoryObj) return;
+
+      const touch = 'touches' in e ? e.touches[0] : e as React.MouseEvent;
+      const clientX = 'clientX' in touch ? touch.clientX : (e as any).clientX;
+      const clientY = 'clientY' in touch ? touch.clientY : (e as any).clientY;
+
+      setContextMenu({
+        position: { x: clientX, y: clientY },
+      });
+    },
+    delay: 500,
+  });
+
   return (
     <div className={`grocery-item ${item.gotten ? 'gotten' : ''} ${!canEdit ? 'read-only' : ''}`}>
       <div className="item-content">
@@ -81,7 +156,22 @@ export const GroceryItem = memo(function GroceryItem({ item, canEdit }: GroceryI
         />
         <div className="item-details">
           <span className="item-name">{item.name}</span>
-          <span className={`category-badge category-${item.category.toLowerCase()}`}>
+          <span
+            className={`category-badge ${isPredefinedCategory ? `category-${item.category.toLowerCase()}` : 'category-custom'}`}
+            style={
+              categoryColor
+                ? {
+                    backgroundColor: categoryColor,
+                    borderColor: categoryColor,
+                    color: getContrastColor(categoryColor),
+                  }
+                : undefined
+            }
+            onContextMenu={handleCategoryContextMenu}
+            {...(categoryObj ? categoryLongPressHandlers : {})}
+            title={categoryObj ? 'Right-click or long-press for category actions' : undefined}
+          >
+            {categoryIcon && <span className="category-icon">{categoryIcon}</span>}
             {item.category}
           </span>
           {item.notes && (
@@ -167,6 +257,16 @@ export const GroceryItem = memo(function GroceryItem({ item, canEdit }: GroceryI
       >
         🗑️
       </button>
+
+      {contextMenu && categoryObj && (
+        <CategoryContextMenu
+          category={categoryObj}
+          position={contextMenu.position}
+          onClose={() => setContextMenu(null)}
+          onAction={handleContextMenuAction}
+          userPermission={userPermission}
+        />
+      )}
     </div>
   );
 });

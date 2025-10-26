@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useAuth } from './context/AuthContext';
 import { useList } from './contexts/ListContext';
 import { useSyncStatus, useConflicts } from './contexts/SyncContext';
@@ -22,11 +22,13 @@ import { OnboardingTour } from './components/OnboardingTour';
 import { ListErrorBoundary } from './components/ListErrorBoundary';
 import { BudgetTracker } from './components/BudgetTracker';
 import { ShareTargetHandler } from './components/ShareTargetHandler';
-import { useListMutations, useGroceryItems } from './zero-store';
+import { CustomCategoryManager } from './components/CustomCategoryManager';
+import { useListMutations, useGroceryItems, useCustomCategories } from './zero-store';
 import { useOnboardingTour } from './hooks/useOnboardingTour';
 import type { FilterState, SortState, ListTemplate, PermissionLevel, ConflictResolution, GroceryItem } from './types';
 import { CATEGORIES } from './types';
 import { createShortcutHandler, type KeyboardShortcut } from './utils/keyboardShortcuts';
+import { getListFilters } from './utils/filterPreferences';
 import './App.css';
 
 type AuthView = 'login' | 'register';
@@ -54,11 +56,32 @@ function App() {
   const [authView, setAuthView] = useState<AuthView>('login');
   const [currentConflict, setCurrentConflict] = useState<ConflictData | null>(null);
 
-  const [filters, setFilters] = useState<FilterState>({
-    searchText: '',
-    showGotten: true,
-    categories: [...CATEGORIES], // Show all categories by default
+  // Get custom categories for the current list to initialize filters properly
+  const customCategories = useCustomCategories(activeListId);
+
+  // Initialize filters with saved preferences or defaults
+  const allCategories = useMemo(() => [...CATEGORIES, ...customCategories], [customCategories]);
+
+  const [filters, setFilters] = useState<FilterState>(() => {
+    if (activeListId) {
+      return getListFilters(activeListId, allCategories);
+    }
+    return {
+      searchText: '',
+      showGotten: true,
+      categories: allCategories,
+      categoryMode: 'include',
+      categoryType: 'all',
+    };
   });
+
+  // Update filters when list changes or custom categories change
+  useEffect(() => {
+    if (activeListId) {
+      const savedFilters = getListFilters(activeListId, allCategories);
+      setFilters(savedFilters);
+    }
+  }, [activeListId, allCategories]);
 
   const [sort, setSort] = useState<SortState>({
     field: 'date',
@@ -70,6 +93,7 @@ function App() {
   const [showListManagement, setShowListManagement] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const [showListSelector, setShowListSelector] = useState(false);
+  const [showCategoryManager, setShowCategoryManager] = useState(false);
   const listSelectorRef = useRef<HTMLDivElement>(null);
 
   const handleFilterChange = (newFilters: Partial<FilterState>) => {
@@ -101,11 +125,17 @@ function App() {
 
   const handleCreateFromTemplate = async (template: ListTemplate) => {
     try {
+      // Pass custom categories if the template specifies to create them
+      const customCategories = template.createCustomCategories && template.customCategories
+        ? template.customCategories
+        : undefined;
+
       await createListFromTemplate(
         template.name,
         template.items,
         undefined, // Use default color
-        template.icon
+        template.icon,
+        customCategories
       );
       console.log('List created from template successfully');
     } catch (error) {
@@ -133,6 +163,12 @@ function App() {
     }, 100);
   }, []);
 
+  const handleOpenCategoryManager = useCallback(() => {
+    if (currentList && (userPermission === 'owner' || userPermission === 'editor')) {
+      setShowCategoryManager(true);
+    }
+  }, [currentList, userPermission]);
+
   // Define keyboard shortcuts
   const shortcuts: KeyboardShortcut[] = [
     {
@@ -157,6 +193,24 @@ function App() {
       enabled: isAuthenticated && !listLoading,
     },
     {
+      key: 'ctrl+k',
+      description: 'Manage categories',
+      category: 'Category Management',
+      handler: handleOpenCategoryManager,
+      enabled: isAuthenticated && currentList !== null && (userPermission === 'owner' || userPermission === 'editor'),
+    },
+    {
+      key: 'ctrl+shift+c',
+      description: 'Focus category dropdown',
+      category: 'Category Management',
+      handler: () => {
+        // This is handled directly in AddItemForm component
+        // Just documenting it here for the help modal
+      },
+      enabled: isAuthenticated && currentList !== null && canEdit(),
+      preventDefault: false, // Let AddItemForm handle this
+    },
+    {
       key: 'ctrl+r',
       description: 'Retry sync',
       category: 'Sync',
@@ -176,6 +230,8 @@ function App() {
           setShowListManagement(false);
         } else if (showShareModal) {
           setShowShareModal(false);
+        } else if (showCategoryManager) {
+          setShowCategoryManager(false);
         } else if (showListSelector) {
           setShowListSelector(false);
         } else {
@@ -422,6 +478,20 @@ function App() {
               // TODO: Implement transfer ownership functionality
               console.log('Transfer ownership not yet implemented');
             }}
+          />
+        </ListErrorBoundary>
+      )}
+
+      {/* Custom Category Manager modal - Available to all users (read-only for viewers) */}
+      {showCategoryManager && currentList && (
+        <ListErrorBoundary
+          componentName="Custom Category Manager"
+          onReset={() => setShowCategoryManager(false)}
+        >
+          <CustomCategoryManager
+            listId={currentList.id}
+            onClose={() => setShowCategoryManager(false)}
+            permissionLevel={userPermission}
           />
         </ListErrorBoundary>
       )}

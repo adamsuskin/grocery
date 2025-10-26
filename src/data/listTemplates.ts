@@ -1,25 +1,4 @@
-import type { Category } from '../types';
-
-/**
- * Template item for pre-populating lists
- */
-export interface TemplateItem {
-  name: string;
-  quantity: number;
-  category: Category;
-  notes?: string;
-}
-
-/**
- * List template with name, description, and default items
- */
-export interface ListTemplate {
-  id: string;
-  name: string;
-  description: string;
-  icon: string;
-  items: TemplateItem[];
-}
+import type { ListTemplate } from '../types';
 
 /**
  * Pre-defined list templates for common grocery shopping scenarios
@@ -246,6 +225,140 @@ export const LIST_TEMPLATES: ListTemplate[] = [
       { name: 'Paper Plates', quantity: 1, category: 'Other', notes: 'Pack of 50' },
       { name: 'Plastic Utensils', quantity: 1, category: 'Other', notes: 'Set' },
       { name: 'Ice', quantity: 2, category: 'Frozen', notes: '10 lb bags' },
+    ],
+  },
+  {
+    id: 'meal-prep',
+    name: 'Meal Prep',
+    description: 'Organized meal prep ingredients by food groups',
+    icon: '🍱',
+    createCustomCategories: true,
+    customCategories: [
+      { name: 'Proteins', color: '#E91E63', icon: '🍗' },
+      { name: 'Vegetables', color: '#4CAF50', icon: '🥦' },
+      { name: 'Grains', color: '#FF9800', icon: '🌾' },
+      { name: 'Healthy Fats', color: '#FFC107', icon: '🥑' },
+    ],
+    items: [
+      { name: 'Chicken Breast', quantity: 3, category: 'Proteins', notes: '3 lbs' },
+      { name: 'Ground Turkey', quantity: 2, category: 'Proteins', notes: '2 lbs' },
+      { name: 'Salmon Fillets', quantity: 4, category: 'Proteins', notes: 'Fresh' },
+      { name: 'Eggs', quantity: 18, category: 'Proteins', notes: 'Extra large' },
+      { name: 'Greek Yogurt', quantity: 6, category: 'Proteins', notes: 'Plain' },
+      { name: 'Broccoli', quantity: 2, category: 'Vegetables', notes: 'Heads' },
+      { name: 'Spinach', quantity: 2, category: 'Vegetables', notes: 'Bags' },
+      { name: 'Sweet Potatoes', quantity: 6, category: 'Vegetables' },
+      { name: 'Bell Peppers', quantity: 4, category: 'Vegetables', notes: 'Assorted colors' },
+      { name: 'Zucchini', quantity: 3, category: 'Vegetables' },
+      { name: 'Asparagus', quantity: 1, category: 'Vegetables', notes: 'Bunch' },
+      { name: 'Brown Rice', quantity: 1, category: 'Grains', notes: '5 lb bag' },
+      { name: 'Quinoa', quantity: 2, category: 'Grains', notes: 'Boxes' },
+      { name: 'Whole Wheat Pasta', quantity: 2, category: 'Grains' },
+      { name: 'Oats', quantity: 1, category: 'Grains', notes: 'Steel cut' },
+      { name: 'Avocados', quantity: 6, category: 'Healthy Fats' },
+      { name: 'Almonds', quantity: 1, category: 'Healthy Fats', notes: 'Raw' },
+      { name: 'Olive Oil', quantity: 1, category: 'Healthy Fats', notes: 'Extra virgin' },
+      { name: 'Nut Butter', quantity: 2, category: 'Healthy Fats', notes: 'Almond or peanut' },
+    ],
+  },
+  {
+    id: 'party-planning',
+    name: 'Party Planning',
+    description: 'Complete party supplies organized by category',
+    icon: '🎈',
+    createCustomCategories: true,
+    customCategories: [
+      { name: 'Decorations', color: '#9C27B0', icon: '🎨' },
+      { name: 'Snacks', color: '#FF5722', icon: '🍿' },
+      { name: 'Drinks', color: '#2196F3', icon: '🥤' },
+      { name: 'Tableware', color: '#795548', icon: '🍽️' },
+    ],
+    items: [
+      { name: 'Balloons', quantity: 3, category: 'Decorations', notes: 'Packs' },
+      { name: 'Streamers', quantity: 4, category: 'Decorations', notes: 'Assorted colors' },
+      { name: 'Banners', quantity: 2, category: 'Decorations' },
+      { name: 'Table Cloth', quantity: 2, category: 'Decorations', notes: 'Disposable' },
+      { name: 'Centerpieces', quantity: 3, category: 'Decorations' },
+      { name: 'Tortilla Chips', quantity: 4, category: 'Snacks', notes: 'Family size' },
+      { name: 'Salsa', quantity: 2, category: 'Snacks', notes: 'Jars' },
+      { name: 'Guacamole', quantity: 2, category: 'Snacks' },
+      { name: 'Cheese Platter', quantity: 1, category: 'Snacks', notes: 'Assorted' },
+      { name: 'Crackers', quantity: 2, category: 'Snacks', notes: 'Boxes' },
+      { name: 'Veggie Tray', quantity: 2, category: 'Snacks', notes: 'With dip' },
+      { name: 'Cookies', quantity: 2, category: 'Snacks', notes: 'Boxes' },
+      { name: 'Brownies', quantity: 1, category: 'Snacks', notes: 'Pan' },
+      { name: 'Soda', quantity: 12, category: 'Drinks', notes: '2L bottles' },
+      { name: 'Juice', quantity: 4, category: 'Drinks', notes: 'Cartons' },
+      { name: 'Water Bottles', quantity: 24, category: 'Drinks', notes: 'Case' },
+      { name: 'Ice', quantity: 3, category: 'Drinks', notes: '10 lb bags' },
+      { name: 'Paper Plates', quantity: 2, category: 'Tableware', notes: 'Packs of 50' },
+      { name: 'Plastic Cups', quantity: 2, category: 'Tableware', notes: 'Packs of 50' },
+      { name: 'Napkins', quantity: 2, category: 'Tableware', notes: 'Packs' },
+      { name: 'Plastic Utensils', quantity: 2, category: 'Tableware', notes: 'Sets' },
+      { name: 'Serving Platters', quantity: 3, category: 'Tableware', notes: 'Disposable' },
+    ],
+  },
+  {
+    id: 'asian-cooking',
+    name: 'Asian Cooking',
+    description: 'Authentic ingredients for Asian cuisine',
+    icon: '🍜',
+    createCustomCategories: true,
+    customCategories: [
+      { name: 'Sauces & Condiments', color: '#D32F2F', icon: '🥫' },
+      { name: 'Noodles & Rice', color: '#F57C00', icon: '🍚' },
+      { name: 'Fresh Ingredients', color: '#388E3C', icon: '🥬' },
+      { name: 'Proteins', color: '#C2185B', icon: '🦐' },
+    ],
+    items: [
+      { name: 'Soy Sauce', quantity: 1, category: 'Sauces & Condiments', notes: 'Low sodium' },
+      { name: 'Oyster Sauce', quantity: 1, category: 'Sauces & Condiments' },
+      { name: 'Sesame Oil', quantity: 1, category: 'Sauces & Condiments' },
+      { name: 'Rice Vinegar', quantity: 1, category: 'Sauces & Condiments' },
+      { name: 'Sriracha', quantity: 1, category: 'Sauces & Condiments' },
+      { name: 'Hoisin Sauce', quantity: 1, category: 'Sauces & Condiments' },
+      { name: 'Fish Sauce', quantity: 1, category: 'Sauces & Condiments' },
+      { name: 'Jasmine Rice', quantity: 1, category: 'Noodles & Rice', notes: '5 lb bag' },
+      { name: 'Rice Noodles', quantity: 2, category: 'Noodles & Rice', notes: 'Packages' },
+      { name: 'Ramen Noodles', quantity: 3, category: 'Noodles & Rice', notes: 'Fresh' },
+      { name: 'Udon Noodles', quantity: 2, category: 'Noodles & Rice' },
+      { name: 'Bok Choy', quantity: 2, category: 'Fresh Ingredients', notes: 'Bunches' },
+      { name: 'Green Onions', quantity: 2, category: 'Fresh Ingredients', notes: 'Bunches' },
+      { name: 'Ginger Root', quantity: 1, category: 'Fresh Ingredients', notes: 'Fresh' },
+      { name: 'Garlic', quantity: 2, category: 'Fresh Ingredients', notes: 'Bulbs' },
+      { name: 'Shiitake Mushrooms', quantity: 1, category: 'Fresh Ingredients', notes: 'Package' },
+      { name: 'Bean Sprouts', quantity: 2, category: 'Fresh Ingredients', notes: 'Bags' },
+      { name: 'Chicken Thighs', quantity: 2, category: 'Proteins', notes: 'Boneless' },
+      { name: 'Pork Belly', quantity: 1, category: 'Proteins', notes: '1 lb' },
+      { name: 'Shrimp', quantity: 1, category: 'Proteins', notes: 'Peeled & deveined' },
+      { name: 'Tofu', quantity: 2, category: 'Proteins', notes: 'Firm' },
+    ],
+  },
+  {
+    id: 'pet-supplies',
+    name: 'Pet Supplies',
+    description: 'Everything for your furry friends',
+    icon: '🐾',
+    createCustomCategories: true,
+    customCategories: [
+      { name: 'Dog Food', color: '#8D6E63', icon: '🦴' },
+      { name: 'Cat Food', color: '#607D8B', icon: '🐱' },
+      { name: 'Pet Treats', color: '#FF9800', icon: '🍖' },
+      { name: 'Pet Care', color: '#009688', icon: '🧼' },
+    ],
+    items: [
+      { name: 'Dry Dog Food', quantity: 1, category: 'Dog Food', notes: '30 lb bag' },
+      { name: 'Wet Dog Food', quantity: 12, category: 'Dog Food', notes: 'Cans' },
+      { name: 'Dog Treats', quantity: 2, category: 'Pet Treats', notes: 'Boxes' },
+      { name: 'Dental Chews', quantity: 1, category: 'Pet Treats', notes: 'Package' },
+      { name: 'Dry Cat Food', quantity: 1, category: 'Cat Food', notes: '16 lb bag' },
+      { name: 'Wet Cat Food', quantity: 24, category: 'Cat Food', notes: 'Cans' },
+      { name: 'Cat Treats', quantity: 2, category: 'Pet Treats', notes: 'Pouches' },
+      { name: 'Catnip', quantity: 1, category: 'Pet Treats' },
+      { name: 'Pet Shampoo', quantity: 1, category: 'Pet Care', notes: 'Bottle' },
+      { name: 'Poop Bags', quantity: 2, category: 'Pet Care', notes: 'Rolls' },
+      { name: 'Cat Litter', quantity: 2, category: 'Pet Care', notes: '25 lb bags' },
+      { name: 'Pet Wipes', quantity: 1, category: 'Pet Care', notes: 'Package' },
     ],
   },
 ];

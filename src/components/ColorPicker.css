@@ -1,0 +1,509 @@
+/* Color Picker Component */
+.color-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.color-picker-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Label */
+.color-picker-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-color);
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Preset Colors Section */
+.color-picker-presets {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.color-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 10px;
+  width: 100%;
+}
+
+.color-preset {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: currentColor;
+  padding: 0;
+  outline: none;
+}
+
+.color-preset:hover:not(:disabled) {
+  transform: scale(1.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  z-index: 1;
+}
+
+.color-preset:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+  z-index: 2;
+}
+
+.color-preset-selected {
+  border-color: var(--text-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  transform: scale(1.05);
+}
+
+.color-preset-selected:hover:not(:disabled) {
+  transform: scale(1.15);
+}
+
+.color-preset:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.color-preset-check {
+  color: white;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  stroke-width: 3;
+}
+
+/* Custom Color Section */
+.color-picker-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+}
+
+.color-picker-toggle-custom {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-color);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+  width: fit-content;
+}
+
+.color-picker-toggle-custom:hover:not(:disabled) {
+  background: #f9f9f9;
+  border-color: var(--primary-color);
+}
+
+.color-picker-toggle-custom:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.color-picker-toggle-custom:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.color-picker-toggle-custom svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Custom Color Input Section */
+.color-picker-custom-input {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.color-picker-input-wrapper {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* Color Preview with Native Picker */
+.color-picker-preview {
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  border: 3px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.color-picker-preview:hover {
+  border-color: var(--primary-color);
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.color-picker-preview:focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.color-picker-native-input {
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+  border: none;
+  cursor: pointer;
+  opacity: 0;
+}
+
+/* Hex Input */
+.color-picker-hex-input {
+  flex: 1;
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  font-family: 'Courier New', Monaco, monospace;
+  text-transform: uppercase;
+  outline: none;
+  transition: all 0.2s;
+  background: white;
+  color: var(--text-color);
+}
+
+.color-picker-hex-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+}
+
+.color-picker-hex-input::placeholder {
+  text-transform: none;
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.color-picker-hex-input:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* Error Message */
+.color-picker-error {
+  font-size: 0.85rem;
+  color: var(--danger-color);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: #ffebee;
+  border: 1px solid #ef9a9a;
+  border-radius: 4px;
+  animation: slideDown 0.2s ease-out;
+}
+
+/* Actions Section */
+.color-picker-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-color);
+  gap: 16px;
+}
+
+/* Clear/Reset Button */
+.color-picker-clear {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: white;
+  border: 2px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  outline: none;
+}
+
+.color-picker-clear:hover:not(:disabled) {
+  background: #f9f9f9;
+  border-color: var(--text-color);
+  color: var(--text-color);
+}
+
+.color-picker-clear:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+.color-picker-clear:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.color-picker-clear svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Current Color Display */
+.color-picker-current {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: #f9f9f9;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.color-picker-current-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.color-picker-current-preview {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: 2px solid var(--border-color);
+  flex-shrink: 0;
+}
+
+.color-picker-current-value {
+  font-family: 'Courier New', Monaco, monospace;
+  font-weight: 600;
+  color: var(--text-color);
+  text-transform: uppercase;
+}
+
+/* Responsive Design */
+
+/* Tablet devices (768px and below) */
+@media (max-width: 768px) {
+  .color-picker-grid {
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+  }
+
+  .color-picker-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .color-picker-clear {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .color-picker-current {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Mobile devices (600px and below) */
+@media (max-width: 600px) {
+  .color-picker {
+    gap: 14px;
+  }
+
+  .color-picker-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+  }
+
+  .color-picker-preview {
+    width: 48px;
+    height: 48px;
+  }
+
+  .color-picker-hex-input {
+    font-size: 0.9rem;
+    padding: 10px 12px;
+  }
+
+  .color-picker-input-wrapper {
+    gap: 10px;
+  }
+}
+
+/* Small mobile devices (480px and below) */
+@media (max-width: 480px) {
+  .color-picker-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+
+  .color-preset {
+    border-width: 2px;
+  }
+
+  .color-picker-preview {
+    width: 44px;
+    height: 44px;
+  }
+
+  .color-picker-input-wrapper {
+    gap: 8px;
+  }
+
+  .color-picker-actions {
+    gap: 12px;
+  }
+
+  .color-picker-current {
+    flex-wrap: wrap;
+    font-size: 0.8rem;
+  }
+}
+
+/* Touch-friendly targets on mobile */
+@media (hover: none) and (pointer: coarse) {
+  .color-preset {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .color-picker-toggle-custom,
+  .color-picker-clear {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+
+  .color-picker-preview {
+    min-width: 48px;
+    min-height: 48px;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .color-preset {
+    border-width: 4px;
+  }
+
+  .color-preset-selected {
+    border-width: 5px;
+  }
+
+  .color-picker-preview,
+  .color-picker-current-preview {
+    border-width: 3px;
+  }
+
+  .color-picker-toggle-custom,
+  .color-picker-clear,
+  .color-picker-hex-input {
+    border-width: 3px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .color-picker-custom-input,
+  .color-picker-error {
+    animation: none;
+  }
+
+  .color-preset,
+  .color-picker-preview,
+  .color-picker-toggle-custom,
+  .color-picker-clear,
+  .color-picker-hex-input {
+    transition: none;
+  }
+
+  .color-preset:hover:not(:disabled),
+  .color-preset-selected:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .color-picker-preview:hover {
+    transform: none;
+  }
+}
+
+/* Dark mode support (if needed in future) */
+@media (prefers-color-scheme: dark) {
+  .color-picker-toggle-custom,
+  .color-picker-clear,
+  .color-picker-hex-input {
+    background: #2a2a2a;
+    color: #e0e0e0;
+    border-color: #444;
+  }
+
+  .color-picker-toggle-custom:hover:not(:disabled),
+  .color-picker-clear:hover:not(:disabled) {
+    background: #333;
+    border-color: #666;
+  }
+
+  .color-picker-current {
+    background: #2a2a2a;
+  }
+
+  .color-picker-error {
+    background: #3a1f1f;
+    border-color: #5a2f2f;
+  }
+}
+
+/* Focus visible improvements for keyboard navigation */
+.color-picker *:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* Screen reader only text */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

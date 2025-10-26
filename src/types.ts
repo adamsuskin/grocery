@@ -10,13 +10,64 @@ export const CATEGORIES = [
   'Other',
 ] as const;
 
+// Category type can be either a predefined category from CATEGORIES array or a custom category name
 export type Category = typeof CATEGORIES[number];
+
+// Custom category types
+export interface CustomCategory {
+  id: string;
+  name: string;
+  listId: string;
+  createdBy: string;
+  color?: string; // Hex color code like #FF5733
+  icon?: string; // Emoji or icon identifier
+  displayOrder: number; // Higher numbers = higher priority in display
+  isArchived: boolean; // Soft delete flag
+  archivedAt?: number; // Timestamp when archived
+  isLocked: boolean; // Whether category is locked (only owner can edit)
+  lastEditedBy?: string; // User who last edited this category
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CustomCategoryTable {
+  id: string;
+  name: string;
+  list_id: string;
+  created_by: string;
+  color: string | null;
+  icon: string | null;
+  display_order: number;
+  is_archived: boolean;
+  archived_at: number | null;
+  is_locked: boolean;
+  last_edited_by: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+export interface CreateCustomCategoryInput {
+  name: string;
+  listId: string;
+  color?: string;
+  icon?: string;
+  displayOrder?: number;
+}
+
+export interface UpdateCustomCategoryInput {
+  id: string;
+  name?: string;
+  color?: string;
+  icon?: string;
+  displayOrder?: number;
+}
 
 // Database types
 export interface Database {
   grocery_items: GroceryItemTable;
   lists: ListTable;
   list_members: ListMemberTable;
+  custom_categories: CustomCategoryTable;
 }
 
 export interface GroceryItemTable {
@@ -87,16 +138,36 @@ export interface UpdateItemInput {
 }
 
 // Filter types
+export type CategoryFilterMode = 'include' | 'exclude';
+export type CategoryType = 'all' | 'predefined' | 'custom';
+
+export interface SavedFilter {
+  id: string;
+  name: string;
+  searchText: string;
+  showGotten: boolean;
+  categories: Category[];
+  categoryMode: CategoryFilterMode;
+  categoryType: CategoryType;
+  createdAt: number;
+  lastUsed: number;
+  useCount: number;
+}
+
 export interface FilterState {
   searchText: string;
   showGotten: boolean;
   categories: Category[];
+  categoryMode: CategoryFilterMode; // Include or exclude selected categories
+  categoryType: CategoryType; // All, predefined only, or custom only
 }
 
 export interface FilterOptions {
   searchText?: string;
   showGotten?: boolean;
   categories?: Category[];
+  categoryMode?: CategoryFilterMode;
+  categoryType?: CategoryType;
 }
 
 export type FilterChangeHandler = (filters: Partial<FilterState>) => void;
@@ -379,12 +450,21 @@ export interface NotificationsProps {
 // List template types
 
 /**
+ * Custom category definition for templates
+ */
+export interface TemplateCustomCategory {
+  name: string;
+  color?: string;
+  icon?: string;
+}
+
+/**
  * Template item for pre-populating lists
  */
 export interface TemplateItem {
   name: string;
   quantity: number;
-  category: Category;
+  category: string; // Can be predefined Category or custom category name
   notes?: string;
 }
 
@@ -397,6 +477,8 @@ export interface ListTemplate {
   description: string;
   icon: string;
   items: TemplateItem[];
+  createCustomCategories?: boolean; // If true, create custom categories when applying template
+  customCategories?: TemplateCustomCategory[]; // Custom category definitions
 }
 
 // Avatar and Member Display types
@@ -529,7 +611,21 @@ export type ActivityAction =
   | 'item_checked'
   | 'item_unchecked'
   | 'items_cleared'
-  | 'items_bulk_deleted';
+  | 'items_bulk_deleted'
+  | 'category_created'
+  | 'category_updated'
+  | 'category_archived'
+  | 'category_restored'
+  | 'category_deleted'
+  | 'category_merged'
+  | 'category_edited'
+  | 'category_locked'
+  | 'category_unlocked'
+  | 'category_suggested'
+  | 'category_suggestion_approved'
+  | 'category_suggestion_rejected'
+  | 'category_comment_added'
+  | 'category_voted';
 
 /**
  * Activity entity
@@ -728,4 +824,430 @@ export interface ConflictResolutionModalProps {
   onCancel: () => void;
   currentUserName?: string;
   remoteUserName?: string;
+}
+
+// Category Collaboration types
+
+/**
+ * Status of a category suggestion
+ */
+export type CategorySuggestionStatus = 'pending' | 'approved' | 'rejected';
+
+/**
+ * Category suggestion from viewers
+ */
+export interface CategorySuggestion {
+  id: string;
+  listId: string;
+  suggestedBy: string;
+  name: string;
+  color?: string;
+  icon?: string;
+  reason?: string;
+  status: CategorySuggestionStatus;
+  reviewedBy?: string;
+  reviewedAt?: number;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/**
+ * Database table for category suggestions
+ */
+export interface CategorySuggestionTable {
+  id: string;
+  list_id: string;
+  suggested_by: string;
+  name: string;
+  color: string | null;
+  icon: string | null;
+  reason: string | null;
+  status: string;
+  reviewed_by: string | null;
+  reviewed_at: number | null;
+  created_at: number;
+  updated_at: number;
+}
+
+/**
+ * Input for creating a category suggestion
+ */
+export interface CreateCategorySuggestionInput {
+  listId: string;
+  name: string;
+  color?: string;
+  icon?: string;
+  reason?: string;
+}
+
+/**
+ * Input for reviewing a category suggestion
+ */
+export interface ReviewCategorySuggestionInput {
+  suggestionId: string;
+  action: 'approve' | 'reject';
+}
+
+/**
+ * Category comment for discussions
+ */
+export interface CategoryComment {
+  id: string;
+  categoryId: string;
+  userId: string;
+  commentText: string;
+  parentId?: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/**
+ * Database table for category comments
+ */
+export interface CategoryCommentTable {
+  id: string;
+  category_id: string;
+  user_id: string;
+  comment_text: string;
+  parent_id: string | null;
+  created_at: number;
+  updated_at: number;
+}
+
+/**
+ * Input for creating a category comment
+ */
+export interface CreateCategoryCommentInput {
+  categoryId: string;
+  commentText: string;
+  parentId?: string;
+}
+
+/**
+ * Vote type for categories
+ */
+export type CategoryVoteType = 'keep' | 'remove';
+
+/**
+ * Category vote
+ */
+export interface CategoryVote {
+  id: string;
+  categoryId: string;
+  userId: string;
+  voteType: CategoryVoteType;
+  createdAt: number;
+  updatedAt: number;
+}
+
+/**
+ * Database table for category votes
+ */
+export interface CategoryVoteTable {
+  id: string;
+  category_id: string;
+  user_id: string;
+  vote_type: string;
+  created_at: number;
+  updated_at: number;
+}
+
+/**
+ * Input for casting a category vote
+ */
+export interface CastCategoryVoteInput {
+  categoryId: string;
+  voteType: CategoryVoteType;
+}
+
+/**
+ * Vote type for category suggestions
+ */
+export type SuggestionVoteType = 'upvote' | 'downvote';
+
+/**
+ * Category suggestion vote
+ */
+export interface CategorySuggestionVote {
+  id: string;
+  suggestionId: string;
+  userId: string;
+  voteType: SuggestionVoteType;
+  createdAt: number;
+}
+
+/**
+ * Database table for category suggestion votes
+ */
+export interface CategorySuggestionVoteTable {
+  id: string;
+  suggestion_id: string;
+  user_id: string;
+  vote_type: string;
+  created_at: number;
+}
+
+/**
+ * Input for voting on a suggestion
+ */
+export interface VoteSuggestionInput {
+  suggestionId: string;
+  voteType: SuggestionVoteType;
+}
+
+/**
+ * Category with collaboration metadata
+ */
+export interface CategoryWithCollaboration extends CustomCategory {
+  creatorName?: string;
+  lastEditorName?: string;
+  commentCount: number;
+  keepVotes: number;
+  removeVotes: number;
+}
+
+/**
+ * Category suggestion with enriched data
+ */
+export interface CategorySuggestionWithDetails extends CategorySuggestion {
+  suggesterName: string;
+  suggesterEmail: string;
+  reviewerName?: string;
+  reviewerEmail?: string;
+  listName: string;
+  upvotes: number;
+  downvotes: number;
+}
+
+/**
+ * Props for CategoryCollaboration component
+ */
+export interface CategoryCollaborationProps {
+  listId: string;
+  category: CustomCategory;
+  permission: ListPermission;
+  onClose: () => void;
+}
+
+/**
+ * Props for CategorySuggestions component
+ */
+export interface CategorySuggestionsProps {
+  listId: string;
+  permission: ListPermission;
+  onClose: () => void;
+}
+
+/**
+ * Category conflict data
+ */
+export interface CategoryConflict {
+  id: string;
+  categoryId: string;
+  categoryName: string;
+  listId: string;
+  localVersion: {
+    name: string;
+    color?: string;
+    icon?: string;
+    userId: string;
+    userName: string;
+    timestamp: number;
+  };
+  remoteVersion: {
+    name: string;
+    color?: string;
+    icon?: string;
+    userId: string;
+    userName: string;
+    timestamp: number;
+  };
+  conflictType: 'name' | 'properties' | 'simultaneous_creation';
+}
+
+/**
+ * Props for CategoryConflictResolver component
+ */
+export interface CategoryConflictResolverProps {
+  conflict: CategoryConflict;
+  onResolve: (resolution: 'local' | 'remote' | 'merge') => void;
+  onCancel: () => void;
+}
+
+// Gamification types
+
+/**
+ * Achievement identifier type
+ */
+export type AchievementId =
+  | 'category_creator'
+  | 'color_coordinator'
+  | 'icon_master'
+  | 'organization_expert'
+  | 'minimalist'
+  | 'perfectionist'
+  | 'speed_organizer'
+  | 'diverse_categorizer'
+  | 'category_veteran'
+  | 'detail_oriented';
+
+/**
+ * Achievement rarity level
+ */
+export type AchievementRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
+/**
+ * User level in gamification system
+ */
+export type UserLevel = 'beginner' | 'intermediate' | 'advanced' | 'expert' | 'master';
+
+/**
+ * Challenge type
+ */
+export type ChallengeType = 'tip' | 'goal' | 'milestone';
+
+/**
+ * Achievement entity
+ */
+export interface Achievement {
+  id: AchievementId;
+  name: string;
+  description: string;
+  icon: string;
+  rarity: AchievementRarity;
+  unlockedAt?: number;
+  progress?: number;
+  maxProgress?: number;
+}
+
+/**
+ * Challenge entity for encouraging specific actions
+ */
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  type: ChallengeType;
+  icon: string;
+  completed: boolean;
+  dismissible: boolean;
+  priority: number;
+}
+
+/**
+ * Gamification statistics for a list
+ */
+export interface GamificationStats {
+  totalCategoriesCreated: number;
+  totalCategoriesWithColors: number;
+  totalCategoriesWithIcons: number;
+  categoriesWithBoth: number;
+  mostUsedCategory: { name: string; count: number } | null;
+  itemsInCustomCategories: number;
+  itemsInOther: number;
+  totalItems: number;
+  categorizationScore: number;
+  organizationScore: number;
+  streak: number;
+  lastActivity: number;
+}
+
+/**
+ * Leaderboard entry for shared lists
+ */
+export interface LeaderboardEntry {
+  userId: string;
+  userName: string;
+  userEmail: string;
+  categoriesCreated: number;
+  totalUsage: number;
+  score: number;
+}
+
+/**
+ * Level information
+ */
+export interface LevelInfo {
+  level: UserLevel;
+  title: string;
+  minCategories: number;
+  icon: string;
+  color: string;
+}
+
+/**
+ * Complete gamification data for a list
+ */
+export interface GamificationData {
+  achievements: Achievement[];
+  stats: GamificationStats;
+  level: UserLevel;
+  challenges: Challenge[];
+  lastUpdated: number;
+  totalPoints: number;
+}
+
+/**
+ * Gamification settings
+ */
+export interface GamificationSettings {
+  funModeEnabled: boolean;
+  showNotifications: boolean;
+  showChallenges: boolean;
+  showLeaderboard: boolean;
+}
+
+/**
+ * Props for GamificationBadges component
+ */
+export interface GamificationBadgesProps {
+  achievements: Achievement[];
+  onClose: () => void;
+}
+
+/**
+ * Props for GamificationProgress component
+ */
+export interface GamificationProgressProps {
+  stats: GamificationStats;
+  level: UserLevel;
+  totalPoints: number;
+  compact?: boolean;
+}
+
+/**
+ * Props for GamificationChallenges component
+ */
+export interface GamificationChallengesProps {
+  listId: string;
+  challenges: Challenge[];
+  onDismiss?: (challengeId: string) => void;
+  maxVisible?: number;
+}
+
+/**
+ * Props for GamificationNotification component
+ */
+export interface GamificationNotificationProps {
+  position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  autoHideDuration?: number;
+  animationDuration?: number;
+}
+
+/**
+ * Props for GamificationLeaderboard component
+ */
+export interface GamificationLeaderboardProps {
+  entries: LeaderboardEntry[];
+  currentUserId?: string;
+  onClose?: () => void;
+  collaborative?: boolean;
+}
+
+/**
+ * Props for GamificationSettings component
+ */
+export interface GamificationSettingsProps {
+  currentListId?: string;
+  onClose?: () => void;
 }

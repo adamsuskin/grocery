@@ -57,6 +57,29 @@ function formatActivityMessage(activity: Activity): string {
     case 'items_bulk_deleted':
       return `${userName} deleted ${activity.details?.count} items`;
 
+    case 'category_created':
+      return `${userName} created category "${activity.details?.category_name}"`;
+
+    case 'category_updated':
+      if (activity.details?.changes && Array.isArray(activity.details.changes)) {
+        const changeFields = activity.details.changes.map((c: any) => c.field).join(', ');
+        return `${userName} updated category "${activity.details?.category_name}" (${changeFields})`;
+      }
+      return `${userName} updated category "${activity.details?.category_name}"`;
+
+    case 'category_archived':
+      return `${userName} archived category "${activity.details?.category_name}"`;
+
+    case 'category_restored':
+      return `${userName} restored category "${activity.details?.category_name}"`;
+
+    case 'category_deleted':
+      return `${userName} deleted category "${activity.details?.category_name}"`;
+
+    case 'category_merged':
+      const sourceCount = activity.details?.source_categories?.length || 0;
+      return `${userName} merged ${sourceCount} categories into "${activity.details?.category_name}"`;
+
     default:
       return `${userName} performed an action`;
   }
@@ -125,6 +148,18 @@ function getActivityIcon(action: Activity['action']): string {
     case 'items_cleared':
     case 'items_bulk_deleted':
       return '🧹';
+    case 'category_created':
+      return '🏷️';
+    case 'category_updated':
+      return '✏️';
+    case 'category_archived':
+      return '📦';
+    case 'category_restored':
+      return '♻️';
+    case 'category_deleted':
+      return '🗑️';
+    case 'category_merged':
+      return '🔀';
     default:
       return '📌';
   }
@@ -138,6 +173,7 @@ export function ListActivity({ listId, limit = 20 }: ListActivityProps) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<'all' | 'categories' | 'items' | 'members'>('all');
 
   useEffect(() => {
     if (!listId || !token) {
@@ -203,6 +239,25 @@ export function ListActivity({ listId, limit = 20 }: ListActivityProps) {
     );
   }
 
+  // Filter activities based on selected filter type
+  const filteredActivities = activities.filter((activity) => {
+    if (filterType === 'all') return true;
+
+    if (filterType === 'categories') {
+      return activity.action.startsWith('category_');
+    }
+
+    if (filterType === 'items') {
+      return activity.action.startsWith('item_') || activity.action === 'items_cleared' || activity.action === 'items_bulk_deleted';
+    }
+
+    if (filterType === 'members') {
+      return activity.action.startsWith('member_') || activity.action === 'list_shared' || activity.action === 'ownership_transferred';
+    }
+
+    return true;
+  });
+
   if (activities.length === 0) {
     return (
       <div className="list-activity">
@@ -220,18 +275,52 @@ export function ListActivity({ listId, limit = 20 }: ListActivityProps) {
     <div className="list-activity">
       <div className="activity-header">
         <h3>Recent Activity</h3>
-        <span className="activity-count">{activities.length} activities</span>
+        <span className="activity-count">{filteredActivities.length} activities</span>
       </div>
+
+      <div className="activity-filters">
+        <button
+          className={`filter-btn ${filterType === 'all' ? 'active' : ''}`}
+          onClick={() => setFilterType('all')}
+        >
+          All
+        </button>
+        <button
+          className={`filter-btn ${filterType === 'categories' ? 'active' : ''}`}
+          onClick={() => setFilterType('categories')}
+        >
+          Categories
+        </button>
+        <button
+          className={`filter-btn ${filterType === 'items' ? 'active' : ''}`}
+          onClick={() => setFilterType('items')}
+        >
+          Items
+        </button>
+        <button
+          className={`filter-btn ${filterType === 'members' ? 'active' : ''}`}
+          onClick={() => setFilterType('members')}
+        >
+          Members
+        </button>
+      </div>
+
       <div className="activity-list">
-        {activities.map((activity) => (
-          <div key={activity.id} className="activity-item">
-            <div className="activity-icon">{getActivityIcon(activity.action)}</div>
-            <div className="activity-content">
-              <p className="activity-message">{formatActivityMessage(activity)}</p>
-              <span className="activity-time">{formatRelativeTime(activity.created_at)}</span>
-            </div>
+        {filteredActivities.length === 0 ? (
+          <div className="activity-empty">
+            <p>No {filterType} activities</p>
           </div>
-        ))}
+        ) : (
+          filteredActivities.map((activity) => (
+            <div key={activity.id} className="activity-item">
+              <div className="activity-icon">{getActivityIcon(activity.action)}</div>
+              <div className="activity-content">
+                <p className="activity-message">{formatActivityMessage(activity)}</p>
+                <span className="activity-time">{formatRelativeTime(activity.created_at)}</span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     </div>
   );

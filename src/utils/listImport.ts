@@ -28,6 +28,11 @@ export interface ImportResult {
   success: boolean;
   listName: string;
   items: ImportedItem[];
+  customCategories?: Array<{
+    name: string;
+    color?: string;
+    icon?: string;
+  }>;
   errors: string[];
   warnings: string[];
 }
@@ -94,6 +99,13 @@ function normalizeQuantity(quantity: any): number {
  *       "category": "Produce",
  *       "notes": "Optional notes"
  *     }
+ *   ],
+ *   "customCategories": [
+ *     {
+ *       "name": "Gluten-Free",
+ *       "color": "#FF5733",
+ *       "icon": "🌾"
+ *     }
  *   ]
  * }
  */
@@ -101,6 +113,7 @@ export async function importFromJSON(file: File): Promise<ImportResult> {
   const errors: string[] = [];
   const warnings: string[] = [];
   const items: ImportedItem[] = [];
+  const customCategories: Array<{ name: string; color?: string; icon?: string }> = [];
 
   try {
     // Read file content
@@ -131,9 +144,13 @@ export async function importFromJSON(file: File): Promise<ImportResult> {
       };
     }
 
-    // Extract list name
-    const listName = typeof data.name === 'string' ? data.name.trim() : 'Imported List';
-    if (!data.name) {
+    // Extract list name from metadata or name field
+    let listName = 'Imported List';
+    if (data.metadata && typeof data.metadata.listName === 'string') {
+      listName = data.metadata.listName.trim();
+    } else if (typeof data.name === 'string') {
+      listName = data.name.trim();
+    } else {
       warnings.push('No list name found, using default name');
     }
 
@@ -158,6 +175,72 @@ export async function importFromJSON(file: File): Promise<ImportResult> {
       };
     }
 
+    // Process custom categories if present
+    if (data.customCategories && Array.isArray(data.customCategories)) {
+      data.customCategories.forEach((cat: any, index: number) => {
+        try {
+          if (typeof cat !== 'object' || cat === null) {
+            warnings.push(`Custom category ${index + 1}: Invalid format, skipping`);
+            return;
+          }
+
+          if (!cat.name || typeof cat.name !== 'string' || !cat.name.trim()) {
+            warnings.push(`Custom category ${index + 1}: Missing name, skipping`);
+            return;
+          }
+
+          const categoryName = cat.name.trim();
+
+          // Check if it's a predefined category
+          if (VALID_CATEGORIES.includes(categoryName as any)) {
+            warnings.push(`Custom category "${categoryName}": This is a predefined category, skipping`);
+            return;
+          }
+
+          // Check for duplicate custom category names
+          if (customCategories.some(c => c.name.toLowerCase() === categoryName.toLowerCase())) {
+            warnings.push(`Custom category "${categoryName}": Duplicate name, skipping`);
+            return;
+          }
+
+          // Validate color if present
+          let color: string | undefined;
+          if (cat.color && typeof cat.color === 'string') {
+            const colorTrimmed = cat.color.trim();
+            if (colorTrimmed && /^#[0-9A-Fa-f]{6}$/i.test(colorTrimmed)) {
+              color = colorTrimmed;
+            } else if (colorTrimmed) {
+              warnings.push(`Custom category "${categoryName}": Invalid color format, using default`);
+            }
+          }
+
+          // Validate icon if present
+          let icon: string | undefined;
+          if (cat.icon && typeof cat.icon === 'string') {
+            const iconTrimmed = cat.icon.trim();
+            if (iconTrimmed) {
+              icon = iconTrimmed;
+            }
+          }
+
+          customCategories.push({
+            name: categoryName,
+            color,
+            icon,
+          });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Unknown error';
+          warnings.push(`Custom category ${index + 1}: ${message}`);
+        }
+      });
+    }
+
+    // Build a list of valid category names (predefined + imported custom)
+    const validCategoryNames = [
+      ...VALID_CATEGORIES,
+      ...customCategories.map(c => c.name),
+    ];
+
     // Process each item
     data.items.forEach((item: any, index: number) => {
       try {
@@ -168,12 +251,13 @@ export async function importFromJSON(file: File): Promise<ImportResult> {
 
         const name = validateItemName(item.name || '');
         const quantity = normalizeQuantity(item.quantity);
-        const category = normalizeCategory(item.category || 'Other');
+        let category = item.category || 'Other';
         const notes = typeof item.notes === 'string' ? item.notes.trim() : '';
 
-        // Warn if category was changed
-        if (item.category && category !== item.category) {
-          warnings.push(`Item "${name}": Category "${item.category}" changed to "${category}"`);
+        // Check if category is valid (predefined or custom)
+        if (!validCategoryNames.includes(category)) {
+          warnings.push(`Item "${name}": Category "${category}" not found, using "Other"`);
+          category = 'Other';
         }
 
         items.push({ name, quantity, category, notes });
@@ -189,15 +273,22 @@ export async function importFromJSON(file: File): Promise<ImportResult> {
         success: false,
         listName,
         items: [],
+        customCategories: customCategories.length > 0 ? customCategories : undefined,
         errors: errors.length > 0 ? errors : ['No valid items found'],
         warnings,
       };
+    }
+
+    // Add info message if custom categories were found
+    if (customCategories.length > 0) {
+      warnings.push(`Found ${customCategories.length} custom categor${customCategories.length === 1 ? 'y' : 'ies'}: ${customCategories.map(c => c.name).join(', ')}`);
     }
 
     return {
       success: true,
       listName,
       items,
+      customCategories: customCategories.length > 0 ? customCategories : undefined,
       errors,
       warnings,
     };

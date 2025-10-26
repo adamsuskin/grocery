@@ -10,8 +10,9 @@
  * @module utils/listExport
  */
 
-import type { GroceryItem, ListWithMembers, Category } from '../types';
+import type { GroceryItem, ListWithMembers, Category, CustomCategory } from '../types';
 import { apiClient } from './api';
+import { getZeroInstance } from '../zero-store';
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -40,6 +41,7 @@ export interface ExportMetadata {
 export interface ExportData {
   metadata: ExportMetadata;
   items: GroceryItem[];
+  customCategories?: CustomCategory[];
 }
 
 /**
@@ -76,7 +78,7 @@ export interface PrintExportOptions {
  * Fetches list data and items for export
  *
  * @param listId - The list ID to export
- * @returns Export data with metadata and items
+ * @returns Export data with metadata, items, and custom categories
  * @throws {Error} If fetch fails
  */
 async function fetchExportData(listId: string): Promise<ExportData> {
@@ -99,6 +101,34 @@ async function fetchExportData(listId: string): Promise<ExportData> {
 
     const items = itemsResponse.items || [];
 
+    // Fetch custom categories for the list
+    const zero = getZeroInstance();
+    let customCategories: CustomCategory[] = [];
+    try {
+      // Query custom categories using Zero's query API
+      const categoriesQueryResult = await (zero.query as any).custom_categories
+        .where('list_id', listId);
+
+      // Convert the query result to an array by iterating
+      const categoriesArray = Array.isArray(categoriesQueryResult)
+        ? categoriesQueryResult
+        : [];
+
+      customCategories = categoriesArray.map((cat: any) => ({
+        id: cat.id,
+        name: cat.name,
+        listId: cat.list_id,
+        createdBy: cat.created_by,
+        color: cat.color || undefined,
+        icon: cat.icon || undefined,
+        createdAt: cat.createdAt,
+        updatedAt: cat.updatedAt,
+      }));
+    } catch (categoryError) {
+      console.warn('Failed to fetch custom categories, continuing without them:', categoryError);
+      // Continue export without custom categories
+    }
+
     // Build metadata
     const metadata: ExportMetadata = {
       listName: list.name,
@@ -120,7 +150,11 @@ async function fetchExportData(listId: string): Promise<ExportData> {
       })),
     };
 
-    return { metadata, items };
+    return {
+      metadata,
+      items,
+      customCategories: customCategories.length > 0 ? customCategories : undefined
+    };
   } catch (error) {
     console.error('Error fetching export data:', error);
     throw new Error(
@@ -274,6 +308,12 @@ export async function exportToCSV(
       if (data.metadata.members.length > 0) {
         const memberNames = data.metadata.members.map(m => m.name).join(', ');
         lines.push(`# Collaborators: ${memberNames}`);
+      }
+
+      if (data.customCategories && data.customCategories.length > 0) {
+        const categoryNames = data.customCategories.map(c => c.name).join(', ');
+        lines.push(`# Custom Categories: ${categoryNames}`);
+        lines.push(`# Note: Custom categories (color/icon) are preserved in JSON exports`);
       }
 
       lines.push(''); // Blank line

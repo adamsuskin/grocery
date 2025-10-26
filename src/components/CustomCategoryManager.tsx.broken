@@ -1,0 +1,1423 @@
+import { useState, useEffect, FormEvent, useCallback, useRef } from 'react';
+import { useCustomCategories, useCustomCategoryMutations } from '../hooks/useCustomCategories';
+import { useCustomCategorySearch, useSearchHighlight } from '../hooks/useCustomCategorySearch';
+import { CATEGORIES, type PermissionLevel, type CustomCategory } from '../types';
+import { validateCategoryFields } from '../utils/categoryValidation';
+import {
+  logCategoryCreated,
+  logCategoryEdited,
+  logCategoryDeleted,
+} from '../utils/categoryAnalytics';
+import { ColorPicker } from './ColorPicker';
+import { EmojiPicker } from './EmojiPicker';
+import { CategoryCopyModal } from './CategoryCopyModal';
+import { CategoryContextMenu, type CategoryAction } from './CategoryContextMenu';
+import { useLongPress } from '../hooks/useLongPress';
+import './CustomCategoryManager.css';
+
+interface CustomCategoryManagerProps {
+  listId: string;
+  onClose: () => void;
+  permissionLevel?: PermissionLevel | null;
+  onViewStatistics?: () => void;
+}
+
+// Helper component for highlighting search matches
+function HighlightedText({ text, query }: { text: string; query: string }) {
+  const { parts } = useSearchHighlight(text, query);
+
+  return (
+    <>
+      {parts.map((part, index) => (
+        part.isHighlighted ? (
+          <mark key={index} className="search-highlight">{part.text}</mark>
+        ) : (
+          <span key={index}>{part.text}</span>
+        )
+      ))}
+    </>
+  );
+}
+
+export function CustomCategoryManager({ listId, onClose, permissionLevel, onViewStatistics }: CustomCategoryManagerProps) {
+  const canEdit = permissionLevel === 'owner' || permissionLevel === 'editor';
+
+  const categories = useCustomCategories(listId);
+  const {
+    addCustomCategory,
+    updateCustomCategory,
+    deleteCustomCategory,
+    deleteMultipleCategories,
+    updateMultipleCategories,
+    mergeCategories,
+    exportCategories,
+    updateCategoryOrder,
+  } = useCustomCategoryMutations();
+
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('#4CAF50');
+  const [newCategoryIcon, setNewCategoryIcon] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editColor, setEditColor] = useState('');
+  const [editIcon, setEditIcon] = useState('');
+
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const [selectedCategories, setSelectedCategories] = useState<Set<string>>(new Set());
+  const [bulkAction, setBulkAction] = useState<string>('');
+  const [showBulkColorPicker, setShowBulkColorPicker] = useState(false);
+  const [bulkColor, setBulkColor] = useState('#4CAF50');
+  const [showMergeDialog, setShowMergeDialog] = useState(false);
+  const [mergeTargetId, setMergeTargetId] = useState<string>('');
+  const [isBulkProcessing, setIsBulkProcessing] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [showCopyModal, setShowCopyModal] = useState(false);
+
+  const [contextMenu, setContextMenu] = useState<{
+    category: CustomCategory;
+    position: { x: number; y: number };
+  } | null>(null);
+
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Search functionality
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const {
+    searchResults,
+    filters,
+    setQuery,
+    setDateRange,
+    setMinUsageCount,
+    setCreatedBy,
+    clearFilters,
+    hasActiveFilters,
+    totalResults,
+    totalCategories
+  } = useCustomCategorySearch(categories);
+
+  useEffect(() => {
+    if (error || successMessage) {
+      const timer = setTimeout(() => {
+        setError(null);
+        setSuccessMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, successMessage]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Ctrl/Cmd+F to focus search
+      if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+        event.preventDefault();
+        searchInputRef.current?.focus();
+        return;
+      }
+
+      // Escape to close or clear search
+      if (event.key === 'Escape') {
+        if (hasActiveFilters) {
+          clearFilters();
+        } else if (!deletingId && !showBulkDeleteConfirm && !showMergeDialog && !showCopyModal) {
+          onClose();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, deletingId, showBulkDeleteConfirm, showMergeDialog, showCopyModal, hasActiveFilters, clearFilters]);
+
+  const validateCategory = useCallback((
+    name: string,
+    color?: string,
+    icon?: string,
+    excludeId?: string
+  ): string | null => {
+    const validationErrors = validateCategoryFields(
+      { name, color, icon },
+      categories,
+      excludeId
+    );
+    return validationErrors.name || validationErrors.color || validationErrors.icon || null;
+  }, [categories]);
+
+  const handleAddCategory = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    const validationError = validateCategory(newCategoryName, newCategoryColor, newCategoryIcon);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setIsAdding(true);
+
+    try {
+      await addCustomCategory(
+        {
+          name: newCategoryName.trim(),
+          listId,
+          color: newCategoryColor || undefined,
+          icon: newCategoryIcon.trim() || undefined,
+        },
+        categories
+      );
+
+      logCategoryCreated(listId, newCategoryName.trim(), {
+        color: newCategoryColor || undefined,
+        icon: newCategoryIcon.trim() || undefined,
+      });
+
+      setSuccessMessage('Category added successfully');
+      setNewCategoryName('');
+      setNewCategoryColor('#4CAF50');
+      setNewCategoryIcon('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add category. Please try again.');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleStartEdit = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId);
+    if (category) {
+      setEditingId(categoryId);
+      setEditName(category.name);
+      setEditColor(category.color || '#4CAF50');
+      setEditIcon(category.icon || '');
+      setError(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditName('');
+    setEditColor('');
+    setEditIcon('');
+    setError(null);
+  };
+
+  const handleSaveEdit = async (categoryId: string) => {
+    setError(null);
+
+    const validationError = validateCategory(editName, editColor, editIcon, categoryId);
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    try {
+      const oldCategory = categories.find(c => c.id === categoryId);
+
+      await updateCustomCategory(
+        {
+          id: categoryId,
+          name: editName.trim(),
+          color: editColor || undefined,
+          icon: editIcon.trim() || undefined,
+        },
+        categories
+      );
+
+      if (oldCategory) {
+        logCategoryEdited(listId, editName.trim(), {
+          oldName: oldCategory.name !== editName.trim() ? oldCategory.name : undefined,
+          newName: oldCategory.name !== editName.trim() ? editName.trim() : undefined,
+          colorChanged: oldCategory.color !== editColor,
+          iconChanged: oldCategory.icon !== editIcon.trim(),
+        });
+      }
+
+      setSuccessMessage('Category updated successfully');
+      handleCancelEdit();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update category. Please try again.');
+    }
+  };
+
+  const handleStartDelete = (categoryId: string) => {
+    setDeletingId(categoryId);
+    setError(null);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletingId) return;
+
+    const categoryToDelete = categories.find(c => c.id === deletingId);
+
+    setIsDeleting(true);
+    setError(null);
+
+    try {
+      await deleteCustomCategory(deletingId);
+
+      if (categoryToDelete) {
+        logCategoryDeleted(listId, categoryToDelete.name);
+      }
+
+      setSuccessMessage('Category deleted successfully');
+      setDeletingId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete category. Please try again.');
+      setDeletingId(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setDeletingId(null);
+  };
+
+  const handleToggleSelect = (categoryId: string) => {
+    const newSelected = new Set(selectedCategories);
+    if (newSelected.has(categoryId)) {
+      newSelected.delete(categoryId);
+    } else {
+      newSelected.add(categoryId);
+    }
+    setSelectedCategories(newSelected);
+  };
+
+  const handleSelectAll = () => {
+    if (selectedCategories.size === categories.length) {
+      setSelectedCategories(new Set());
+    } else {
+      setSelectedCategories(new Set(categories.map(c => c.id)));
+    }
+  };
+
+  const handleBulkAction = async () => {
+    if (selectedCategories.size === 0) {
+      setError('Please select at least one category');
+      return;
+    }
+
+    switch (bulkAction) {
+      case 'delete':
+        setShowBulkDeleteConfirm(true);
+        break;
+      case 'changeColor':
+        setShowBulkColorPicker(true);
+        break;
+      case 'export':
+        await handleExportCategories();
+        break;
+      case 'merge':
+        setShowMergeDialog(true);
+        break;
+      default:
+        setError('Please select a bulk action');
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setIsBulkProcessing(true);
+    setError(null);
+
+    try {
+      const categoryIds = Array.from(selectedCategories);
+      await deleteMultipleCategories(categoryIds);
+
+      const count = categoryIds.length;
+      setSuccessMessage(`Successfully deleted ${count} categor${count === 1 ? 'y' : 'ies'}`);
+      setSelectedCategories(new Set());
+      setShowBulkDeleteConfirm(false);
+      setBulkAction('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete categories. Please try again.');
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleBulkColorChange = async () => {
+    setIsBulkProcessing(true);
+    setError(null);
+
+    try {
+      const updates = Array.from(selectedCategories).map(id => ({
+        id,
+        changes: { color: bulkColor }
+      }));
+
+      await updateMultipleCategories(updates);
+
+      const count = updates.length;
+      setSuccessMessage(`Successfully updated color for ${count} categor${count === 1 ? 'y' : 'ies'}`);
+      setSelectedCategories(new Set());
+      setShowBulkColorPicker(false);
+      setBulkAction('');
+      setBulkColor('#4CAF50');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update categories. Please try again.');
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleExportCategories = async () => {
+    setError(null);
+
+    try {
+      const categoryIds = Array.from(selectedCategories);
+      const json = await exportCategories(categoryIds);
+
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `custom-categories-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      const count = categoryIds.length;
+      setSuccessMessage(`Successfully exported ${count} categor${count === 1 ? 'y' : 'ies'}`);
+      setSelectedCategories(new Set());
+      setBulkAction('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to export categories. Please try again.');
+    }
+  };
+
+  const handleMergeCategories = async () => {
+    if (!mergeTargetId) {
+      setError('Please select a target category');
+      return;
+    }
+
+    if (selectedCategories.has(mergeTargetId)) {
+      setError('Target category cannot be one of the selected categories');
+      return;
+    }
+
+    setIsBulkProcessing(true);
+    setError(null);
+
+    try {
+      const sourceIds = Array.from(selectedCategories);
+      await mergeCategories(sourceIds, mergeTargetId);
+
+      const count = sourceIds.length;
+      setSuccessMessage(`Successfully merged ${count} categor${count === 1 ? 'y' : 'ies'} into target category`);
+      setSelectedCategories(new Set());
+      setShowMergeDialog(false);
+      setBulkAction('');
+      setMergeTargetId('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to merge categories. Please try again.');
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleCopySuccess = (count: number) => {
+    setSuccessMessage(`Successfully imported ${count} categor${count === 1 ? 'y' : 'ies'}`);
+    setShowCopyModal(false);
+  };
+
+  const handleMoveUp = async (categoryId: string) => {
+    const index = categories.findIndex(c => c.id === categoryId);
+    if (index <= 0) return;
+
+    const currentCategory = categories[index];
+    const previousCategory = categories[index - 1];
+    setError(null);
+
+    try {
+      await updateCategoryOrder(currentCategory.id, previousCategory.displayOrder);
+      await updateCategoryOrder(previousCategory.id, currentCategory.displayOrder);
+      setSuccessMessage('Category moved up');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to move category');
+    }
+  };
+
+  const handleMoveDown = async (categoryId: string) => {
+    const index = categories.findIndex(c => c.id === categoryId);
+    if (index === -1 || index >= categories.length - 1) return;
+
+    const currentCategory = categories[index];
+    const nextCategory = categories[index + 1];
+    setError(null);
+
+    try {
+      await updateCategoryOrder(currentCategory.id, nextCategory.displayOrder);
+      await updateCategoryOrder(nextCategory.id, currentCategory.displayOrder);
+      setSuccessMessage('Category moved down');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to move category');
+    }
+  };
+
+  const handleResetOrder = async () => {
+    setError(null);
+    setIsBulkProcessing(true);
+
+    try {
+      const updates = categories.map(cat => ({
+        id: cat.id,
+        changes: { displayOrder: 0 }
+      }));
+
+      await updateMultipleCategories(updates);
+      setSuccessMessage('Category order reset to default');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to reset category order');
+    } finally {
+      setIsBulkProcessing(false);
+    }
+  };
+
+  const handleContextMenu = (e: React.MouseEvent, category: CustomCategory) => {
+    e.preventDefault();
+    setContextMenu({
+      category,
+      position: { x: e.clientX, y: e.clientY },
+    });
+  };
+
+  const handleContextMenuAction = async (action: CategoryAction) => {
+    if (!contextMenu) return;
+
+    const category = contextMenu.category;
+
+    switch (action) {
+      case 'edit':
+        handleStartEdit(category.id);
+        break;
+
+      case 'changeColor':
+        // Set up for editing but focus on color
+        handleStartEdit(category.id);
+        // Focus will be handled by the edit form
+        break;
+
+      case 'changeIcon':
+        // Set up for editing but focus on icon
+        handleStartEdit(category.id);
+        break;
+
+      case 'duplicate':
+        try {
+          await addCustomCategory(
+            {
+              name: `${category.name} (Copy)`,
+              listId: category.listId,
+              color: category.color,
+              icon: category.icon,
+            },
+            categories
+          );
+          setSuccessMessage(`Duplicated category "${category.name}"`);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to duplicate category');
+        }
+        break;
+
+      case 'archive':
+        // Archive functionality not yet implemented in hooks
+        // This would require updating the updateCustomCategory to support isArchived
+        setError('Archive functionality coming soon');
+        break;
+
+      case 'delete':
+        handleStartDelete(category.id);
+        break;
+
+      case 'viewItems':
+        // This would trigger filtering items by category
+        // For now, close the manager and the parent component should handle filtering
+        setSuccessMessage(`Viewing items in "${category.name}"`);
+        onClose();
+        break;
+
+      case 'exportItems':
+        try {
+          // Export just this category
+          await handleExportSingleCategory(category.id);
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to export category');
+        }
+        break;
+    }
+  };
+
+  const handleExportSingleCategory = async (categoryId: string) => {
+    try {
+      const json = await exportCategories([categoryId]);
+      const category = categories.find(c => c.id === categoryId);
+
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `category-${category?.name || 'export'}-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setSuccessMessage(`Exported category "${category?.name}"`);
+    } catch (err) {
+      throw err;
+    }
+  };
+
+  const deletingCategory = deletingId ? categories.find(c => c.id === deletingId) : null;
+  const availableTargets = categories.filter(c => !selectedCategories.has(c.id));
+
+  return (
+    <div
+      className="category-manager-overlay"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="category-manager-modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="category-manager-title"
+        aria-describedby="category-manager-description"
+      >
+        <div className="category-manager-header">
+          <h2 id="category-manager-title">Manage Custom Categories</h2>
+          <div className="category-manager-header-actions">
+            {onViewStatistics && (
+              <button
+                className="btn btn-secondary btn-view-stats"
+                onClick={onViewStatistics}
+                aria-label="View category statistics"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M3 3v18h18" />
+                  <path d="M18 17V9" />
+                  <path d="M13 17V5" />
+                  <path d="M8 17v-3" />
+                </svg>
+                <span>Statistics</span>
+              </button>
+            )}
+            <button
+              className="btn-close"
+              onClick={onClose}
+              aria-label="Close category manager dialog"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+
+        <div
+          id="category-manager-description"
+          className="sr-only"
+        >
+          Create, edit, and delete custom categories for organizing your grocery items. Use tab to navigate, enter or space to activate buttons, and escape to close this dialog.
+        </div>
+
+        {error && (
+          <div
+            className="message message-error"
+            role="alert"
+            aria-live="assertive"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {error}
+          </div>
+        )}
+        {successMessage && (
+          <div
+            className="message message-success"
+            role="status"
+            aria-live="polite"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            {successMessage}
+          </div>
+        )}
+
+        <div className="category-manager-body">
+          {!canEdit && (
+            <div className="permission-notice">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" y1="8" x2="12" y2="12" />
+                <line x1="12" y1="16" x2="12.01" y2="16" />
+              </svg>
+              <span>You have view-only access. Only owners and editors can create, edit, or delete custom categories.</span>
+            </div>
+          )}
+
+          {canEdit && (
+            <section className="category-section" aria-labelledby="add-category-heading">
+              <h3 id="add-category-heading">Add New Category</h3>
+              <form onSubmit={handleAddCategory} className="category-form" aria-label="Add new category form">
+                <div className="form-group form-group-full">
+                  <label htmlFor="category-name">Category Name *</label>
+                  <input
+                    id="category-name"
+                    type="text"
+                    className="input"
+                    placeholder="e.g., Spices, Snacks, Cleaning"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                    disabled={isAdding}
+                    maxLength={100}
+                    required
+                    aria-required="true"
+                    aria-invalid={error ? "true" : "false"}
+                    aria-describedby={error ? "category-error" : undefined}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <EmojiPicker
+                    value={newCategoryIcon}
+                    onChange={setNewCategoryIcon}
+                    label="Icon"
+                    disabled={isAdding}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <ColorPicker
+                    value={newCategoryColor}
+                    onChange={setNewCategoryColor}
+                    label="Color (optional)"
+                    disabled={isAdding}
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="btn btn-primary"
+                  disabled={isAdding}
+                  aria-label={isAdding ? "Adding category, please wait" : "Add category"}
+                >
+                  {isAdding ? 'Adding...' : 'Add Category'}
+                </button>
+              </form>
+            </section>
+          )}
+
+          <section className="category-section">
+            <h3>Search Categories</h3>
+            <div className="search-bar-container">
+              <div className="search-input-wrapper">
+                <svg className="search-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  className="search-input"
+                  placeholder="Search by name, color, or icon... (Ctrl/Cmd+F)"
+                  value={filters.query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  aria-label="Search categories"
+                />
+                {filters.query && (
+                  <button
+                    className="search-clear-btn"
+                    onClick={() => setQuery('')}
+                    aria-label="Clear search"
+                    title="Clear search"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18" />
+                      <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {(categories.length > 0 || CATEGORIES.length > 0) && (
+                <div className="search-stats">
+                  {hasActiveFilters ? (
+                    <>
+                      <span className="search-count">
+                        Showing {totalResults} of {totalCategories + CATEGORIES.length} categories
+                      </span>
+                      <button
+                        className="btn btn-small btn-text"
+                        onClick={clearFilters}
+                        aria-label="Clear all filters"
+                      >
+                        Clear filters
+                      </button>
+                    </>
+                  ) : (
+                    <span className="search-count-muted">
+                      {totalCategories + CATEGORIES.length} total categories ({CATEGORIES.length} predefined, {totalCategories} custom)
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {categories.length > 5 && (
+                <button
+                  className="btn btn-small btn-secondary toggle-advanced-filters"
+                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  aria-expanded={showAdvancedFilters}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="4" y1="21" x2="4" y2="14" />
+                    <line x1="4" y1="10" x2="4" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12" y2="3" />
+                    <line x1="20" y1="21" x2="20" y2="16" />
+                    <line x1="20" y1="12" x2="20" y2="3" />
+                    <line x1="1" y1="14" x2="7" y2="14" />
+                    <line x1="9" y1="8" x2="15" y2="8" />
+                    <line x1="17" y1="16" x2="23" y2="16" />
+                  </svg>
+                  {showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters
+                </button>
+              )}
+
+              {showAdvancedFilters && (
+                <div className="advanced-filters">
+                  <div className="filter-row">
+                    <div className="form-group">
+                      <label htmlFor="filter-created-after">Created After</label>
+                      <input
+                        id="filter-created-after"
+                        type="date"
+                        className="input input-small"
+                        onChange={(e) => {
+                          const date = e.target.value ? new Date(e.target.value) : undefined;
+                          setDateRange(date, filters.createdBefore);
+                        }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="filter-created-before">Created Before</label>
+                      <input
+                        id="filter-created-before"
+                        type="date"
+                        className="input input-small"
+                        onChange={(e) => {
+                          const date = e.target.value ? new Date(e.target.value) : undefined;
+                          setDateRange(filters.createdAfter, date);
+                        }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="filter-min-usage">Min Usage Count</label>
+                      <input
+                        id="filter-min-usage"
+                        type="number"
+                        min="0"
+                        className="input input-small"
+                        placeholder="0"
+                        onChange={(e) => {
+                          const value = e.target.value ? parseInt(e.target.value) : undefined;
+                          setMinUsageCount(value);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="category-section">
+            <h3>Predefined Categories</h3>
+            <p className="section-description">
+              These built-in categories are available in all lists and cannot be modified.
+            </p>
+            <div className="predefined-categories">
+              {CATEGORIES.map((category) => (
+                <div key={category} className="category-item predefined-category">
+                  <div className="category-info">
+                    <span className="category-name"><HighlightedText text={category} query={filters.query} /></span>
+                    <span className="category-badge">Built-in</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="category-section">
+            <div className="category-section-header">
+              <div className="section-title-row">
+                <h3>Your Custom Categories</h3>
+                {canEdit && (
+                  <div className="section-actions">
+                    {categories.length > 0 && (
+                      <button
+                        className="btn btn-small btn-secondary"
+                        onClick={handleResetOrder}
+                        disabled={isBulkProcessing}
+                        title="Reset category order to default (by creation date)"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="23 4 23 10 17 10" />
+                          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                        </svg>
+                        Reset Order
+                      </button>
+                    )}
+                    <button
+                      className="btn btn-small btn-secondary"
+                      onClick={() => setShowCopyModal(true)}
+                      title="Import categories from another list"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                      Import from List
+                    </button>
+                  </div>
+                )}
+                    <>
+                      <span className="search-count">
+                        Showing {totalResults} of {totalCategories + CATEGORIES.length} categories
+                      </span>
+                      <button
+                        className="btn btn-small btn-text"
+                        onClick={clearFilters}
+                        aria-label="Clear all filters"
+                      >
+                        Clear filters
+                      </button>
+                    </>
+                  ) : (
+                    <span className="search-count-muted">
+                      {totalCategories + CATEGORIES.length} total categories ({CATEGORIES.length} predefined, {totalCategories} custom)
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {categories.length > 5 && (
+                <button
+                  className="btn btn-small btn-secondary toggle-advanced-filters"
+                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  aria-expanded={showAdvancedFilters}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="4" y1="21" x2="4" y2="14" />
+                    <line x1="4" y1="10" x2="4" y2="3" />
+                    <line x1="12" y1="21" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12" y2="3" />
+                    <line x1="20" y1="21" x2="20" y2="16" />
+                    <line x1="20" y1="12" x2="20" y2="3" />
+                    <line x1="1" y1="14" x2="7" y2="14" />
+                    <line x1="9" y1="8" x2="15" y2="8" />
+                    <line x1="17" y1="16" x2="23" y2="16" />
+                  </svg>
+                  {showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters
+                </button>
+              )}
+
+              {showAdvancedFilters && (
+                <div className="advanced-filters">
+                  <div className="filter-row">
+                    <div className="form-group">
+                      <label htmlFor="filter-created-after">Created After</label>
+                      <input
+                        id="filter-created-after"
+                        type="date"
+                        className="input input-small"
+                        onChange={(e) => {
+                          const date = e.target.value ? new Date(e.target.value) : undefined;
+                          setDateRange(date, filters.createdBefore);
+                        }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="filter-created-before">Created Before</label>
+                      <input
+                        id="filter-created-before"
+                        type="date"
+                        className="input input-small"
+                        onChange={(e) => {
+                          const date = e.target.value ? new Date(e.target.value) : undefined;
+                          setDateRange(filters.createdAfter, date);
+                        }}
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label htmlFor="filter-min-usage">Min Usage Count</label>
+                      <input
+                        id="filter-min-usage"
+                        type="number"
+                        min="0"
+                        className="input input-small"
+                        placeholder="0"
+                        onChange={(e) => {
+                          const value = e.target.value ? parseInt(e.target.value) : undefined;
+                          setMinUsageCount(value);
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="category-section">
+            <h3>Predefined Categories</h3>
+            <p className="section-description">
+              These built-in categories are available in all lists and cannot be modified.
+            </p>
+            <div className="predefined-categories">
+              {CATEGORIES.map((category) => (
+                <div key={category} className="category-item predefined-category">
+                  <div className="category-info">
+                    <span className="category-name"><HighlightedText text={category} query={filters.query} /></span>
+                    <span className="category-badge">Built-in</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="category-section">
+            <div className="category-section-header">
+              <div className="section-title-row">
+                <h3>Your Custom Categories</h3>
+                {canEdit && (
+                  <button
+                    className="btn btn-small btn-secondary"
+                    onClick={() => setShowCopyModal(true)}
+                    title="Import categories from another list"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="7 10 12 15 17 10" />
+                      <line x1="12" y1="15" x2="12" y2="3" />
+                    </svg>
+                    Import from List
+                  </button>
+                )}
+              </div>
+              {canEdit && categories.length > 0 && (
+                <div className="bulk-operations-toolbar">
+                  <label className="select-all-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={selectedCategories.size === categories.length && categories.length > 0}
+                      onChange={handleSelectAll}
+                    />
+                    <span>Select All ({selectedCategories.size})</span>
+                  </label>
+                  {selectedCategories.size > 0 && (
+                    <div className="bulk-actions">
+                      <select
+                        className="bulk-action-select"
+                        value={bulkAction}
+                        onChange={(e) => setBulkAction(e.target.value)}
+                      >
+                        <option value="">Choose action...</option>
+                        <option value="delete">Delete Selected</option>
+                        <option value="changeColor">Change Color</option>
+                        <option value="export">Export Selected</option>
+                        {selectedCategories.size > 1 && (
+                          <option value="merge">Merge Categories</option>
+                        )}
+                      </select>
+                      <button
+                        className="btn btn-small btn-primary"
+                        onClick={handleBulkAction}
+                        disabled={!bulkAction}
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {categories.length === 0 ? (
+              <div className="empty-categories">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 3h7v7H3z" />
+                  <path d="M14 3h7v7h-7z" />
+                  <path d="M14 14h7v7h-7z" />
+                  <path d="M3 14h7v7H3z" />
+                </svg>
+                <p>No custom categories yet</p>
+                {canEdit ? (
+                  <p className="empty-hint">Create your first custom category above to organize items your way!</p>
+                ) : (
+                  <p className="empty-hint">This list has no custom categories yet.</p>
+                )}
+              </div>
+            ) : searchResults.length === 0 && hasActiveFilters ? (
+              <div className="empty-categories">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.35-4.35" />
+                </svg>
+                <p>No categories match your search</p>
+                <p className="empty-hint">Try adjusting your search terms or filters</p>
+                <button className="btn btn-secondary" onClick={clearFilters} style={{ marginTop: '12px' }}>
+                  Clear all filters
+                </button>
+              </div>
+            ) : (
+              <div className="custom-categories">
+                {searchResults.map((category) => {
+                  const isEditing = editingId === category.id;
+                  const isSelected = selectedCategories.has(category.id);
+
+                  // Create long-press handlers for mobile
+                  const longPressHandlers = useLongPress({
+                    onLongPress: (e) => {
+                      const touch = 'touches' in e ? e.touches[0] : e as React.MouseEvent;
+                      const clientX = 'clientX' in touch ? touch.clientX : (e as any).clientX;
+                      const clientY = 'clientY' in touch ? touch.clientY : (e as any).clientY;
+
+                      setContextMenu({
+                        category,
+                        position: { x: clientX, y: clientY },
+                      });
+                    },
+                    delay: 500,
+                  });
+
+                  return (
+                    <div
+                      key={category.id}
+                      className={`category-item custom-category ${isSelected ? 'selected' : ''}`}
+                      onContextMenu={(e) => handleContextMenu(e, category)}
+                      {...longPressHandlers}
+                    >
+                      {isEditing ? (
+                        <div className="category-edit-form">
+                          <div className="form-group form-group-full">
+                            <label htmlFor={`edit-name-${category.id}`}>Category Name</label>
+                            <input
+                              id={`edit-name-${category.id}`}
+                              type="text"
+                              className="input"
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              maxLength={100}
+                              autoFocus
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <EmojiPicker
+                              value={editIcon}
+                              onChange={setEditIcon}
+                              label="Icon"
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <ColorPicker
+                              value={editColor}
+                              onChange={setEditColor}
+                              label="Color"
+                            />
+                          </div>
+
+                          <div className="category-actions">
+                            <button
+                              className="btn btn-small btn-primary"
+                              onClick={() => handleSaveEdit(category.id)}
+                            >
+                              Save
+                            </button>
+                            <button
+                              className="btn btn-small btn-secondary"
+                              onClick={handleCancelEdit}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {canEdit && (
+                            <div className="category-checkbox">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => handleToggleSelect(category.id)}
+                                aria-label={`Select ${category.name}`}
+                              />
+                            </div>
+                          )}
+                          <div className="category-info">
+                            <div className="category-visual">
+                              {category.icon && (
+                                <span className="category-icon">{category.icon}</span>
+                              )}
+                              {category.color && (
+                                <span
+                                  className="category-color-preview"
+                                  style={{ backgroundColor: category.color }}
+                                  title={`Color: ${category.color}`}
+                                />
+                              )}
+                            </div>
+                            <span className="category-name">
+                              <HighlightedText text={category.name} query={filters.query} />
+                            </span>
+                          </div>
+
+                          {canEdit && (
+                            <div className="category-reorder-controls">
+                              <button
+                                className="btn btn-icon btn-reorder"
+                                onClick={() => handleMoveUp(category.id)}
+                                disabled={categories.indexOf(category) === 0}
+                                title="Move up"
+                                aria-label={`Move ${category.name} up`}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polyline points="18 15 12 9 6 15" />
+                                </svg>
+                              </button>
+                              <button
+                                className="btn btn-icon btn-reorder"
+                                onClick={() => handleMoveDown(category.id)}
+                                disabled={categories.indexOf(category) === categories.length - 1}
+                                title="Move down"
+                                aria-label={`Move ${category.name} down`}
+                              >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polyline points="6 9 12 15 18 9" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
+
+                          {canEdit && (
+                            <div className="category-actions">
+                              <button
+                                className="btn btn-icon"
+                                onClick={() => handleStartEdit(category.id)}
+                                title="Edit category"
+                                aria-label={`Edit ${category.name}`}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </button>
+                              <button
+                                className="btn btn-icon btn-danger"
+                                onClick={() => handleStartDelete(category.id)}
+                                title="Delete category"
+                                aria-label={`Delete ${category.name}`}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                  <line x1="10" y1="11" x2="10" y2="17" />
+                                  <line x1="14" y1="11" x2="14" y2="17" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+
+      {deletingCategory && (
+        <div className="confirmation-overlay" onClick={handleCancelDelete}>
+          <div className="confirmation-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete Category?</h3>
+            <div className="confirmation-content">
+              <p className="confirmation-message">
+                Are you sure you want to delete <strong>"{deletingCategory.name}"</strong>?
+              </p>
+              <p className="confirmation-warning">
+                Items using this category will still be visible, but the category will no longer be available for new items.
+              </p>
+            </div>
+            <div className="confirmation-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={handleCancelDelete}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Category'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkDeleteConfirm && (
+        <div className="confirmation-overlay" onClick={() => setShowBulkDeleteConfirm(false)}>
+          <div className="confirmation-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete Multiple Categories?</h3>
+            <div className="confirmation-content">
+              <p className="confirmation-message">
+                Are you sure you want to delete <strong>{selectedCategories.size}</strong> selected {selectedCategories.size === 1 ? 'category' : 'categories'}?
+              </p>
+              <p className="confirmation-warning">
+                Items using these categories will still be visible, but the categories will no longer be available for new items.
+              </p>
+            </div>
+            <div className="confirmation-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                disabled={isBulkProcessing}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleBulkDelete}
+                disabled={isBulkProcessing}
+              >
+                {isBulkProcessing ? 'Deleting...' : 'Delete Categories'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showBulkColorPicker && (
+        <div className="confirmation-overlay" onClick={() => setShowBulkColorPicker(false)}>
+          <div className="confirmation-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Change Color for Selected Categories</h3>
+            <div className="confirmation-content">
+              <p className="confirmation-message">
+                Choose a color to apply to <strong>{selectedCategories.size}</strong> selected {selectedCategories.size === 1 ? 'category' : 'categories'}:
+              </p>
+              <div className="bulk-color-picker">
+                <ColorPicker
+                  value={bulkColor}
+                  onChange={setBulkColor}
+                  label="New Color"
+                />
+              </div>
+            </div>
+            <div className="confirmation-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowBulkColorPicker(false)}
+                disabled={isBulkProcessing}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleBulkColorChange}
+                disabled={isBulkProcessing}
+              >
+                {isBulkProcessing ? 'Updating...' : 'Update Colors'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showMergeDialog && (
+        <div className="confirmation-overlay" onClick={() => setShowMergeDialog(false)}>
+          <div className="confirmation-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Merge Categories</h3>
+            <div className="confirmation-content">
+              <p className="confirmation-message">
+                Select a target category to merge <strong>{selectedCategories.size}</strong> selected {selectedCategories.size === 1 ? 'category' : 'categories'} into:
+              </p>
+              <p className="confirmation-warning">
+                All items from the selected categories will be moved to the target category, and the selected categories will be deleted.
+              </p>
+              <div className="merge-target-select">
+                <label htmlFor="merge-target">Target Category *</label>
+                <select
+                  id="merge-target"
+                  className="input"
+                  value={mergeTargetId}
+                  onChange={(e) => setMergeTargetId(e.target.value)}
+                >
+                  <option value="">Choose target category...</option>
+                  {availableTargets.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.icon && `${cat.icon} `}{cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div className="confirmation-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={() => setShowMergeDialog(false)}
+                disabled={isBulkProcessing}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleMergeCategories}
+                disabled={isBulkProcessing || !mergeTargetId}
+              >
+                {isBulkProcessing ? 'Merging...' : 'Merge Categories'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {contextMenu && (
+        <CategoryContextMenu
+          category={contextMenu.category}
+          position={contextMenu.position}
+          onClose={() => setContextMenu(null)}
+          onAction={handleContextMenuAction}
+          userPermission={permissionLevel || 'viewer'}
+        />
+      )}
+
+      {showCopyModal && (
+        <CategoryCopyModal
+          currentListId={listId}
+          onClose={() => setShowCopyModal(false)}
+          onSuccess={handleCopySuccess}
+        />
+      )}
+    </div>
+  );
+}

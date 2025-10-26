@@ -1,0 +1,337 @@
+/* Gamification Progress */
+.gamification-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.gamification-progress-compact {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+}
+
+.level-badge-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.level-icon-compact {
+  font-size: 1.25rem;
+}
+
+.level-title-compact {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.stats-compact {
+  display: flex;
+  gap: 1rem;
+}
+
+.stat-compact {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.stat-icon {
+  font-size: 1rem;
+}
+
+/* Level Section */
+.level-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.level-badge {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 16px;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.level-icon {
+  font-size: 3rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.level-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.level-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.level-subtitle {
+  font-size: 0.875rem;
+  opacity: 0.9;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.level-progress-section {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid #e0e0e0;
+}
+
+.level-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.progress-categories {
+  color: #667eea;
+}
+
+.level-progress-bar {
+  height: 12px;
+  background: #e0e0e0;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.level-progress-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+}
+
+.level-progress-text {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0;
+}
+
+.max-level-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border-radius: 12px;
+  color: white;
+  font-weight: bold;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.max-level-icon {
+  font-size: 1.5rem;
+  animation: rotate 4s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Stats Grid */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  border: 2px solid #f0f0f0;
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.stat-card-icon {
+  font-size: 2rem;
+}
+
+.stat-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-card-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #333;
+}
+
+.stat-card-label {
+  font-size: 0.75rem;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Scores Section */
+.scores-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.score-item {
+  background: white;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 2px solid #f0f0f0;
+}
+
+.score-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.score-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #666;
+}
+
+.score-value {
+  font-size: 1.125rem;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.score-bar {
+  height: 10px;
+  background: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.score-fill {
+  height: 100%;
+  transition: width 0.5s ease;
+  border-radius: 5px;
+}
+
+.score-description {
+  font-size: 0.75rem;
+  color: #999;
+  margin: 0;
+}
+
+/* Most Used Section */
+.most-used-section {
+  background: white;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 2px solid #f0f0f0;
+}
+
+.most-used-section h4 {
+  margin: 0 0 0.75rem 0;
+  font-size: 0.875rem;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.most-used-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+  border-radius: 12px;
+  color: white;
+}
+
+.most-used-icon {
+  font-size: 2rem;
+}
+
+.most-used-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.most-used-name {
+  font-size: 1.125rem;
+  font-weight: bold;
+}
+
+.most-used-count {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .level-badge {
+    padding: 1rem;
+  }
+
+  .level-icon {
+    font-size: 2.5rem;
+  }
+
+  .level-title {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    flex-direction: column;
+    text-align: center;
+  }
+}

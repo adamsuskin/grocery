@@ -1,0 +1,253 @@
+/* Mobile-optimized Color Picker */
+
+.color-picker-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.color-picker-mobile.disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Label */
+.color-picker-label-mobile {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-color);
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Native color picker wrapper */
+.color-picker-native-wrapper {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 12px;
+  border: 2px solid var(--border-color);
+}
+
+/* Native color input for mobile */
+.color-picker-native-input-mobile {
+  width: 64px;
+  height: 64px;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background: transparent;
+  padding: 0;
+}
+
+/* iOS Safari specific styles */
+.color-picker-native-input-mobile::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.color-picker-native-input-mobile::-webkit-color-swatch {
+  border: none;
+  border-radius: 12px;
+}
+
+/* Firefox specific styles */
+.color-picker-native-input-mobile::-moz-color-swatch {
+  border: none;
+  border-radius: 12px;
+}
+
+/* Preview section */
+.color-picker-preview-mobile {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.color-swatch-mobile {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.color-value-mobile {
+  font-family: 'Courier New', Monaco, monospace;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-color);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Quick presets section */
+.color-presets-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.color-presets-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+/* Preset colors grid for mobile */
+.color-presets-grid-mobile {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 12px;
+  padding: 12px;
+  background: #f9f9f9;
+  border-radius: 12px;
+}
+
+.color-preset-btn-mobile {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: currentColor;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-height: 48px; /* Touch target size */
+  min-width: 48px;
+}
+
+.color-preset-btn-mobile:active {
+  transform: scale(0.92);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.color-preset-btn-mobile.selected {
+  border-color: var(--text-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: scale(1.05);
+}
+
+.color-preset-btn-mobile:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.color-check-icon {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+  pointer-events: none;
+}
+
+/* Tablet responsive (landscape phones and small tablets) */
+@media (min-width: 600px) and (max-width: 1024px) {
+  .color-presets-grid-mobile {
+    grid-template-columns: repeat(8, 1fr);
+  }
+
+  .color-picker-native-input-mobile {
+    width: 72px;
+    height: 72px;
+  }
+
+  .color-swatch-mobile {
+    width: 56px;
+    height: 56px;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 400px) {
+  .color-presets-grid-mobile {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+  }
+
+  .color-picker-native-input-mobile {
+    width: 56px;
+    height: 56px;
+  }
+
+  .color-swatch-mobile {
+    width: 40px;
+    height: 40px;
+  }
+
+  .color-value-mobile {
+    font-size: 14px;
+  }
+}
+
+/* Touch-optimized for devices without hover */
+@media (hover: none) and (pointer: coarse) {
+  .color-preset-btn-mobile {
+    min-height: 52px;
+    min-width: 52px;
+  }
+
+  .color-picker-native-input-mobile {
+    min-width: 64px;
+    min-height: 64px;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .color-preset-btn-mobile {
+    border-width: 4px;
+  }
+
+  .color-preset-btn-mobile.selected {
+    border-width: 5px;
+  }
+
+  .color-swatch-mobile {
+    border-width: 3px;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .color-preset-btn-mobile {
+    transition: none;
+  }
+
+  .color-preset-btn-mobile:active {
+    transform: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .color-picker-native-wrapper,
+  .color-presets-grid-mobile {
+    background: #2a2a2a;
+    border-color: #444;
+  }
+
+  .color-presets-label {
+    color: #aaa;
+  }
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  .color-picker-mobile {
+    padding-left: max(0px, env(safe-area-inset-left));
+    padding-right: max(0px, env(safe-area-inset-right));
+  }
+}

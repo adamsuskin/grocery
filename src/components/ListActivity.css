@@ -33,6 +33,39 @@
   font-weight: 500;
 }
 
+/* Activity filters */
+.activity-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  background-color: transparent;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  background-color: #f1f5f9;
+  color: #334155;
+}
+
+.filter-btn.active {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
 /* Loading state */
 .activity-loading {
   display: flex;
@@ -197,5 +230,25 @@
 
   .activity-time {
     color: #64748b;
+  }
+
+  .activity-filters {
+    border-bottom-color: #334155;
+  }
+
+  .filter-btn {
+    color: #94a3b8;
+    border-color: #334155;
+  }
+
+  .filter-btn:hover {
+    background-color: #334155;
+    color: #cbd5e1;
+  }
+
+  .filter-btn.active {
+    background-color: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
   }
 }

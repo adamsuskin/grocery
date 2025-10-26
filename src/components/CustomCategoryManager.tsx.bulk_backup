@@ -1,0 +1,498 @@
+import { useState, useEffect, FormEvent, useCallback } from 'react';
+import { useCustomCategories, useCustomCategoryMutations } from '../hooks/useCustomCategories';
+import { CATEGORIES, type PermissionLevel } from '../types';
+import { validateCategoryFields } from '../utils/categoryValidation';
+import {
+  logCategoryCreated,
+  logCategoryEdited,
+  logCategoryDeleted,
+} from '../utils/categoryAnalytics';
+import { ColorPicker } from './ColorPicker';
+import { EmojiPicker } from './EmojiPicker';
+import './CustomCategoryManager.css';
+
+interface CustomCategoryManagerProps {
+  listId: string;
+  onClose: () => void;
+  permissionLevel?: PermissionLevel | null;
+}
+
+export function CustomCategoryManager({ listId, onClose, permissionLevel }: CustomCategoryManagerProps) {
+  // Determine if user can edit (owner or editor)
+  const canEdit = permissionLevel === 'owner' || permissionLevel === 'editor';
+
+  // Fetch custom categories for this list
+  const categories = useCustomCategories(listId);
+  const { addCustomCategory, updateCustomCategory, deleteCustomCategory } = useCustomCategoryMutations();
+
+  // Form state for adding new category
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryColor, setNewCategoryColor] = useState('#4CAF50');
+  const [newCategoryIcon, setNewCategoryIcon] = useState('');
+  const [isAdding, setIsAdding] = useState(false);
+
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editColor, setEditColor] = useState('');
+  const [editIcon, setEditIcon] = useState('');
+
+  // Delete confirmation state
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Error and success messages
+  const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  // Clear messages after a few seconds
+  useEffect(() => {
+    if (error || successMessage) {
+      const timer = setTimeout(() => {
+        setError(null);
+        setSuccessMessage(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, successMessage]);
+
+  // Handle Escape key to close modal
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && !deletingId) {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [onClose, deletingId]);
+
+  // Validate category fields using the validation utility
+  const validateCategory = useCallback((
+    name: string,
+    color?: string,
+    icon?: string,
+    excludeId?: string
+  ): string | null => {
+    const validationErrors = validateCategoryFields(
+      { name, color, icon },
+      categories,
+      excludeId
+    );
+
+    // Return the first error found
+    return validationErrors.name || validationErrors.color || validationErrors.icon || null;
+  }, [categories]);
+
+  // Handle adding a new category
+  const handleAddCategory = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    const validationError = validateCategory(newCategoryName, newCategoryColor, newCategoryIcon);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    setIsAdding(true);
+
+    try {
+      await addCustomCategory(
+        {
+          name: newCategoryName.trim(),
+          listId,
+          color: newCategoryColor || undefined,
+          icon: newCategoryIcon.trim() || undefined,
+        },
+        categories // Pass existing categories to avoid redundant query
+      );
+
+      // Track category creation in analytics
+      logCategoryCreated(listId, newCategoryName.trim(), {
+        color: newCategoryColor || undefined,
+        icon: newCategoryIcon.trim() || undefined,
+      });
+
+      setSuccessMessage('Category added successfully');
+      setNewCategoryName('');
+      setNewCategoryColor('#4CAF50');
+      setNewCategoryIcon('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add category. Please try again.');
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  // Handle starting edit mode
+  const handleStartEdit = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId);
+    if (category) {
+      setEditingId(categoryId);
+      setEditName(category.name);
+      setEditColor(category.color || '#4CAF50');
+      setEditIcon(category.icon || '');
+      setError(null);
+    }
+  };
+
+  // Handle canceling edit mode
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditName('');
+    setEditColor('');
+    setEditIcon('');
+    setError(null);
+  };
+
+  // Handle saving edited category
+  const handleSaveEdit = async (categoryId: string) => {
+    setError(null);
+
+    // Validate all fields before submitting (excluding current category from duplicate check)
+    const validationError = validateCategory(
+      editName,
+      editColor,
+      editIcon,
+      categoryId
+    );
+
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
+
+    try {
+      const oldCategory = categories.find(c => c.id === categoryId);
+
+      await updateCustomCategory(
+        {
+          id: categoryId,
+          name: editName.trim(),
+          color: editColor || undefined,
+          icon: editIcon.trim() || undefined,
+        },
+        categories // Pass existing categories to avoid redundant query
+      );
+
+      // Track category edit in analytics
+      if (oldCategory) {
+        logCategoryEdited(listId, editName.trim(), {
+          oldName: oldCategory.name !== editName.trim() ? oldCategory.name : undefined,
+          newName: oldCategory.name !== editName.trim() ? editName.trim() : undefined,
+          colorChanged: oldCategory.color !== editColor,
+          iconChanged: oldCategory.icon !== editIcon.trim(),
+        });
+      }
+
+      setSuccessMessage('Category updated successfully');
+      handleCancelEdit();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update category. Please try again.');
+    }
+  };
+
+  // Handle starting delete confirmation
+  const handleStartDelete = (categoryId: string) => {
+    setDeletingId(categoryId);
+    setError(null);
+  };
+
+  // Handle confirming delete
+  const handleConfirmDelete = async () => {
+    if (!deletingId) return;
+
+    const categoryToDelete = categories.find(c => c.id === deletingId);
+
+    setIsDeleting(true);
+    setError(null);
+
+    try {
+      await deleteCustomCategory(deletingId);
+
+      // Track category deletion in analytics
+      if (categoryToDelete) {
+        logCategoryDeleted(listId, categoryToDelete.name);
+      }
+
+      setSuccessMessage('Category deleted successfully');
+      setDeletingId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete category. Please try again.');
+      setDeletingId(null); // Close the confirmation dialog on error
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Handle canceling delete
+  const handleCancelDelete = () => {
+    setDeletingId(null);
+  };
+
+  // Get the category being deleted
+  const deletingCategory = deletingId ? categories.find(c => c.id === deletingId) : null;
+
+  return (
+    <div className="category-manager-overlay" onClick={onClose}>
+      <div className="category-manager-modal" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="category-manager-header">
+          <h2>Manage Custom Categories</h2>
+          <button className="btn-close" onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </div>
+
+        {/* Messages */}
+        {error && (
+          <div className="message message-error">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {error}
+          </div>
+        )}
+        {successMessage && (
+          <div className="message message-success">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            {successMessage}
+          </div>
+        )}
+
+        {/* Body */}
+        <div className="category-manager-body">
+          {/* Add Category Form */}
+          <section className="category-section">
+            <h3>Add New Category</h3>
+            <form onSubmit={handleAddCategory} className="category-form">
+              <div className="form-group form-group-full">
+                <label htmlFor="category-name">Category Name *</label>
+                <input
+                  id="category-name"
+                  type="text"
+                  className="input"
+                  placeholder="e.g., Spices, Snacks, Cleaning"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  disabled={isAdding}
+                  maxLength={100}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <EmojiPicker
+                  value={newCategoryIcon}
+                  onChange={setNewCategoryIcon}
+                  label="Icon"
+                  disabled={isAdding}
+                />
+              </div>
+
+              <div className="form-group">
+                <ColorPicker
+                  value={newCategoryColor}
+                  onChange={setNewCategoryColor}
+                  label="Color (optional)"
+                  disabled={isAdding}
+                />
+              </div>
+
+              <button type="submit" className="btn btn-primary" disabled={isAdding}>
+                {isAdding ? 'Adding...' : 'Add Category'}
+              </button>
+            </form>
+          </section>
+
+          {/* Predefined Categories Reference */}
+          <section className="category-section">
+            <h3>Predefined Categories</h3>
+            <p className="section-description">
+              These built-in categories are available in all lists and cannot be modified.
+            </p>
+            <div className="predefined-categories">
+              {CATEGORIES.map((category) => (
+                <div key={category} className="category-item predefined-category">
+                  <div className="category-info">
+                    <span className="category-name">{category}</span>
+                    <span className="category-badge">Built-in</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          {/* Custom Categories List */}
+          <section className="category-section">
+            <h3>Your Custom Categories</h3>
+            {categories.length === 0 ? (
+              <div className="empty-categories">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 3h7v7H3z" />
+                  <path d="M14 3h7v7h-7z" />
+                  <path d="M14 14h7v7h-7z" />
+                  <path d="M3 14h7v7H3z" />
+                </svg>
+                <p>No custom categories yet</p>
+                {canEdit ? (
+                  <p className="empty-hint">Create your first custom category above to organize items your way!</p>
+                ) : (
+                  <p className="empty-hint">This list has no custom categories yet.</p>
+                )}
+              </div>
+            ) : (
+              <div className="custom-categories">
+                {categories.map((category) => {
+                  const isEditing = editingId === category.id;
+
+                  return (
+                    <div key={category.id} className="category-item custom-category">
+                      {isEditing ? (
+                        // Edit Mode
+                        <div className="category-edit-form">
+                          <div className="form-group form-group-full">
+                            <label htmlFor={`edit-name-${category.id}`}>Category Name</label>
+                            <input
+                              id={`edit-name-${category.id}`}
+                              type="text"
+                              className="input"
+                              value={editName}
+                              onChange={(e) => setEditName(e.target.value)}
+                              maxLength={100}
+                              autoFocus
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <EmojiPicker
+                              value={editIcon}
+                              onChange={setEditIcon}
+                              label="Icon"
+                            />
+                          </div>
+
+                          <div className="form-group">
+                            <ColorPicker
+                              value={editColor}
+                              onChange={setEditColor}
+                              label="Color"
+                            />
+                          </div>
+
+                          <div className="category-actions">
+                            <button
+                              className="btn btn-small btn-primary"
+                              onClick={() => handleSaveEdit(category.id)}
+                            >
+                              Save
+                            </button>
+                            <button
+                              className="btn btn-small btn-secondary"
+                              onClick={handleCancelEdit}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        // View Mode
+                        <>
+                          <div className="category-info">
+                            <div className="category-visual">
+                              {category.icon && (
+                                <span className="category-icon">{category.icon}</span>
+                              )}
+                              {category.color && (
+                                <span
+                                  className="category-color-preview"
+                                  style={{ backgroundColor: category.color }}
+                                  title={`Color: ${category.color}`}
+                                />
+                              )}
+                            </div>
+                            <span className="category-name">{category.name}</span>
+                          </div>
+
+                          {/* Only show edit/delete buttons for editors and owners */}
+                          {canEdit && (
+                            <div className="category-actions">
+                              <button
+                                className="btn btn-icon"
+                                onClick={() => handleStartEdit(category.id)}
+                                title="Edit category"
+                                aria-label={`Edit ${category.name}`}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                                </svg>
+                              </button>
+                              <button
+                                className="btn btn-icon btn-danger"
+                                onClick={() => handleStartDelete(category.id)}
+                                title="Delete category"
+                                aria-label={`Delete ${category.name}`}
+                              >
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                  <polyline points="3 6 5 6 21 6" />
+                                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                                  <line x1="10" y1="11" x2="10" y2="17" />
+                                  <line x1="14" y1="11" x2="14" y2="17" />
+                                </svg>
+                              </button>
+                            </div>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deletingCategory && (
+        <div className="confirmation-overlay" onClick={handleCancelDelete}>
+          <div className="confirmation-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Delete Category?</h3>
+            <div className="confirmation-content">
+              <p className="confirmation-message">
+                Are you sure you want to delete <strong>"{deletingCategory.name}"</strong>?
+              </p>
+              <p className="confirmation-warning">
+                Items using this category will still be visible, but the category will no longer be available for new items.
+              </p>
+            </div>
+            <div className="confirmation-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={handleCancelDelete}
+                disabled={isDeleting}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-danger"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Category'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

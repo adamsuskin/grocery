@@ -1,0 +1,395 @@
+/* Mobile-specific styles for Custom Category Manager */
+
+/* Bottom sheet modal for mobile */
+.mobile-bottom-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  top: auto;
+  max-height: 90vh;
+  border-radius: 20px 20px 0 0;
+  animation: slideUpFromBottom 0.3s ease-out;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes slideUpFromBottom {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Drag handle for bottom sheet */
+.modal-drag-handle {
+  padding: 12px 0 8px;
+  cursor: grab;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  touch-action: none;
+}
+
+.modal-drag-handle:active {
+  cursor: grabbing;
+}
+
+.drag-handle-bar {
+  width: 40px;
+  height: 4px;
+  background: #ddd;
+  border-radius: 2px;
+}
+
+/* Mobile-optimized category items with swipe actions */
+.category-item.custom-category {
+  position: relative;
+  overflow: visible;
+  touch-action: pan-y;
+}
+
+.category-item.custom-category.show-actions {
+  overflow: visible;
+}
+
+/* Swipe actions container */
+.category-swipe-actions {
+  position: absolute;
+  right: -120px;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 8px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.category-item.show-actions .category-swipe-actions {
+  opacity: 1;
+}
+
+/* Swipe action buttons */
+.btn-swipe-action {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.btn-swipe-edit {
+  background: var(--primary-color, #4caf50);
+  color: white;
+}
+
+.btn-swipe-edit:active {
+  background: #45a049;
+  transform: scale(0.95);
+}
+
+.btn-swipe-delete {
+  background: var(--danger-color, #f44336);
+  color: white;
+}
+
+.btn-swipe-delete:active {
+  background: #da190b;
+  transform: scale(0.95);
+}
+
+/* Mobile checkbox styling */
+.category-checkbox-mobile input[type="checkbox"] {
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  margin-right: 12px;
+}
+
+/* Mobile form inputs */
+.input-mobile {
+  padding: 14px 16px;
+  font-size: 16px; /* Prevent zoom on iOS */
+  min-height: 48px;
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.input-mobile:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.15);
+}
+
+/* Mobile color input */
+.input-color-mobile {
+  width: 64px;
+  height: 48px;
+  border-radius: 8px;
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.color-value-mobile {
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-left: 8px;
+}
+
+/* Mobile buttons */
+.btn-mobile {
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 8px;
+  min-height: 48px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-mobile.btn-primary {
+  background: var(--primary-color);
+  color: white;
+}
+
+.btn-mobile.btn-primary:active {
+  background: #45a049;
+  transform: scale(0.98);
+}
+
+.btn-mobile.btn-secondary {
+  background: white;
+  color: var(--text-color);
+  border: 2px solid var(--border-color);
+}
+
+.btn-mobile.btn-secondary:active {
+  background: #f5f5f5;
+  transform: scale(0.98);
+}
+
+/* Mobile form layout */
+.category-edit-form-mobile {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.category-actions-mobile {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+/* Mobile close button */
+.btn-close-mobile {
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Touch ripple effect */
+@keyframes touchRipple {
+  0% {
+    transform: scale(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.btn-mobile::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: inherit;
+  transform: translate(-50%, -50%) scale(0);
+  pointer-events: none;
+}
+
+.btn-mobile:active::after {
+  animation: touchRipple 0.6s ease-out;
+}
+
+/* Mobile-specific layouts */
+@media (max-width: 600px) {
+  .category-manager-overlay {
+    padding: 0;
+  }
+
+  .category-manager-modal:not(.mobile-bottom-sheet) {
+    border-radius: 0;
+    max-height: 100vh;
+    width: 100%;
+  }
+
+  .category-manager-header {
+    position: sticky;
+    top: 0;
+    background: var(--card-bg);
+    z-index: 10;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .category-manager-body {
+    padding: 16px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Form fields stack vertically */
+  .form-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  /* Touch-friendly spacing */
+  .category-item {
+    padding: 16px;
+    margin-bottom: 8px;
+  }
+
+  .category-info {
+    flex: 1;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Hide less important info on mobile */
+  .category-usage-count {
+    display: none;
+  }
+
+  /* Simplified bulk operations */
+  .bulk-operations-toolbar {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .bulk-action-select {
+    width: 100%;
+    min-height: 48px;
+    font-size: 16px;
+  }
+
+  /* Mobile confirmation dialogs */
+  .confirmation-dialog {
+    margin: 16px;
+    border-radius: 16px;
+  }
+
+  .confirmation-actions {
+    flex-direction: column-reverse;
+    gap: 12px;
+  }
+
+  .confirmation-actions .btn {
+    width: 100%;
+    min-height: 48px;
+  }
+}
+
+/* Prevent text selection during swipe */
+.category-item.custom-category {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Safe area insets for notched devices */
+@supports (padding: max(0px)) {
+  .mobile-bottom-sheet {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .category-manager-header {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+
+  .category-manager-body {
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+  }
+}
+
+/* Landscape mobile orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+  .mobile-bottom-sheet {
+    max-height: 95vh;
+  }
+
+  .category-manager-header {
+    padding: 12px 16px;
+  }
+
+  .category-manager-body {
+    padding: 12px 16px;
+  }
+
+  .btn-mobile {
+    padding: 10px 20px;
+    min-height: 40px;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-bottom-sheet,
+  .category-item.custom-category,
+  .btn-swipe-action,
+  .btn-mobile {
+    animation: none;
+    transition: none;
+  }
+
+  .btn-mobile::after {
+    animation: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .btn-swipe-action {
+    border: 2px solid white;
+  }
+
+  .input-mobile:focus {
+    border-width: 3px;
+  }
+
+  .drag-handle-bar {
+    background: #999;
+  }
+}

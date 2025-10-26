@@ -1,0 +1,273 @@
+/* Category Context Menu Styles */
+
+.category-context-menu {
+  position: fixed;
+  z-index: 10000;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  min-width: 220px;
+  max-width: 280px;
+  padding: 6px 0;
+  animation: contextMenuFadeIn 0.15s ease-out;
+  transform-origin: top left;
+}
+
+@keyframes contextMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Header */
+.context-menu-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  color: #333;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.context-menu-category-preview {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.context-menu-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.context-menu-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  flex-shrink: 0;
+}
+
+.context-menu-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Divider */
+.context-menu-divider {
+  height: 1px;
+  background-color: #e8e8e8;
+  margin: 4px 0;
+}
+
+/* Menu Items */
+.context-menu-items {
+  padding: 4px 0;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 14px;
+  border: none;
+  background: transparent;
+  color: #333;
+  font-size: 0.875rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.1s ease, color 0.1s ease;
+  position: relative;
+}
+
+.context-menu-item:hover {
+  background-color: #f5f5f5;
+}
+
+.context-menu-item:active {
+  background-color: #ebebeb;
+}
+
+.context-menu-item.dangerous {
+  color: #d32f2f;
+}
+
+.context-menu-item.dangerous:hover {
+  background-color: #ffebee;
+}
+
+.context-menu-item.dangerous .context-menu-item-icon {
+  color: #d32f2f;
+}
+
+.context-menu-item-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  color: #666;
+}
+
+.context-menu-item.dangerous .context-menu-item-icon {
+  color: #d32f2f;
+}
+
+.context-menu-item-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.context-menu-item-shortcut {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  color: #999;
+  font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  background-color: #f5f5f5;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid #e0e0e0;
+}
+
+.context-menu-item:hover .context-menu-item-shortcut {
+  background-color: #ebebeb;
+  border-color: #d0d0d0;
+}
+
+/* Footer */
+.context-menu-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  font-size: 0.75rem;
+  color: #999;
+}
+
+.context-menu-footer svg {
+  flex-shrink: 0;
+  color: #999;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .category-context-menu {
+    background: #2d2d2d;
+    border-color: #404040;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  }
+
+  .context-menu-header {
+    color: #e0e0e0;
+  }
+
+  .context-menu-divider {
+    background-color: #404040;
+  }
+
+  .context-menu-item {
+    color: #e0e0e0;
+  }
+
+  .context-menu-item:hover {
+    background-color: #383838;
+  }
+
+  .context-menu-item:active {
+    background-color: #424242;
+  }
+
+  .context-menu-item.dangerous {
+    color: #ef5350;
+  }
+
+  .context-menu-item.dangerous:hover {
+    background-color: #3d2626;
+  }
+
+  .context-menu-item-icon {
+    color: #b0b0b0;
+  }
+
+  .context-menu-item.dangerous .context-menu-item-icon {
+    color: #ef5350;
+  }
+
+  .context-menu-item-shortcut {
+    background-color: #383838;
+    border-color: #505050;
+    color: #b0b0b0;
+  }
+
+  .context-menu-item:hover .context-menu-item-shortcut {
+    background-color: #424242;
+    border-color: #5a5a5a;
+  }
+
+  .context-menu-footer {
+    color: #808080;
+  }
+
+  .context-menu-footer svg {
+    color: #808080;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .category-context-menu {
+    min-width: 200px;
+    max-width: 260px;
+    /* Position mobile menus centered on screen for better UX */
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+  }
+
+  .context-menu-item {
+    padding: 12px 14px;
+    font-size: 0.9rem;
+  }
+
+  .context-menu-item-shortcut {
+    display: none; /* Hide keyboard shortcuts on mobile */
+  }
+}
+
+/* Accessibility */
+.context-menu-item:focus {
+  outline: 2px solid #4caf50;
+  outline-offset: -2px;
+  background-color: #f5f5f5;
+}
+
+@media (prefers-color-scheme: dark) {
+  .context-menu-item:focus {
+    outline-color: #66bb6a;
+    background-color: #383838;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .category-context-menu {
+    border-width: 2px;
+  }
+
+  .context-menu-item:focus {
+    outline-width: 3px;
+  }
+}

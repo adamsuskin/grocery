@@ -22,6 +22,7 @@ export function ImportList({ onClose, onImportComplete }: ImportListProps) {
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [listName, setListName] = useState('');
   const [importError, setImportError] = useState<string | null>(null);
+  const [importCustomCategories, setImportCustomCategories] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { createListFromTemplate } = useListMutations();
 
@@ -86,12 +87,19 @@ export function ImportList({ onClose, onImportComplete }: ImportListProps) {
     setImportError(null);
 
     try {
-      // Create the list with imported items
+      // Prepare custom categories if user opted to import them
+      const customCategoriesData =
+        importCustomCategories && importResult.customCategories
+          ? importResult.customCategories
+          : undefined;
+
+      // Create the list with imported items and custom categories
       const listId = await createListFromTemplate(
         listName.trim(),
         importResult.items,
         undefined, // Use default color
-        undefined  // Use default icon
+        undefined, // Use default icon
+        customCategoriesData
       );
 
       setStep('complete');
@@ -183,6 +191,13 @@ export function ImportList({ onClose, onImportComplete }: ImportListProps) {
       "category": "Dairy",
       "notes": "Whole milk"
     }
+  ],
+  "customCategories": [
+    {
+      "name": "Gluten-Free",
+      "color": "#FF5733",
+      "icon": "🌾"
+    }
   ]
 }`}</pre>
             </div>
@@ -232,7 +247,12 @@ Apples,6,Produce,`}</pre>
               </div>
               <div className="summary-content">
                 <h4>{importResult.items.length} Items Ready</h4>
-                <p>Review and import your list</p>
+                <p>
+                  Review and import your list
+                  {importResult.customCategories && importResult.customCategories.length > 0 && (
+                    <> (includes {importResult.customCategories.length} custom categor{importResult.customCategories.length === 1 ? 'y' : 'ies'})</>
+                  )}
+                </p>
               </div>
             </div>
           </div>
@@ -287,6 +307,45 @@ Apples,6,Produce,`}</pre>
                   ))}
                 </ul>
               </div>
+            </div>
+          )}
+
+          {importResult.customCategories && importResult.customCategories.length > 0 && (
+            <div className="preview-custom-categories">
+              <div className="custom-categories-header">
+                <h4>Custom Categories ({importResult.customCategories.length})</h4>
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={importCustomCategories}
+                    onChange={(e) => setImportCustomCategories(e.target.checked)}
+                  />
+                  <span>Import custom categories</span>
+                </label>
+              </div>
+              {importCustomCategories && (
+                <>
+                  <div className="custom-categories-list">
+                    {importResult.customCategories.map((cat, index) => (
+                      <div key={index} className="custom-category-item">
+                        {cat.icon && <span className="category-icon">{cat.icon}</span>}
+                        <span className="category-name">{cat.name}</span>
+                        {cat.color && (
+                          <span className="category-color" style={{ backgroundColor: cat.color }} title={cat.color}></span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="custom-categories-note">
+                    These custom categories will be created when you import the list.
+                  </p>
+                </>
+              )}
+              {!importCustomCategories && (
+                <p className="custom-categories-note">
+                  Custom categories will not be imported. Items using custom categories will be assigned to "Other".
+                </p>
+              )}
             </div>
           )}
 
