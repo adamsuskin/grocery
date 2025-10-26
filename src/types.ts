@@ -101,7 +101,7 @@ export interface FilterBarProps {
 }
 
 // Sort types
-export type SortField = 'name' | 'quantity' | 'date';
+export type SortField = 'name' | 'quantity' | 'date' | 'category';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortState {

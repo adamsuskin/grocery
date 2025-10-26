@@ -20,6 +20,8 @@ export function SortControls({ sort, onChange }: SortControlsProps) {
         return 'Quantity';
       case 'date':
         return 'Date';
+      case 'category':
+        return 'Category';
     }
   };
 
@@ -27,7 +29,7 @@ export function SortControls({ sort, onChange }: SortControlsProps) {
     <div className="sort-controls">
       <label className="sort-label">Sort by:</label>
       <div className="sort-buttons">
-        {(['name', 'quantity', 'date'] as SortField[]).map((field) => (
+        {(['name', 'quantity', 'date', 'category'] as SortField[]).map((field) => (
           <button
             key={field}
             onClick={() => handleFieldChange(field)}

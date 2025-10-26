@@ -1,38 +1,30 @@
 # Currently In Progress
 
-## Phase 16: Offline Conflict Resolution
+## Implementing: Add Sorting by Category
 
-**Started:** [Current session]
-**Assigned to:** Claude Agent Instance
+**Started:** Now
+**Phase:** Future Enhancements
+**Status:** In Progress
 
-### Goal
-Implement robust offline conflict resolution for the grocery list app to handle scenarios where multiple users edit the same items while offline, then come back online.
+### Task Description
+Add "category" as a sort field option to complement existing sort by name, quantity, and date. This will allow users to group items by their category (Produce, Dairy, Meat, etc.) when viewing their grocery list.
 
-### Tasks
-- [ ] Research Zero's conflict resolution capabilities and patterns
-- [ ] Design conflict resolution strategy (Last-Write-Wins vs Custom Merge)
-- [ ] Implement conflict detection system
-- [ ] Create ConflictResolver utility class
-- [ ] Add offline queue management
-- [ ] Implement merge strategies for different field types
-- [ ] Create UI components for conflict notification
-- [ ] Add user conflict resolution interface
-- [ ] Implement automatic conflict resolution for simple cases
-- [ ] Add conflict logging and analytics
-- [ ] Update Zero store with conflict handlers
-- [ ] Add offline indicator to UI
-- [ ] Create sync status component
-- [ ] Test multi-user offline scenarios
-- [ ] Document conflict resolution behavior
-- [ ] Update README with offline usage guide
+### Implementation Steps
+1. Update TypeScript types to add 'category' to SortField union type
+2. Update zero-store.ts sorting logic to handle category sorting
+3. Update SortControls component to include category sort button
+4. Test all sorting combinations (category + asc/desc)
+5. Verify TypeScript compilation passes
+6. Verify build process passes
+7. Update documentation
+8. Commit changes
 
-### Implementation Strategy
-1. **Detection**: Monitor Zero sync status and detect conflicts
-2. **Resolution Strategies**:
-   - Automatic: timestamps, non-overlapping fields
-   - Manual: show conflict UI for critical changes
-3. **User Experience**: Clear indicators, easy conflict resolution UI
-4. **Testing**: Comprehensive offline/online scenarios
+### Files to Modify
+- src/types.ts - Add 'category' to SortField type
+- src/zero-store.ts - Add category sorting logic
+- src/components/SortControls.tsx - Add category sort button
+- README.md - Document category sorting
+- IMPLEMENTATION_PLAN.md - Mark task as complete
 
-### Target Completion
-Using up to 50 subagents to implement in parallel
+### Expected Outcome
+Users can sort their grocery list by category to group similar items together (e.g., all Produce items, then all Dairy items, etc.), making shopping more efficient.

@@ -34,7 +34,7 @@ Phase 15 introduces a complete multi-user collaboration system that transforms t
 - 🔍 **Search**: Search for items by name with real-time filtering
 - 🎛️ **Filter**: Toggle visibility of gotten items and filter by categories
 - 📊 **Results Counter**: See the number of items matching your filters
-- 🔄 **Sort**: Sort items by name, quantity, or date (ascending/descending)
+- 🔄 **Sort**: Sort items by name, quantity, date, or category (ascending/descending)
 - ⚡ **Bulk Operations**: Mark all items as gotten or delete all gotten items at once
 
 ### List Sharing & Collaboration (Phase 15 NEW!)
@@ -2226,12 +2226,14 @@ The app includes powerful search, filter, and sort capabilities to help you orga
 - **Sort by Name**: Sort items alphabetically (A-Z or Z-A)
 - **Sort by Quantity**: Sort items by quantity (lowest to highest or highest to lowest)
 - **Sort by Date**: Sort items by creation date (newest first or oldest first)
+- **Sort by Category**: Sort items by category name alphabetically (Bakery, Beverages, Dairy, etc.)
 - Click the arrow button (↑/↓) to toggle between ascending and descending order
 - Sorting is applied after filtering, so you can combine search/filter with any sort option
 
 **Filter and Sort Combinations:**
 - Search, category filters, gotten filter, and sort work together seamlessly
 - For example: search for "apple", show only Produce category, hide gotten items, and sort by quantity to see how many apples you still need to buy
+- Sort by category to group all items of the same type together (all Dairy items, then all Produce items, etc.) for easier shopping
 - The results counter shows how many items match your current filters (e.g., "Showing 3 of 10 items")
 
 **Results Counter:**

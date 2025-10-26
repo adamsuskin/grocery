@@ -562,6 +562,9 @@ export function useGroceryItems(listId?: string, filters?: FilterState, sort?: S
           case 'date':
             comparison = a.createdAt - b.createdAt;
             break;
+          case 'category':
+            comparison = a.category.localeCompare(b.category);
+            break;
         }
 
         return sort.direction === 'asc' ? comparison : -comparison;
