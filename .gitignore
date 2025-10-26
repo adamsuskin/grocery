@@ -31,3 +31,9 @@ dist-ssr
 # Environment
 .env
 .env.local
+
+# PWA / Service Worker
+# Note: Generated service worker files are committed to git for production
+# dev-dist/ contains development service worker files
+dev-dist/
+.workbox-cache/

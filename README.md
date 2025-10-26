@@ -1,6 +1,10 @@
 # 🛒 Grocery List App
 
-A collaborative grocery list application built with React, TypeScript, and Vite. Features real-time synchronization, multi-user list sharing, and comprehensive collaboration tools.
+[![PWA](https://img.shields.io/badge/PWA-Installable-blue)](https://developer.mozilla.org/en-US/docs/Web/Progressive_web_apps)
+[![Offline](https://img.shields.io/badge/Offline-Ready-green)](docs/PWA_USER_GUIDE.md)
+[![Service Worker](https://img.shields.io/badge/Service%20Worker-Enabled-orange)](docs/PWA_USER_GUIDE.md)
+
+A collaborative grocery list application built with React, TypeScript, and Vite. Features real-time synchronization, multi-user list sharing, and Progressive Web App (PWA) capabilities for offline use and app installation.
 
 ## 🎉 What's New in Phase 15: List Sharing & Collaboration
 
@@ -67,6 +71,22 @@ Phase 15 introduces a complete multi-user collaboration system that transforms t
 - 🛡️ **Rate Limiting**: Brute-force protection on auth endpoints
 - 🔒 **Password Security**: bcrypt hashing with 12 rounds
 - 👥 **Multi-User Support**: Each user has isolated data
+
+### Progressive Web App (PWA) Features
+- 📱 **Install as App**: Install on home screen (Android, iOS, Desktop)
+- 🔌 **Works Offline**: Full functionality without internet connection
+- 🔄 **Background Sync**: Automatically syncs changes when online (Android, Desktop)
+- 🔔 **Push Notifications**: Get notified of list updates (Android, Desktop)
+- ⚡ **Fast Loading**: Instant load times with intelligent caching
+- 🎨 **Native Feel**: Full-screen mode, looks like a native app
+- 🔄 **Auto Updates**: Automatically updates to latest version
+- 💾 **Offline Queue**: Changes queue locally and sync when reconnected
+
+**Learn More:**
+- [PWA User Guide](docs/PWA_USER_GUIDE.md) - Complete installation and usage guide
+- [Quick Start Guide](docs/PWA_QUICK_START.md) - Get started in minutes
+- [FAQ](docs/PWA_FAQ.md) - Frequently asked questions
+- [Browser Support](docs/PWA_BROWSER_SUPPORT.md) - Compatibility matrix
 
 ### Technical Features
 - 🔄 **Real-time Sync**: Changes sync automatically via Zero across all devices and users
@@ -330,15 +350,58 @@ The app supports 10 major world currencies for maximum flexibility:
 - Use the budget tracker as a guide while shopping
 - Stay disciplined with the visual feedback
 
+## Installing the PWA
+
+The Grocery List app can be installed on your device for a native app experience!
+
+### Quick Installation
+
+**Android (Chrome):**
+1. Open the app in Chrome
+2. Tap the install banner or menu (⋮) → "Add to Home screen"
+3. Tap "Install"
+4. Icon appears on your home screen
+
+**iOS (Safari):**
+1. Open the app in Safari
+2. Tap the Share button (□↑)
+3. Scroll and tap "Add to Home Screen"
+4. Tap "Add"
+5. Icon appears on your home screen
+
+**Desktop (Chrome/Edge):**
+1. Open the app in Chrome or Edge
+2. Click the install icon (⊕) in the address bar
+3. Click "Install"
+4. App opens in standalone window
+
+**Benefits of Installing:**
+- Access from home screen like any app
+- Works offline with full functionality
+- Faster loading with intelligent caching
+- Background sync (Android, Desktop)
+- Push notifications (Android, Desktop)
+- Full-screen native app experience
+- No app store required
+
+**Detailed Instructions:**
+- [PWA User Guide](docs/PWA_USER_GUIDE.md) - Complete installation guide for all platforms
+- [Quick Start Guide](docs/PWA_QUICK_START.md) - Get started in 2 minutes
+- [Browser Support](docs/PWA_BROWSER_SUPPORT.md) - Check if your browser supports installation
+
+---
+
 ## Tech Stack
 
 - **TypeScript**: Type-safe JavaScript
 - **React 18**: UI framework with hooks
-- **Vite**: Fast build tool and dev server
+- **Vite**: Fast build tool and dev server with PWA plugin
 - **pnpm**: Efficient package manager
 - **Zero**: Real-time sync and collaboration framework
 - **PostgreSQL**: Database backend for Zero
 - **zero-cache**: Local caching server for offline support
+- **Service Workers**: Enable offline mode and background sync
+- **Web App Manifest**: Make app installable on devices
 
 ## Project Structure
 

@@ -8,11 +8,14 @@
  * ## Features
  *
  * - **Queue Persistence**: Mutations are persisted to localStorage to survive page refreshes
+ * - **Background Sync Integration**: Uses Background Sync API when available for reliable sync
  * - **Automatic Retry**: Failed mutations are retried with exponential backoff
  * - **Queue Prioritization**: Deletes are processed before adds to avoid conflicts
  * - **Conflict Detection**: Detects and resolves conflicts before applying mutations
  * - **Progress Tracking**: Provides callbacks for tracking queue progress
  * - **Type Safety**: Full TypeScript support with strict typing
+ * - **Polling Fallback**: Automatic polling when Background Sync is unavailable
+ * - **Online Detection**: Automatically processes queue when connection is restored
  *
  * ## Usage
  *
@@ -43,15 +46,51 @@
  * import { useOfflineQueue } from './utils/offlineQueue';
  *
  * function MyComponent() {
- *   const { queueStatus, pendingCount, retryFailed } = useOfflineQueue();
+ *   const {
+ *     queueStatus,
+ *     pendingCount,
+ *     retryFailed,
+ *     triggerSync,
+ *     isUsingBackgroundSync,
+ *     browserCapabilities
+ *   } = useOfflineQueue();
  *
  *   return (
  *     <div>
  *       <p>Pending mutations: {pendingCount}</p>
+ *       <p>Using Background Sync: {isUsingBackgroundSync ? 'Yes' : 'No'}</p>
  *       <button onClick={retryFailed}>Retry Failed</button>
+ *       <button onClick={triggerSync}>Sync Now</button>
  *     </div>
  *   );
  * }
+ * ```
+ *
+ * ### Background Sync Integration
+ *
+ * The offline queue now integrates with the Background Sync API when available:
+ *
+ * ```typescript
+ * import { OfflineQueueManager, hasBackgroundSyncSupport } from './utils/offlineQueue';
+ *
+ * // Check if Background Sync is supported
+ * if (hasBackgroundSyncSupport()) {
+ *   console.log('Background Sync is available!');
+ * }
+ *
+ * // Create queue with Background Sync enabled (default)
+ * const queue = new OfflineQueueManager({
+ *   useBackgroundSync: true,
+ *   syncConfig: {
+ *     syncTag: 'offline-sync',
+ *     showNotifications: true,
+ *     enablePollingFallback: true,
+ *     pollingInterval: 30000,
+ *   }
+ * });
+ *
+ * // Manually trigger sync
+ * await queue.triggerSync();
  * ```
  *
  * ## Architecture
@@ -61,14 +100,34 @@
  * - **OfflineQueueManager**: Core class managing the queue
  * - **useOfflineQueue**: React hook for accessing queue state
  * - **localStorage persistence**: Queue survives page refreshes
+ * - **Background Sync API**: Browser-native sync when available
  * - **Exponential backoff**: Smart retry strategy
  * - **Conflict detection**: Prevents data inconsistencies
+ * - **Service Worker communication**: Message passing for sync events
+ *
+ * ## Browser Compatibility
+ *
+ * - **Background Sync API**: Chromium-based browsers (Chrome 49+, Edge 79+)
+ * - **Service Workers**: All modern browsers (Chrome 40+, Firefox 44+, Safari 11.1+, Edge 17+)
+ * - **localStorage**: All modern browsers
+ * - **Polling Fallback**: Automatically used when Background Sync is unavailable
+ *
+ * The system automatically detects browser capabilities and chooses the best strategy:
+ * 1. Background Sync API (best reliability, battery efficient)
+ * 2. Polling with online detection (good fallback)
+ * 3. Manual sync (always available)
  */
 
 import { nanoid } from 'nanoid';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getZeroInstance } from '../zero-store';
 import type { GroceryItem } from '../types';
+import type {
+  ServiceWorkerRegistrationWithSync,
+  NotificationPermission,
+  BackgroundSyncConfig,
+  BrowserCapabilities,
+} from '../types/serviceWorker';
 
 /**
  * Types of mutations that can be queued
@@ -124,6 +183,12 @@ export interface OfflineQueueConfig {
 
   /** Whether to automatically process queue when initialized */
   autoProcess?: boolean;
+
+  /** Whether to use Background Sync API when available */
+  useBackgroundSync?: boolean;
+
+  /** Background Sync configuration */
+  syncConfig?: Partial<BackgroundSyncConfig>;
 
   /** Callback called when queue is processed */
   onQueueProcessed?: (results: ProcessingResult) => void;
@@ -196,20 +261,6 @@ const MUTATION_PRIORITY: Record<MutationType, number> = {
 };
 
 /**
- * Default configuration for the offline queue
- */
-const DEFAULT_CONFIG: Required<OfflineQueueConfig> = {
-  maxRetries: 5,
-  baseDelay: 1000, // 1 second
-  maxDelay: 60000, // 60 seconds
-  autoProcess: true,
-  onQueueProcessed: () => {},
-  onMutationSuccess: () => {},
-  onMutationFailed: () => {},
-  onStatusChange: () => {},
-};
-
-/**
  * LocalStorage key for persisting the queue
  */
 const STORAGE_KEY = 'grocery_offline_queue';
@@ -218,6 +269,173 @@ const STORAGE_KEY = 'grocery_offline_queue';
  * LocalStorage key for queue metadata
  */
 const METADATA_KEY = 'grocery_offline_queue_metadata';
+
+/**
+ * Default Background Sync configuration
+ */
+const DEFAULT_SYNC_CONFIG: BackgroundSyncConfig = {
+  syncTag: 'offline-sync',
+  showNotifications: true,
+  enablePollingFallback: true,
+  pollingInterval: 30000, // 30 seconds
+  maxRetries: 3,
+};
+
+/**
+ * Default configuration for the offline queue
+ */
+const DEFAULT_CONFIG: Required<OfflineQueueConfig> = {
+  maxRetries: 5,
+  baseDelay: 1000, // 1 second
+  maxDelay: 60000, // 60 seconds
+  autoProcess: true,
+  useBackgroundSync: true,
+  syncConfig: DEFAULT_SYNC_CONFIG,
+  onQueueProcessed: () => {},
+  onMutationSuccess: () => {},
+  onMutationFailed: () => {},
+  onStatusChange: () => {},
+};
+
+/**
+ * Check if service worker is supported
+ * @returns True if service worker API is available
+ */
+export function hasServiceWorkerSupport(): boolean {
+  return 'serviceWorker' in navigator;
+}
+
+/**
+ * Check if Background Sync API is supported
+ * @returns True if Background Sync API is available
+ */
+export function hasBackgroundSyncSupport(): boolean {
+  if (!hasServiceWorkerSupport()) {
+    return false;
+  }
+
+  // Check if sync is available on ServiceWorkerRegistration
+  return 'sync' in ServiceWorkerRegistration.prototype;
+}
+
+/**
+ * Get browser capabilities for offline features
+ * @returns Object with browser capability flags
+ */
+export function getBrowserCapabilities(): BrowserCapabilities {
+  const hasNotifications = 'Notification' in window;
+  const notificationPermission = hasNotifications
+    ? (Notification.permission as NotificationPermission)
+    : 'denied';
+
+  return {
+    hasServiceWorker: hasServiceWorkerSupport(),
+    hasBackgroundSync: hasBackgroundSyncSupport(),
+    hasNotifications,
+    notificationPermission,
+    isOnline: navigator.onLine,
+  };
+}
+
+/**
+ * Request permission to show notifications
+ * @returns Promise resolving to the permission state
+ */
+export async function requestNotificationPermission(): Promise<NotificationPermission> {
+  if (!('Notification' in window)) {
+    console.warn('[OfflineQueue] Notifications API not supported');
+    return 'denied';
+  }
+
+  if (Notification.permission === 'granted') {
+    return 'granted';
+  }
+
+  if (Notification.permission === 'denied') {
+    return 'denied';
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    return permission as NotificationPermission;
+  } catch (error) {
+    console.error('[OfflineQueue] Error requesting notification permission:', error);
+    return 'denied';
+  }
+}
+
+/**
+ * Register a Background Sync event
+ * @param tag - Unique tag for this sync event
+ * @returns Promise that resolves when sync is registered
+ */
+export async function registerBackgroundSync(tag: string): Promise<void> {
+  if (!hasBackgroundSyncSupport()) {
+    throw new Error('Background Sync API not supported');
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready as ServiceWorkerRegistrationWithSync;
+
+    if (!registration.sync) {
+      throw new Error('SyncManager not available on registration');
+    }
+
+    await registration.sync.register(tag);
+    console.log('[OfflineQueue] Background sync registered:', tag);
+  } catch (error) {
+    console.error('[OfflineQueue] Failed to register background sync:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get registered sync tags
+ * @returns Promise resolving to array of registered tags
+ */
+export async function getRegisteredSyncTags(): Promise<string[]> {
+  if (!hasBackgroundSyncSupport()) {
+    return [];
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready as ServiceWorkerRegistrationWithSync;
+
+    if (!registration.sync) {
+      return [];
+    }
+
+    const tags = await registration.sync.getTags();
+    return tags;
+  } catch (error) {
+    console.error('[OfflineQueue] Failed to get sync tags:', error);
+    return [];
+  }
+}
+
+/**
+ * Send message to service worker
+ * @param message - Message to send
+ * @returns Promise that resolves when message is sent
+ */
+export async function sendMessageToServiceWorker(message: any): Promise<void> {
+  if (!hasServiceWorkerSupport()) {
+    throw new Error('Service Worker not supported');
+  }
+
+  try {
+    const registration = await navigator.serviceWorker.ready;
+
+    if (!registration.active) {
+      throw new Error('No active service worker');
+    }
+
+    registration.active.postMessage(message);
+  } catch (error) {
+    console.error('[OfflineQueue] Failed to send message to service worker:', error);
+    throw error;
+  }
+}
 
 /**
  * OfflineQueueManager
@@ -231,14 +449,35 @@ export class OfflineQueueManager {
   private config: Required<OfflineQueueConfig>;
   private isProcessing = false;
   private processingStartTime = 0;
+  private supportsBackgroundSync = false;
+  private pollingInterval: number | null = null;
 
   /**
    * Create a new OfflineQueueManager
    * @param config - Configuration options
    */
   constructor(config: OfflineQueueConfig = {}) {
-    this.config = { ...DEFAULT_CONFIG, ...config };
+    this.config = {
+      ...DEFAULT_CONFIG,
+      ...config,
+      syncConfig: { ...DEFAULT_SYNC_CONFIG, ...config.syncConfig }
+    };
     this.loadQueue();
+
+    // Check for Background Sync support
+    this.supportsBackgroundSync = hasBackgroundSyncSupport();
+
+    if (this.supportsBackgroundSync && this.config.useBackgroundSync) {
+      console.log('[OfflineQueue] Background Sync API is supported and enabled');
+      this.initializeBackgroundSync();
+    } else {
+      console.log('[OfflineQueue] Using localStorage fallback for offline queue');
+
+      // Start polling if fallback is enabled
+      if (this.config.syncConfig.enablePollingFallback !== false) {
+        this.startPolling();
+      }
+    }
 
     // Auto-process queue if configured
     if (this.config.autoProcess) {
@@ -246,6 +485,9 @@ export class OfflineQueueManager {
         console.error('[OfflineQueue] Auto-process failed:', error);
       });
     }
+
+    // Listen for online event
+    window.addEventListener('online', this.handleOnline);
   }
 
   /**
@@ -275,6 +517,13 @@ export class OfflineQueueManager {
 
     // Notify status change
     this.notifyStatusChange();
+
+    // Trigger Background Sync if supported
+    if (this.supportsBackgroundSync && this.config.useBackgroundSync) {
+      this.triggerSync().catch(error => {
+        console.error('[OfflineQueue] Failed to trigger sync:', error);
+      });
+    }
   }
 
   /**
@@ -634,6 +883,175 @@ export class OfflineQueueManager {
       processingTime: 0,
     };
   }
+
+  /**
+   * Initialize Background Sync
+   */
+  private initializeBackgroundSync(): void {
+    // Listen for messages from service worker
+    if (hasServiceWorkerSupport()) {
+      navigator.serviceWorker.addEventListener('message', this.handleServiceWorkerMessage);
+    }
+  }
+
+  /**
+   * Handle messages from service worker
+   */
+  private handleServiceWorkerMessage = (event: MessageEvent): void => {
+    const { type, payload } = event.data;
+
+    switch (type) {
+      case 'QUEUE_SYNCED':
+        console.log('[OfflineQueue] Queue synced by service worker');
+        this.loadQueue();
+        this.notifyStatusChange();
+        break;
+
+      case 'SYNC_FAILED':
+        console.error('[OfflineQueue] Sync failed in service worker:', payload);
+        break;
+
+      case 'QUEUE_STATUS_RESPONSE':
+        console.log('[OfflineQueue] Queue status from service worker:', payload);
+        break;
+
+      default:
+        // Ignore unknown message types
+        break;
+    }
+  };
+
+  /**
+   * Handle online event
+   */
+  private handleOnline = (): void => {
+    console.log('[OfflineQueue] Device is now online');
+
+    // If we have pending items, trigger sync
+    const pendingCount = this.queue.filter(m => m.status === 'pending' || m.status === 'failed').length;
+
+    if (pendingCount > 0) {
+      console.log(`[OfflineQueue] Processing ${pendingCount} pending mutations`);
+
+      if (this.supportsBackgroundSync && this.config.useBackgroundSync) {
+        this.triggerSync().catch(error => {
+          console.error('[OfflineQueue] Failed to trigger sync on online event:', error);
+        });
+      } else {
+        this.processQueue().catch(error => {
+          console.error('[OfflineQueue] Failed to process queue on online event:', error);
+        });
+      }
+    }
+  };
+
+  /**
+   * Trigger a Background Sync
+   * @returns Promise that resolves when sync is registered
+   */
+  public async triggerSync(): Promise<void> {
+    if (!this.supportsBackgroundSync || !this.config.useBackgroundSync) {
+      console.warn('[OfflineQueue] Background Sync not available, processing queue directly');
+      await this.processQueue();
+      return;
+    }
+
+    try {
+      const tag = this.config.syncConfig.syncTag || DEFAULT_SYNC_CONFIG.syncTag;
+      await registerBackgroundSync(tag);
+      console.log('[OfflineQueue] Sync triggered with tag:', tag);
+
+      // Send message to service worker
+      await sendMessageToServiceWorker({
+        type: 'SYNC_QUEUE',
+        payload: { tag }
+      });
+    } catch (error) {
+      console.error('[OfflineQueue] Failed to trigger sync:', error);
+
+      // Fallback to direct processing
+      if (navigator.onLine) {
+        await this.processQueue();
+      }
+    }
+  }
+
+  /**
+   * Start polling for queue processing (fallback when Background Sync unavailable)
+   */
+  private startPolling(): void {
+    if (this.pollingInterval !== null) {
+      return; // Already polling
+    }
+
+    const interval = this.config.syncConfig.pollingInterval || DEFAULT_SYNC_CONFIG.pollingInterval;
+    console.log(`[OfflineQueue] Starting polling with ${interval}ms interval`);
+
+    this.pollingInterval = window.setInterval(() => {
+      // Only process if online and have pending items
+      if (navigator.onLine && !this.isProcessing) {
+        const pendingCount = this.queue.filter(
+          m => m.status === 'pending' || m.status === 'failed'
+        ).length;
+
+        if (pendingCount > 0) {
+          console.log(`[OfflineQueue] Polling: processing ${pendingCount} pending items`);
+          this.processQueue().catch(error => {
+            console.error('[OfflineQueue] Polling: failed to process queue:', error);
+          });
+        }
+      }
+    }, interval);
+  }
+
+  /**
+   * Stop polling
+   */
+  private stopPolling(): void {
+    if (this.pollingInterval !== null) {
+      window.clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+      console.log('[OfflineQueue] Stopped polling');
+    }
+  }
+
+  /**
+   * Get browser capabilities
+   * @returns Browser capabilities object
+   */
+  public getBrowserCapabilities(): BrowserCapabilities {
+    return getBrowserCapabilities();
+  }
+
+  /**
+   * Check if Background Sync is supported and enabled
+   * @returns True if Background Sync is being used
+   */
+  public isUsingBackgroundSync(): boolean {
+    return this.supportsBackgroundSync && this.config.useBackgroundSync;
+  }
+
+  /**
+   * Request notification permission
+   * @returns Promise resolving to permission state
+   */
+  public async requestNotificationPermission(): Promise<NotificationPermission> {
+    return requestNotificationPermission();
+  }
+
+  /**
+   * Clean up resources
+   */
+  public destroy(): void {
+    this.stopPolling();
+    window.removeEventListener('online', this.handleOnline);
+
+    if (hasServiceWorkerSupport()) {
+      navigator.serviceWorker.removeEventListener('message', this.handleServiceWorkerMessage);
+    }
+
+    console.log('[OfflineQueue] Queue manager destroyed');
+  }
 }
 
 /**
@@ -763,6 +1181,43 @@ export function useOfflineQueue(config?: OfflineQueueConfig) {
     return queueManager.getQueuedMutations();
   }, [queueManager]);
 
+  /**
+   * Trigger a sync manually
+   */
+  const triggerSync = useCallback(async () => {
+    await queueManager.triggerSync();
+    setQueueStatus(queueManager.getStatus());
+  }, [queueManager]);
+
+  /**
+   * Get browser capabilities
+   */
+  const browserCapabilities = useMemo(() => {
+    return queueManager.getBrowserCapabilities();
+  }, [queueManager]);
+
+  /**
+   * Check if using Background Sync
+   */
+  const isUsingBackgroundSync = useMemo(() => {
+    return queueManager.isUsingBackgroundSync();
+  }, [queueManager]);
+
+  /**
+   * Request notification permission
+   */
+  const requestNotificationPermission = useCallback(async () => {
+    return queueManager.requestNotificationPermission();
+  }, [queueManager]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      // Note: We don't destroy the singleton manager
+      // as it might be used by other components
+    };
+  }, []);
+
   return {
     // Status
     queueStatus,
@@ -774,6 +1229,10 @@ export function useOfflineQueue(config?: OfflineQueueConfig) {
     lastProcessed: queueStatus.lastProcessed,
     lastUpdate,
 
+    // Background Sync info
+    isUsingBackgroundSync,
+    browserCapabilities,
+
     // Actions
     retryFailed,
     clearQueue,
@@ -781,6 +1240,8 @@ export function useOfflineQueue(config?: OfflineQueueConfig) {
     addMutation,
     removeMutation,
     getQueuedMutations,
+    triggerSync,
+    requestNotificationPermission,
 
     // Direct access to manager
     queueManager,

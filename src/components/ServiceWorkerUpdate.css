@@ -1,0 +1,511 @@
+/**
+ * ServiceWorkerUpdate Styles
+ *
+ * Update banner component with:
+ * - Fixed positioning (top or bottom)
+ * - Smooth slide-in/fade-out animations
+ * - Loading spinner for update progress
+ * - Prominent CTA button styling
+ * - Responsive design for mobile
+ * - Dark mode support
+ * - Reduced motion support
+ */
+
+/* Main update banner */
+.sw-update-banner {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  background: white;
+  border-bottom: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  animation: slideInDown 0.3s ease-out;
+}
+
+/* Position variants */
+.sw-update-top {
+  top: 0;
+}
+
+.sw-update-bottom {
+  bottom: 0;
+  border-top: 1px solid #e0e0e0;
+  border-bottom: none;
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  animation: slideInUp 0.3s ease-out;
+}
+
+/* Banner content */
+.sw-update-content {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Icon */
+.sw-update-icon {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  color: #2196f3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sw-update-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* Message area */
+.sw-update-message {
+  flex: 1;
+  min-width: 0;
+}
+
+.sw-update-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #212121;
+  line-height: 1.4;
+}
+
+.sw-update-description {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+}
+
+/* Action buttons */
+.sw-update-actions {
+  display: flex;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.sw-update-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.sw-update-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.sw-update-button-primary {
+  background: #2196f3;
+  color: white;
+}
+
+.sw-update-button-primary:hover:not(:disabled) {
+  background: #1976d2;
+  box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+}
+
+.sw-update-button-primary:active:not(:disabled) {
+  background: #1565c0;
+}
+
+.sw-update-button-secondary {
+  background: transparent;
+  color: #666;
+  border: 1px solid #e0e0e0;
+}
+
+.sw-update-button-secondary:hover:not(:disabled) {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.sw-update-button-secondary:active:not(:disabled) {
+  background: #eeeeee;
+}
+
+/* Loading spinner */
+.sw-update-spinner {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #2196f3;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Progress bar */
+.sw-update-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: #e0e0e0;
+  overflow: hidden;
+}
+
+.sw-update-progress-bar {
+  height: 100%;
+  background: #2196f3;
+  animation: progress 2s ease-in-out infinite;
+}
+
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Slide-in animations */
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Compact variant */
+.sw-update-compact {
+  position: fixed;
+  z-index: 10000;
+  background: #2196f3;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: fadeInScale 0.3s ease-out;
+  max-width: 400px;
+}
+
+.sw-update-compact.sw-update-top {
+  top: 16px;
+  right: 16px;
+}
+
+.sw-update-compact.sw-update-bottom {
+  bottom: 16px;
+  right: 16px;
+}
+
+.sw-update-compact-message {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.sw-update-compact-button {
+  padding: 6px 12px;
+  background: white;
+  color: #2196f3;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sw-update-compact-button:hover {
+  background: #f5f5f5;
+  transform: scale(1.05);
+}
+
+.sw-update-compact-close {
+  padding: 4px;
+  background: transparent;
+  color: white;
+  border: none;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.sw-update-compact-close:hover {
+  opacity: 1;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Inline variant */
+.sw-update-inline {
+  background: #e3f2fd;
+  border: 1px solid #90caf9;
+  border-radius: 8px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 16px 0;
+}
+
+.sw-update-inline-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sw-update-inline-icon {
+  flex-shrink: 0;
+  color: #2196f3;
+}
+
+.sw-update-inline-content span {
+  font-size: 14px;
+  color: #1565c0;
+  font-weight: 500;
+}
+
+.sw-update-inline-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sw-update-inline-button,
+.sw-update-inline-button-secondary {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sw-update-inline-button {
+  background: #2196f3;
+  color: white;
+}
+
+.sw-update-inline-button:hover {
+  background: #1976d2;
+}
+
+.sw-update-inline-button-secondary {
+  background: transparent;
+  color: #1976d2;
+}
+
+.sw-update-inline-button-secondary:hover {
+  background: rgba(33, 150, 243, 0.1);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .sw-update-content {
+    flex-wrap: wrap;
+    padding: 12px 16px;
+  }
+
+  .sw-update-message {
+    width: 100%;
+    order: -1;
+  }
+
+  .sw-update-actions {
+    width: 100%;
+    margin-top: 8px;
+  }
+
+  .sw-update-button {
+    flex: 1;
+  }
+
+  .sw-update-compact {
+    left: 16px;
+    right: 16px;
+    max-width: none;
+  }
+
+  .sw-update-inline {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sw-update-inline-actions {
+    width: 100%;
+  }
+
+  .sw-update-inline-button,
+  .sw-update-inline-button-secondary {
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .sw-update-description {
+    display: none;
+  }
+
+  .sw-update-button {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .sw-update-banner {
+    background: #2c2c2c;
+    border-color: #424242;
+  }
+
+  .sw-update-top,
+  .sw-update-bottom {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  .sw-update-title {
+    color: #e0e0e0;
+  }
+
+  .sw-update-description {
+    color: #b0b0b0;
+  }
+
+  .sw-update-button-secondary {
+    color: #b0b0b0;
+    border-color: #424242;
+  }
+
+  .sw-update-button-secondary:hover:not(:disabled) {
+    background: #383838;
+    color: #e0e0e0;
+  }
+
+  .sw-update-button-secondary:active:not(:disabled) {
+    background: #424242;
+  }
+
+  .sw-update-spinner {
+    border-color: #424242;
+    border-top-color: #2196f3;
+  }
+
+  .sw-update-progress {
+    background: #424242;
+  }
+
+  .sw-update-inline {
+    background: #1e3a4f;
+    border-color: #2196f3;
+  }
+
+  .sw-update-inline-content span {
+    color: #90caf9;
+  }
+}
+
+/* Accessibility improvements */
+.sw-update-button:focus-visible,
+.sw-update-compact-button:focus-visible,
+.sw-update-compact-close:focus-visible,
+.sw-update-inline-button:focus-visible,
+.sw-update-inline-button-secondary:focus-visible {
+  outline: 2px solid #2196f3;
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .sw-update-banner {
+    animation: none;
+  }
+
+  .sw-update-compact {
+    animation: none;
+  }
+
+  .sw-update-spinner {
+    animation-duration: 1.5s;
+  }
+
+  .sw-update-progress-bar {
+    animation: none;
+    width: 100%;
+  }
+
+  .sw-update-button:hover:not(:disabled) {
+    transform: none;
+  }
+
+  .sw-update-compact-button:hover {
+    transform: none;
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .sw-update-banner {
+    border: 2px solid currentColor;
+  }
+
+  .sw-update-button {
+    border: 2px solid currentColor;
+  }
+}
+
+/* Print styles - hide update banners */
+@media print {
+  .sw-update-banner,
+  .sw-update-compact,
+  .sw-update-inline {
+    display: none;
+  }
+}

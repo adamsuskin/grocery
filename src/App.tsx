@@ -14,6 +14,8 @@ import { ConflictNotifications } from './components/ConflictNotification';
 import { ConflictResolutionModal } from './components/ConflictResolutionModal';
 import type { ConflictData } from './components/ConflictResolutionModal';
 import { KeyboardShortcutsHelp } from './components/KeyboardShortcutsHelp';
+import ServiceWorkerUpdate from './components/ServiceWorkerUpdate';
+import { NotificationPrompt } from './components/NotificationPrompt';
 import { ListManagement } from './components/ListManagement';
 import { ShareListModal } from './components/ShareListModal';
 import { OnboardingTour } from './components/OnboardingTour';
@@ -312,6 +314,9 @@ function App() {
   // Show grocery list when authenticated
   return (
     <div className="app">
+      {/* Service Worker Update Banner */}
+      <ServiceWorkerUpdate position="top" autoHideDelay={3000} />
+
       {/* Onboarding tour - shown on first visit */}
       {showTour && (
         <OnboardingTour onComplete={completeTour} onSkip={skipTour} />
@@ -319,6 +324,9 @@ function App() {
 
       {/* Notification toast container */}
       <Notifications position="top-right" autoHideDuration={5000} />
+
+      {/* Push notification permission prompt */}
+      <NotificationPrompt />
 
       {/* Conflict notifications */}
       <ConflictNotifications

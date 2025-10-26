@@ -25,6 +25,7 @@ import listsRoutes from './lists/routes';
 import usersRoutes from './users/routes';
 import activitiesRoutes from './activities/routes';
 import invitesRoutes from './invites/routes';
+import notificationsRoutes from './notifications/routes';
 import { authErrorHandler } from './auth/middleware';
 
 /**
@@ -201,6 +202,11 @@ app.get('/api', (req: Request, res: Response) => {
         getDetails: 'GET /api/invites/:token - Get invite details (public)',
         accept: 'POST /api/invites/:token/accept - Accept invite and join list',
       },
+      notifications: {
+        subscribe: 'POST /api/notifications/subscribe - Subscribe to push notifications',
+        unsubscribe: 'POST /api/notifications/unsubscribe - Unsubscribe from push notifications',
+        test: 'POST /api/notifications/test - Send test notification',
+      },
     },
   });
 });
@@ -213,6 +219,7 @@ app.use('/api/lists', listsRoutes);
 app.use('/api/lists', activitiesRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api', invitesRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 /**
  * Error Handling Middleware (must be last)

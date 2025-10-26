@@ -487,5 +487,43 @@ COMMENT ON COLUMN list_pins.list_id IS 'List that was pinned';
 COMMENT ON COLUMN list_pins.pinned_at IS 'When the list was pinned';
 
 -- =====================================================
+-- PHASE 16: Create Push Subscriptions Table
+-- =====================================================
+
+-- Push subscriptions table for web push notifications
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  endpoint TEXT NOT NULL,
+  p256dh_key TEXT NOT NULL,
+  auth_key TEXT NOT NULL,
+  expiration_time BIGINT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+
+  -- Unique constraint: one endpoint per user
+  CONSTRAINT unique_user_endpoint UNIQUE (user_id, endpoint)
+);
+
+-- Create indexes for push_subscriptions table
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON push_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_endpoint ON push_subscriptions(endpoint);
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_created_at ON push_subscriptions(created_at DESC);
+
+COMMENT ON TABLE push_subscriptions IS 'Web push notification subscriptions for real-time updates';
+COMMENT ON COLUMN push_subscriptions.id IS 'Unique subscription identifier (UUID)';
+COMMENT ON COLUMN push_subscriptions.user_id IS 'User who owns this subscription';
+COMMENT ON COLUMN push_subscriptions.endpoint IS 'Push service endpoint URL';
+COMMENT ON COLUMN push_subscriptions.p256dh_key IS 'Public key for message encryption (P-256 ECDH)';
+COMMENT ON COLUMN push_subscriptions.auth_key IS 'Authentication secret for message encryption';
+COMMENT ON COLUMN push_subscriptions.expiration_time IS 'When subscription expires (timestamp in milliseconds, NULL if no expiration)';
+
+-- Trigger to automatically update updated_at on push_subscriptions table
+CREATE TRIGGER update_push_subscriptions_updated_at
+  BEFORE UPDATE ON push_subscriptions
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- =====================================================
 -- Schema Initialization Complete
 -- =====================================================

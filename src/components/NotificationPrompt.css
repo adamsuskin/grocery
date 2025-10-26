@@ -1,0 +1,348 @@
+/**
+ * NotificationPrompt Styles
+ *
+ * Styling for the notification permission prompt with:
+ * - Modal overlay for focus
+ * - Clean, modern card design
+ * - Clear call-to-action buttons
+ * - Responsive design for mobile
+ * - Smooth animations
+ * - Matches app's design system
+ */
+
+/* Overlay */
+.notification-prompt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease-out;
+  backdrop-filter: blur(2px);
+}
+
+/* Prompt card */
+.notification-prompt {
+  position: relative;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  max-width: 500px;
+  width: 100%;
+  padding: 32px;
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Icon */
+.notification-prompt-icon {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.notification-icon-bell {
+  font-size: 48px;
+  display: inline-block;
+  animation: bellRing 1s ease-in-out;
+}
+
+/* Content */
+.notification-prompt-content {
+  margin-bottom: 24px;
+}
+
+.notification-prompt-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 12px 0;
+  text-align: center;
+}
+
+.notification-prompt-description {
+  font-size: 16px;
+  color: #666;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+/* Benefits list */
+.notification-prompt-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.notification-prompt-benefits li {
+  padding: 8px 0 8px 28px;
+  position: relative;
+  font-size: 14px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.notification-prompt-benefits li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 20px;
+  height: 20px;
+  background: #4caf50;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+/* Error message */
+.notification-prompt-error {
+  margin-top: 12px;
+  padding: 12px;
+  background: #ffebee;
+  border: 1px solid #ffcdd2;
+  border-radius: 8px;
+  color: #c62828;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* Actions */
+.notification-prompt-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.notification-prompt-button {
+  flex: 1;
+  min-width: 120px;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-prompt-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.notification-prompt-button-primary {
+  background: #4caf50;
+  color: white;
+}
+
+.notification-prompt-button-primary:hover:not(:disabled) {
+  background: #45a049;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+}
+
+.notification-prompt-button-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.notification-prompt-button-secondary {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.notification-prompt-button-secondary:hover:not(:disabled) {
+  background: #e0e0e0;
+  color: #333;
+}
+
+/* Close button */
+.notification-prompt-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #999;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.notification-prompt-close:hover:not(:disabled) {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.notification-prompt-close:focus {
+  outline: 2px solid #2196f3;
+  outline-offset: 2px;
+}
+
+.notification-prompt-close:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bellRing {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  10%, 30% {
+    transform: rotate(-10deg);
+  }
+  20%, 40% {
+    transform: rotate(10deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .notification-prompt {
+    padding: 24px;
+    margin: 16px;
+  }
+
+  .notification-prompt-title {
+    font-size: 20px;
+  }
+
+  .notification-prompt-description {
+    font-size: 14px;
+  }
+
+  .notification-prompt-benefits li {
+    font-size: 13px;
+    padding: 6px 0 6px 28px;
+  }
+
+  .notification-prompt-actions {
+    flex-direction: column;
+  }
+
+  .notification-prompt-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .notification-prompt {
+    padding: 20px;
+  }
+
+  .notification-icon-bell {
+    font-size: 40px;
+  }
+
+  .notification-prompt-title {
+    font-size: 18px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .notification-prompt {
+    background: #2c2c2c;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  }
+
+  .notification-prompt-title {
+    color: #e0e0e0;
+  }
+
+  .notification-prompt-description {
+    color: #b0b0b0;
+  }
+
+  .notification-prompt-benefits li {
+    color: #c0c0c0;
+  }
+
+  .notification-prompt-error {
+    background: #4a1a1a;
+    border-color: #7a2a2a;
+    color: #ff6b6b;
+  }
+
+  .notification-prompt-button-secondary {
+    background: #3a3a3a;
+    color: #b0b0b0;
+  }
+
+  .notification-prompt-button-secondary:hover:not(:disabled) {
+    background: #4a4a4a;
+    color: #e0e0e0;
+  }
+
+  .notification-prompt-close {
+    color: #999;
+  }
+
+  .notification-prompt-close:hover:not(:disabled) {
+    background: #3a3a3a;
+    color: #e0e0e0;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .notification-prompt-overlay,
+  .notification-prompt,
+  .notification-icon-bell {
+    animation: none;
+  }
+
+  .notification-prompt-button:hover {
+    transform: none;
+  }
+}
+
+/* Print - hide prompt */
+@media print {
+  .notification-prompt-overlay {
+    display: none;
+  }
+}
