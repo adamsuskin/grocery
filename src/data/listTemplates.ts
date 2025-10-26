@@ -23,6 +23,13 @@ export interface ListTemplate {
 
 /**
  * Pre-defined list templates for common grocery shopping scenarios
+ *
+ * TODO: Future Enhancement - Custom Template Saving
+ * - Allow users to save their current lists as custom templates
+ * - Store custom templates in database (per-user or shared)
+ * - Add UI to manage (edit/delete) custom templates
+ * - Consider template sharing/publishing features
+ * - Implement template categories/tags for better organization
  */
 export const LIST_TEMPLATES: ListTemplate[] = [
   {
@@ -166,6 +173,79 @@ export const LIST_TEMPLATES: ListTemplate[] = [
       { name: 'Powdered Sugar', quantity: 1, category: 'Pantry' },
       { name: 'Vegetable Oil', quantity: 1, category: 'Pantry' },
       { name: 'Honey', quantity: 1, category: 'Pantry' },
+    ],
+  },
+  {
+    id: 'quick-dinner',
+    name: 'Quick Dinner',
+    description: 'Everything you need for fast weeknight meals',
+    icon: '🍽️',
+    items: [
+      { name: 'Pasta', quantity: 2, category: 'Pantry', notes: 'Various shapes' },
+      { name: 'Pasta Sauce', quantity: 2, category: 'Pantry', notes: 'Marinara or Alfredo' },
+      { name: 'Ground Beef', quantity: 1, category: 'Meat', notes: '1 lb' },
+      { name: 'Chicken Breast', quantity: 2, category: 'Meat', notes: 'Boneless' },
+      { name: 'Rice', quantity: 1, category: 'Pantry', notes: 'Instant or regular' },
+      { name: 'Canned Beans', quantity: 2, category: 'Pantry', notes: 'Black or pinto' },
+      { name: 'Tortillas', quantity: 1, category: 'Bakery', notes: 'Flour or corn' },
+      { name: 'Shredded Cheese', quantity: 1, category: 'Dairy', notes: 'Mexican blend' },
+      { name: 'Salsa', quantity: 1, category: 'Pantry' },
+      { name: 'Frozen Vegetables', quantity: 2, category: 'Frozen', notes: 'Mixed or broccoli' },
+      { name: 'Garlic', quantity: 1, category: 'Produce', notes: 'Bulb' },
+      { name: 'Onions', quantity: 2, category: 'Produce' },
+      { name: 'Soy Sauce', quantity: 1, category: 'Pantry' },
+      { name: 'Olive Oil', quantity: 1, category: 'Pantry' },
+      { name: 'Spices', quantity: 1, category: 'Pantry', notes: 'Italian seasoning, cumin, etc.' },
+    ],
+  },
+  {
+    id: 'coffee-tea',
+    name: 'Coffee & Tea Station',
+    description: 'Stock up your home coffee and tea bar',
+    icon: '☕',
+    items: [
+      { name: 'Coffee Beans', quantity: 2, category: 'Beverages', notes: 'Whole bean or ground' },
+      { name: 'Tea Bags', quantity: 2, category: 'Beverages', notes: 'Assorted flavors' },
+      { name: 'Milk', quantity: 1, category: 'Dairy', notes: 'Whole or 2%' },
+      { name: 'Half and Half', quantity: 1, category: 'Dairy' },
+      { name: 'Almond Milk', quantity: 1, category: 'Beverages', notes: 'Or other dairy alternative' },
+      { name: 'Sugar', quantity: 1, category: 'Pantry', notes: 'White or raw' },
+      { name: 'Honey', quantity: 1, category: 'Pantry' },
+      { name: 'Cinnamon', quantity: 1, category: 'Pantry', notes: 'Ground' },
+      { name: 'Vanilla Syrup', quantity: 1, category: 'Pantry', notes: 'Optional flavoring' },
+      { name: 'Cocoa Powder', quantity: 1, category: 'Pantry', notes: 'For mochas' },
+      { name: 'Whipped Cream', quantity: 1, category: 'Dairy', notes: 'Optional topping' },
+      { name: 'Coffee Filters', quantity: 1, category: 'Other', notes: 'If needed' },
+      { name: 'Biscotti', quantity: 1, category: 'Bakery', notes: 'Optional treat' },
+    ],
+  },
+  {
+    id: 'camping-trip',
+    name: 'Camping Trip',
+    description: 'All the food essentials for your outdoor adventure',
+    icon: '🏕️',
+    items: [
+      { name: 'Hot Dogs', quantity: 2, category: 'Meat', notes: 'Packs of 8' },
+      { name: 'Hamburger Patties', quantity: 2, category: 'Meat', notes: 'Pre-made' },
+      { name: 'Buns', quantity: 2, category: 'Bakery', notes: 'Hot dog and hamburger' },
+      { name: 'Marshmallows', quantity: 2, category: 'Pantry', notes: 'For s\'mores' },
+      { name: 'Graham Crackers', quantity: 1, category: 'Pantry' },
+      { name: 'Chocolate Bars', quantity: 4, category: 'Pantry', notes: 'Hershey\'s for s\'mores' },
+      { name: 'Trail Mix', quantity: 2, category: 'Pantry' },
+      { name: 'Granola Bars', quantity: 2, category: 'Pantry', notes: 'Boxes' },
+      { name: 'Bottled Water', quantity: 12, category: 'Beverages', notes: 'Case' },
+      { name: 'Juice Boxes', quantity: 12, category: 'Beverages' },
+      { name: 'Coffee', quantity: 1, category: 'Beverages', notes: 'Instant or ground' },
+      { name: 'Eggs', quantity: 12, category: 'Dairy', notes: 'For breakfast' },
+      { name: 'Bacon', quantity: 1, category: 'Meat' },
+      { name: 'Bread', quantity: 1, category: 'Bakery' },
+      { name: 'Peanut Butter', quantity: 1, category: 'Pantry' },
+      { name: 'Jelly', quantity: 1, category: 'Pantry' },
+      { name: 'Chips', quantity: 2, category: 'Pantry', notes: 'Assorted' },
+      { name: 'Condiments', quantity: 1, category: 'Pantry', notes: 'Ketchup, mustard, mayo' },
+      { name: 'Paper Plates', quantity: 1, category: 'Other', notes: 'Pack of 50' },
+      { name: 'Plastic Utensils', quantity: 1, category: 'Other', notes: 'Set' },
+      { name: 'Ice', quantity: 2, category: 'Frozen', notes: '10 lb bags' },
     ],
   },
 ];

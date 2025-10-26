@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { ListTemplate } from '../types';
 import { LIST_TEMPLATES } from '../data/listTemplates';
 import './TemplateSelector.css';
@@ -10,6 +10,21 @@ interface TemplateSelectorProps {
 
 export function TemplateSelector({ onSelectTemplate, onClose }: TemplateSelectorProps) {
   const [selectedTemplate, setSelectedTemplate] = useState<ListTemplate | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Filter templates based on search query
+  const filteredTemplates = useMemo(() => {
+    if (!searchQuery.trim()) {
+      return LIST_TEMPLATES;
+    }
+
+    const query = searchQuery.toLowerCase();
+    return LIST_TEMPLATES.filter(template =>
+      template.name.toLowerCase().includes(query) ||
+      template.description.toLowerCase().includes(query) ||
+      template.items.some(item => item.name.toLowerCase().includes(query))
+    );
+  }, [searchQuery]);
 
   const handleTemplateClick = (template: ListTemplate) => {
     setSelectedTemplate(template);
@@ -49,8 +64,38 @@ export function TemplateSelector({ onSelectTemplate, onClose }: TemplateSelector
             Start your list with pre-populated items from a template. You can add, remove, or modify items after creating the list.
           </p>
 
-          <div className="template-grid">
-            {LIST_TEMPLATES.map((template) => (
+          <div className="template-search">
+            <input
+              type="text"
+              className="template-search-input"
+              placeholder="Search templates by name, description, or items..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search templates"
+            />
+            {searchQuery && (
+              <button
+                className="template-search-clear"
+                onClick={() => setSearchQuery('')}
+                aria-label="Clear search"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            )}
+          </div>
+
+          {filteredTemplates.length === 0 ? (
+            <div className="template-no-results">
+              <p>No templates found matching "{searchQuery}"</p>
+              <button className="btn btn-secondary" onClick={() => setSearchQuery('')}>
+                Clear Search
+              </button>
+            </div>
+          ) : (
+            <div className="template-grid">
+              {filteredTemplates.map((template) => (
               <div
                 key={template.id}
                 className={`template-card ${selectedTemplate?.id === template.id ? 'selected' : ''}`}
@@ -64,7 +109,8 @@ export function TemplateSelector({ onSelectTemplate, onClose }: TemplateSelector
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          )}
 
           {selectedTemplate && (
             <div className="template-preview">

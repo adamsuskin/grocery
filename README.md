@@ -28,6 +28,8 @@ Phase 15 introduces a complete multi-user collaboration system that transforms t
 - ✅ **Add Items**: Add grocery items with name, quantity, category, and optional notes
 - 🏷️ **Categories**: Organize items into categories (Produce, Dairy, Meat, Bakery, Pantry, Frozen, Beverages, Other)
 - 📝 **Notes**: Add optional notes to items (brand preferences, location in store, etc.)
+- 📋 **List Templates**: Quick-start your list with 9 pre-built templates (Weekly Groceries, Party Supplies, Quick Dinner, etc.)
+- 🔍 **Template Search**: Find templates by name, description, or individual items
 - ✅ **Mark as Gotten**: Toggle items as gotten/not gotten
 - ✅ **Delete Items**: Remove items from the list
 - ✅ **View List**: See all items with customizable sorting
@@ -2136,6 +2138,59 @@ All endpoints may return the following error responses:
 See the [Authentication](#authentication) section for details on obtaining access tokens.
 
 ## Usage
+
+### Using List Templates
+
+The app includes pre-built list templates to help you quickly create grocery lists for common shopping scenarios. Templates come with pre-populated items that you can customize after creating the list.
+
+**Available Templates:**
+
+1. **Weekly Groceries** (16 items) - Essential items for a week of meals including produce, meat, dairy, and pantry staples
+2. **Party Supplies** (14 items) - Everything you need for hosting a party including snacks, drinks, and disposables
+3. **Breakfast Essentials** (17 items) - Start your day right with breakfast staples like eggs, bacon, cereal, and coffee
+4. **Healthy Snacks** (14 items) - Nutritious snacks for the whole family including fruits, nuts, and protein bars
+5. **BBQ Cookout** (19 items) - Fire up the grill with burgers, hot dogs, sides, and BBQ essentials
+6. **Baking Basics** (15 items) - Stock up on baking essentials like flour, sugar, butter, and chocolate chips
+7. **Quick Dinner** (15 items) - Everything you need for fast weeknight meals including pasta, rice, and proteins
+8. **Coffee & Tea Station** (13 items) - Stock up your home coffee and tea bar with beans, milk, syrups, and treats
+9. **Camping Trip** (21 items) - All the food essentials for your outdoor adventure including s'mores ingredients
+
+**How to Use Templates:**
+
+1. Click the list selector dropdown at the top of the page
+2. Click "Use a Template" button
+3. Browse available templates or search for specific items
+4. Click on a template card to preview its contents
+5. Review the preview showing the first 5 items (and item count)
+6. Click "Use This Template" to create a new list with all the items
+7. The new list is created with all template items pre-populated
+8. Customize the list by adding, removing, or editing items as needed
+
+**Template Search & Filtering:**
+
+The template selector includes a powerful search feature:
+- Search by template name (e.g., "breakfast", "party")
+- Search by template description (e.g., "weeknight meals", "outdoor")
+- Search by item name (e.g., "marshmallows" finds Camping Trip template)
+- Clear search with the X button or "Clear Search" button
+- No results message appears when search doesn't match any templates
+
+**Template Features:**
+
+- Each template includes practical items with appropriate quantities
+- Items are pre-categorized for easy shopping (Produce, Dairy, Meat, etc.)
+- Many items include helpful notes (e.g., "5 lb bag", "Pre-made", "For s'mores")
+- Templates create a new list that you fully own and can customize
+- All list features work with template-created lists (sharing, exporting, etc.)
+
+**Tips for Using Templates:**
+
+- Use templates as a starting point and customize to your needs
+- Templates are great for recurring shopping trips (weekly groceries)
+- Combine multiple templates by creating separate lists
+- Edit quantities and notes after creating from a template
+- Remove items you don't need or add new ones
+- Save time by not having to enter common items manually
 
 ### Adding Items
 
