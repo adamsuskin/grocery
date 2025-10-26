@@ -242,7 +242,7 @@
   border-right: 1px solid var(--border-color, #e0e0e0);
   display: flex;
   flex-direction: column;
-  transition: all 0.2s;
+  /* Transitions defined in Drag and Drop Styles section for better control */
 }
 
 .meal-calendar-row .meal-slot:last-child {
@@ -408,11 +408,388 @@
   color: white;
 }
 
-/* Drag and Drop */
+/* ===== Drag and Drop Styles ===== */
+
+/* Dragging State - Slot being dragged */
+.meal-slot.dragging {
+  opacity: 0.5;
+  transform: scale(0.95) rotate(2deg);
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+  cursor: grabbing;
+  z-index: 1000;
+}
+
+/* Drag Source - Original position during drag */
+.meal-slot.drag-source {
+  opacity: 0.4;
+  border: 2px dashed var(--border-color, #e0e0e0);
+  background: #f5f5f5;
+  transition: opacity 0.3s ease-out, background 0.3s ease-out;
+}
+
+/* Enhanced Drop Zone - Valid drop target */
 .meal-slot.drag-over {
-  background: #e3f2fd;
+  background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
   border-color: var(--primary-color, #667eea);
-  box-shadow: inset 0 0 0 2px var(--primary-color, #667eea);
+  box-shadow:
+    inset 0 0 0 2px var(--primary-color, #667eea),
+    0 0 20px rgba(102, 126, 234, 0.4);
+  animation: dragOverPulse 1.5s ease-in-out infinite;
+  transition: all 0.3s ease-out;
+}
+
+@keyframes dragOverPulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 2px var(--primary-color, #667eea),
+      0 0 20px rgba(102, 126, 234, 0.4);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 3px var(--primary-color, #667eea),
+      0 0 30px rgba(102, 126, 234, 0.6);
+  }
+}
+
+/* Invalid Drop Zone */
+.meal-slot.drag-over-invalid {
+  background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);
+  border-color: #f44336;
+  box-shadow: inset 0 0 0 2px #f44336;
+  cursor: not-allowed;
+  animation: none;
+}
+
+/* Copy Mode Drop Zone - When Ctrl/Cmd is held during drag */
+.meal-slot.drag-over-copy {
+  background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+  border-color: #4caf50;
+  box-shadow:
+    inset 0 0 0 2px #4caf50,
+    0 0 20px rgba(76, 175, 80, 0.4);
+  animation: dragOverCopyPulse 1.5s ease-in-out infinite;
+  transition: all 0.3s ease-out;
+}
+
+@keyframes dragOverCopyPulse {
+  0%, 100% {
+    box-shadow:
+      inset 0 0 0 2px #4caf50,
+      0 0 20px rgba(76, 175, 80, 0.4);
+  }
+  50% {
+    box-shadow:
+      inset 0 0 0 3px #4caf50,
+      0 0 30px rgba(76, 175, 80, 0.6);
+  }
+}
+
+/* Copy Indicator - When Ctrl/Cmd is held */
+.meal-slot.drag-copy-mode::after {
+  content: 'Copy';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 4px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  background: #4caf50;
+  color: white;
+  border-radius: 4px;
+  animation: copyIndicatorFadeIn 0.2s ease-out;
+  z-index: 10;
+}
+
+@keyframes copyIndicatorFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* ===== Touch Drag and Drop Styles ===== */
+
+/* Long Press Animation - Shows user is holding */
+.meal-slot.long-pressing {
+  animation: longPressPulse 0.5s ease-in-out;
+  transform: scale(1.05);
+}
+
+@keyframes longPressPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+  100% {
+    transform: scale(1.05);
+  }
+}
+
+/* Touch Dragging State - Slot being dragged */
+.meal-slot.touch-dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+/* Touch Drag Preview - Follows finger */
+.touch-drag-preview {
+  pointer-events: none;
+  user-select: none;
+}
+
+.touch-drag-preview-content {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  opacity: 0.9;
+  white-space: nowrap;
+  max-width: 250px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Drag Preview/Ghost Styling */
+.drag-preview {
+  position: fixed;
+  pointer-events: none;
+  z-index: 9999;
+  opacity: 0.9;
+  transform: rotate(-2deg);
+  transition: transform 0.2s ease-out;
+}
+
+.drag-preview-recipe {
+  padding: 12px;
+  background: white;
+  border: 2px solid var(--primary-color, #667eea);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.drag-preview-meal {
+  padding: 12px;
+  background: white;
+  border-left: 4px solid var(--primary-color, #667eea);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  min-width: 180px;
+  max-width: 280px;
+}
+
+/* Drop Animation */
+.meal-slot-drop-animation {
+  animation: dropSuccess 0.4s ease-out;
+}
+
+@keyframes dropSuccess {
+  0% {
+    transform: scale(1.05);
+    background: #c8e6c9;
+  }
+  50% {
+    transform: scale(1.08);
+    background: #a5d6a7;
+  }
+  100% {
+    transform: scale(1);
+    background: inherit;
+  }
+}
+
+/* Smooth Transitions for Drag States */
+.meal-slot {
+  transition:
+    transform 0.2s ease-out,
+    opacity 0.2s ease-out,
+    background 0.3s ease-out,
+    border-color 0.3s ease-out,
+    box-shadow 0.3s ease-out;
+}
+
+/* ===== Mobile Touch Drag Styles ===== */
+
+/* Touch Dragging State */
+.meal-slot.touch-dragging {
+  opacity: 0.7;
+  transform: scale(1.05) rotate(3deg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+/* Long Press Active - Progress indicator */
+.meal-slot.long-press-active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--primary-color, #667eea);
+  border-radius: 8px 8px 0 0;
+  animation: longPressProgress 0.5s ease-out forwards;
+  z-index: 10;
+}
+
+@keyframes longPressProgress {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* Long Press Feedback */
+.meal-slot.long-press-active {
+  animation: longPressPulse 0.5s ease-out;
+}
+
+@keyframes longPressPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.98);
+    background: #f0f0f0;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Touch Target Sizing */
+@media (max-width: 768px) {
+  .meal-slot-action-btn {
+    min-width: 44px;
+    min-height: 44px;
+    width: 44px;
+    height: 44px;
+  }
+
+  .meal-mobile-slot .meal-slot {
+    min-height: 88px;
+    padding: 12px;
+  }
+
+  .meal-slot-empty-content {
+    padding: 12px;
+  }
+
+  .meal-slot-add-icon {
+    font-size: 2.5rem;
+  }
+}
+
+/* Touch-friendly spacing */
+@media (max-width: 768px) {
+  .meal-slot-actions {
+    gap: 10px;
+    margin-top: 12px;
+  }
+
+  .meal-day-meals {
+    gap: 20px;
+  }
+}
+
+/* ===== Recipe Selector Drag Styles ===== */
+
+/* Recipe item draggable state */
+.recipe-selector-item[draggable="true"] {
+  cursor: grab;
+  position: relative;
+}
+
+.recipe-selector-item[draggable="true"]:active {
+  cursor: grabbing;
+}
+
+.recipe-selector-item.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+  transition: transform 0.2s ease-out, opacity 0.2s ease-out;
+}
+
+/* Drag hint indicator */
+.recipe-selector-item[draggable="true"]::after {
+  content: '\2630';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+  color: var(--text-muted, #999);
+  opacity: 0;
+  transition: opacity 0.2s ease-out;
+}
+
+.recipe-selector-item[draggable="true"]:hover::after {
+  opacity: 1;
+}
+
+/* ===== Accessibility & Focus States ===== */
+
+.meal-slot:focus-visible {
+  outline: 3px solid var(--primary-color, #667eea);
+  outline-offset: 2px;
+}
+
+.meal-slot.drag-over:focus-visible {
+  outline: 3px solid #2196f3;
+  outline-offset: 2px;
+}
+
+/* ===== Additional Animation Keyframes ===== */
+
+@keyframes dragGlow {
+  0%, 100% {
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .meal-slot.drag-over {
+    border-width: 3px;
+    border-style: solid;
+  }
+
+  .meal-slot.dragging {
+    opacity: 0.7;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .meal-slot,
+  .meal-slot.dragging,
+  .meal-slot.drag-over,
+  .drag-preview {
+    animation: none;
+    transition: none;
+  }
+
+  .meal-slot.drag-over {
+    box-shadow: inset 0 0 0 3px var(--primary-color, #667eea);
+  }
 }
 
 /* Recipe Selector Modal */
@@ -969,6 +1346,22 @@
 
   .meal-mobile-slot .meal-slot-filled {
     border-left-width: 2px;
+  }
+
+  /* Touch-specific improvements for mobile */
+  .meal-slot-action-btn {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .meal-slot-empty {
+    min-height: 88px;
+  }
+
+  .meal-mobile-slot .meal-slot {
+    min-height: 88px;
   }
 
   /* Recipe Selector Mobile */

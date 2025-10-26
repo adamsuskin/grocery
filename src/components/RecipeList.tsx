@@ -406,12 +406,35 @@ function RecipeCard({
     }
   };
 
+  // Drag handlers for dragging recipes to meal planner
+  const handleDragStart = (e: React.DragEvent) => {
+    // Store recipe data in dataTransfer
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('application/recipe', recipe.id);
+
+    // Add visual feedback
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '0.5';
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    // Reset visual feedback
+    if (e.currentTarget instanceof HTMLElement) {
+      e.currentTarget.style.opacity = '1';
+    }
+  };
+
   return (
     <div
       className={`recipe-card ${viewMode === 'list' ? 'list-view' : ''} ${
         isSelected ? 'selected' : ''
       }`}
       onClick={handleCardClick}
+      draggable={true}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+      style={{ cursor: 'grab' }}
     >
       {showActions && onSelect && (
         <div className="recipe-card-checkbox">

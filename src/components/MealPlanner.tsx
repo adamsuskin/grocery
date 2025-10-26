@@ -71,6 +71,26 @@ export function MealPlanner({ userId, listId, onGenerateList }: MealPlannerProps
     date: Date;
     mealType: MealType;
   } | null>(null);
+  const [isCopyMode, setIsCopyMode] = useState(false);
+
+  // Touch state for mobile drag-and-drop
+  const [touchState, setTouchState] = useState<{
+    startTime: number | null;
+    startPos: { x: number; y: number } | null;
+    currentPos: { x: number; y: number } | null;
+    isDragging: boolean;
+    longPressTimer: NodeJS.Timeout | null;
+    draggedMealPlan: MealPlan | null;
+    isLongPressing: boolean;
+  }>({
+    startTime: null,
+    startPos: null,
+    currentPos: null,
+    isDragging: false,
+    longPressTimer: null,
+    draggedMealPlan: null,
+    isLongPressing: false,
+  });
 
   // Create a map of meal plans by date and meal type for easy lookup
   const mealPlanMap = useMemo(() => {
@@ -156,11 +176,58 @@ export function MealPlanner({ userId, listId, onGenerateList }: MealPlannerProps
   // Drag and drop handlers
   const handleDragStart = (e: React.DragEvent, mealPlan: MealPlan) => {
     setDraggedMealPlan(mealPlan);
-    e.dataTransfer.effectAllowed = 'move';
+
+    // Check if copy mode (Ctrl/Cmd key held)
+    const isCopy = e.ctrlKey || e.metaKey;
+    setIsCopyMode(isCopy);
+
+    // Set effect allowed based on copy mode
+    e.dataTransfer.effectAllowed = isCopy ? 'copy' : 'move';
+
+    // Create custom drag image with rotation effect
+    const dragElement = e.currentTarget as HTMLElement;
+    const clone = dragElement.cloneNode(true) as HTMLElement;
+    clone.style.width = `${dragElement.offsetWidth}px`;
+    clone.style.opacity = '0.8';
+    clone.style.transform = 'rotate(-3deg)';
+    clone.style.position = 'absolute';
+    clone.style.top = '-1000px';
+    clone.style.left = '-1000px';
+    document.body.appendChild(clone);
+    e.dataTransfer.setDragImage(clone, dragElement.offsetWidth / 2, dragElement.offsetHeight / 2);
+
+    // Clean up the clone after drag starts
+    setTimeout(() => {
+      if (document.body.contains(clone)) {
+        document.body.removeChild(clone);
+      }
+    }, 0);
+
+    // Add dragging class to element
+    dragElement.classList.add('dragging');
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    const dragElement = e.currentTarget as HTMLElement;
+    dragElement.classList.remove('dragging');
+    setDraggedMealPlan(null);
+    setIsCopyMode(false);
   };
 
   const handleDragOver = (e: React.DragEvent, date: Date, mealType: MealType) => {
     e.preventDefault();
+
+    // Update copy mode dynamically during drag
+    const isCopy = e.ctrlKey || e.metaKey;
+    setIsCopyMode(isCopy);
+
+    // Allow both recipe and meal plan drops
+    if (e.dataTransfer.types.includes('application/recipe')) {
+      e.dataTransfer.dropEffect = 'copy';
+    } else {
+      e.dataTransfer.dropEffect = isCopy ? 'copy' : 'move';
+    }
+
     setDragOverSlot({ date, mealType });
   };
 
@@ -173,17 +240,183 @@ export function MealPlanner({ userId, listId, onGenerateList }: MealPlannerProps
     e.preventDefault();
     setDragOverSlot(null);
 
-    if (!draggedMealPlan) return;
+    // Check if dragging a recipe from RecipeList
+    const recipeId = e.dataTransfer.getData('application/recipe');
 
-    // Update the meal plan to the new date and meal type
-    const newPlannedDate = getStartOfDay(date);
-    await updateMealPlan(draggedMealPlan.id, {
-      id: draggedMealPlan.id,
-      plannedDate: newPlannedDate,
-      mealType,
+    if (recipeId) {
+      // Recipe drop - create a new meal plan
+      const recipe = recipeMap.get(recipeId);
+      if (!recipe) return;
+
+      const plannedDate = getStartOfDay(date);
+      await createMealPlan({
+        recipeId: recipe.id,
+        plannedDate,
+        mealType,
+        servings: recipe.servings || 4,
+        listId,
+      });
+    } else if (draggedMealPlan) {
+      // Meal plan drop - check if copy or move
+      const newPlannedDate = getStartOfDay(date);
+      const isCopy = e.ctrlKey || e.metaKey;
+
+      if (isCopy) {
+        // Copy the meal - create a new meal plan with the same recipe
+        await createMealPlan({
+          recipeId: draggedMealPlan.recipeId,
+          plannedDate: newPlannedDate,
+          mealType,
+          servings: draggedMealPlan.servings,
+          listId,
+        });
+      } else {
+        // Move the meal - update existing meal plan
+        await updateMealPlan(draggedMealPlan.id, {
+          id: draggedMealPlan.id,
+          plannedDate: newPlannedDate,
+          mealType,
+        });
+      }
+
+      setDraggedMealPlan(null);
+      setIsCopyMode(false);
+    }
+  };
+
+  // Touch event handlers for mobile drag-and-drop
+  const handleTouchStart = (e: React.TouchEvent, mealPlan: MealPlan) => {
+    const touch = e.touches[0];
+    const startTime = Date.now();
+    const startPos = { x: touch.clientX, y: touch.clientY };
+
+    // Start long-press timer (500ms)
+    const timer = setTimeout(() => {
+      // Haptic feedback on drag start (if supported)
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+
+      setTouchState((prev) => ({
+        ...prev,
+        isDragging: true,
+        isLongPressing: false,
+        draggedMealPlan: mealPlan,
+      }));
+    }, 500);
+
+    setTouchState({
+      startTime,
+      startPos,
+      currentPos: startPos,
+      isDragging: false,
+      longPressTimer: timer,
+      draggedMealPlan: mealPlan,
+      isLongPressing: true,
+    });
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    const currentPos = { x: touch.clientX, y: touch.clientY };
+
+    // If we moved too much during long-press, cancel it
+    if (touchState.isLongPressing && touchState.startPos) {
+      const dx = Math.abs(currentPos.x - touchState.startPos.x);
+      const dy = Math.abs(currentPos.y - touchState.startPos.y);
+
+      if (dx > 10 || dy > 10) {
+        // Cancel long-press if finger moved too much
+        if (touchState.longPressTimer) {
+          clearTimeout(touchState.longPressTimer);
+        }
+        setTouchState((prev) => ({
+          ...prev,
+          isLongPressing: false,
+          longPressTimer: null,
+        }));
+        return;
+      }
+    }
+
+    if (touchState.isDragging) {
+      e.preventDefault(); // Prevent scrolling while dragging
+
+      setTouchState((prev) => ({
+        ...prev,
+        currentPos,
+      }));
+
+      // Find the element under the touch point
+      const elementUnderTouch = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (elementUnderTouch) {
+        // Find the closest meal slot
+        const mealSlotElement = elementUnderTouch.closest('[data-meal-slot]');
+        if (mealSlotElement) {
+          const dateStr = mealSlotElement.getAttribute('data-date');
+          const mealType = mealSlotElement.getAttribute('data-meal-type') as MealType;
+
+          if (dateStr && mealType) {
+            const date = new Date(dateStr);
+            setDragOverSlot({ date, mealType });
+          }
+        }
+      }
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    // Clean up long-press timer
+    if (touchState.longPressTimer) {
+      clearTimeout(touchState.longPressTimer);
+    }
+
+    if (touchState.isDragging && touchState.draggedMealPlan && dragOverSlot) {
+      // Drop the meal plan
+      const newPlannedDate = getStartOfDay(dragOverSlot.date);
+      await updateMealPlan(touchState.draggedMealPlan.id, {
+        id: touchState.draggedMealPlan.id,
+        plannedDate: newPlannedDate,
+        mealType: dragOverSlot.mealType,
+      });
+
+      // Haptic feedback on successful drop
+      if (navigator.vibrate) {
+        navigator.vibrate(30);
+      }
+    }
+
+    // Reset touch state
+    setTouchState({
+      startTime: null,
+      startPos: null,
+      currentPos: null,
+      isDragging: false,
+      longPressTimer: null,
+      draggedMealPlan: null,
+      isLongPressing: false,
     });
 
-    setDraggedMealPlan(null);
+    setDragOverSlot(null);
+  };
+
+  const handleTouchCancel = () => {
+    // Clean up on touch cancel
+    if (touchState.longPressTimer) {
+      clearTimeout(touchState.longPressTimer);
+    }
+
+    setTouchState({
+      startTime: null,
+      startPos: null,
+      currentPos: null,
+      isDragging: false,
+      longPressTimer: null,
+      draggedMealPlan: null,
+      isLongPressing: false,
+    });
+
+    setDragOverSlot(null);
   };
 
   // Generate shopping list handler
@@ -296,9 +529,11 @@ export function MealPlanner({ userId, listId, onGenerateList }: MealPlannerProps
                     onRemove={handleRemoveMeal}
                     onToggleCooked={handleToggleCooked}
                     onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
                     onDragOver={(e) => handleDragOver(e, date, mealType)}
                     onDrop={(e) => handleDrop(e, date, mealType)}
                     isDragOver={isDragOver}
+                    isCopyMode={isCopyMode}
                   />
                 );
               })}
@@ -321,6 +556,9 @@ export function MealPlanner({ userId, listId, onGenerateList }: MealPlannerProps
                 {MEAL_TYPES.map((mealType) => {
                   const mealPlan = getMealPlan(date, mealType);
                   const recipe = mealPlan ? recipeMap.get(mealPlan.recipeId) : undefined;
+                  const isDragOver =
+                    dragOverSlot?.date.toDateString() === date.toDateString() &&
+                    dragOverSlot?.mealType === mealType;
 
                   return (
                     <div key={mealType} className="meal-mobile-slot">
@@ -334,6 +572,19 @@ export function MealPlanner({ userId, listId, onGenerateList }: MealPlannerProps
                         onView={handleViewMeal}
                         onRemove={handleRemoveMeal}
                         onToggleCooked={handleToggleCooked}
+                        onTouchStart={handleTouchStart}
+                        onTouchMove={handleTouchMove}
+                        onTouchEnd={handleTouchEnd}
+                        onTouchCancel={handleTouchCancel}
+                        isDragOver={isDragOver}
+                        isLongPressing={
+                          touchState.isLongPressing &&
+                          touchState.draggedMealPlan?.id === mealPlan?.id
+                        }
+                        isTouchDragging={
+                          touchState.isDragging &&
+                          touchState.draggedMealPlan?.id === mealPlan?.id
+                        }
                       />
                     </div>
                   );
@@ -370,6 +621,25 @@ export function MealPlanner({ userId, listId, onGenerateList }: MealPlannerProps
               <p>Meal Plan ID: {detailState.mealPlan.id}</p>
               <p>Recipe ID: {detailState.mealPlan.recipeId}</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Touch Drag Preview */}
+      {touchState.isDragging && touchState.currentPos && touchState.draggedMealPlan && (
+        <div
+          className="touch-drag-preview"
+          style={{
+            position: 'fixed',
+            left: touchState.currentPos.x,
+            top: touchState.currentPos.y,
+            transform: 'translate(-50%, -50%)',
+            pointerEvents: 'none',
+            zIndex: 9999,
+          }}
+        >
+          <div className="touch-drag-preview-content">
+            {recipeMap.get(touchState.draggedMealPlan.recipeId)?.name || 'Meal'}
           </div>
         </div>
       )}

@@ -1,135 +1,104 @@
 # Currently In Progress
 
-**Status:** No active development phase
+**Status:** Active development - Phase 29
+**Started:** [Current Date]
 
 ---
 
-## Phase 28: Unit Conversion System - COMPLETE! ✅
+## Phase 29: Enhanced Drag & Drop Meal Planner - IN PROGRESS 🚧
 
-**Completed:** October 26, 2024
+**Priority:** HIGH
+**Assigned:** Claude Agent Instance
 
-### Implementation Summary
+### Objective
+Implement visual drag and drop functionality for the meal planner to enhance user experience and make meal planning more intuitive and efficient.
 
-Phase 28 has been successfully completed! Implemented a comprehensive unit conversion system for recipe ingredients and grocery items.
+### Key Features to Implement
 
-### Quick Stats
-- **15 files modified** (8 modified, 7 new)
-- **4,054 lines added** (+4,054 insertions, -107 deletions)
-- **Zero TypeScript errors** in new implementation
-- **100% backward compatible** with existing data
+1. **Visual Drag and Drop Between Calendar Days**
+   - Allow users to drag meal plans from one day to another
+   - Smooth animations during drag
+   - Visual feedback showing valid drop zones
+   - Update plannedDate when dropped
 
-### Key Features Delivered
-- ✅ 45+ bidirectional unit conversions (volume, weight, count)
-- ✅ User preferences for measurement systems
-- ✅ Smart shopping list aggregation across units
-- ✅ Automatic unit conversion in recipe displays
-- ✅ Decimal precision support (1.5 cups, 0.25 tsp)
-- ✅ Type-safe throughout with full TypeScript integration
+2. **Drag to Reorder Meals Within a Day**
+   - Allow reordering meals within the same day
+   - Update mealType or custom ordering
+   - Maintain smooth animations
 
-### Core Components Created
+3. **Drag to Copy Meals to Multiple Days**
+   - Hold modifier key (Ctrl/Cmd) to copy instead of move
+   - Visual indicator showing copy vs move
+   - Create duplicates of meal plans
 
-1. **UnitConverter Class** (723 lines) - `/src/utils/unitConversion.ts`
-   - Bidirectional conversion with path-finding algorithm
-   - Unit normalization (handles plurals/abbreviations)
-   - Smart quantity formatting
+4. **Drag from Recipe List to Calendar**
+   - Drag recipes directly from recipe list
+   - Drop onto calendar to create meal plan
+   - Automatic meal plan creation on drop
 
-2. **UnitPreferences Component** (322 lines + 562 CSS) - `/src/components/UnitPreferences.tsx`
-   - Settings UI for measurement preferences
-   - Integrated into UserProfile modal
-   - Clean, accessible design
+5. **Touch-Friendly Mobile Drag and Drop**
+   - Support touch events for mobile devices
+   - Long-press to initiate drag on mobile
+   - Touch-optimized drop zones
 
-3. **Database Schema** - Migration `011_add_unit_conversion_support.sql`
-   - `unit_conversions` table with 45+ conversions
-   - `user_preferences` table for user settings
-   - Enhanced `grocery_items` with unit support
+### Technical Implementation Plan
 
-4. **Zero Hooks** - 4 new hooks in `/src/zero-store.ts`
-   - `useUnitConversions()` - Query conversions
-   - `useUserPreferences()` - Get user settings
-   - `useUserPreferencesMutations()` - Update preferences
-   - `useUnitConverter()` - Get initialized converter
+1. **Library Selection**
+   - Evaluate: react-beautiful-dnd, dnd-kit, react-dnd
+   - Choose based on: TypeScript support, mobile compatibility, bundle size
+   - Preferred: @dnd-kit/core (modern, accessible, touch-friendly)
 
-### Enhanced Features
+2. **Component Updates**
+   - Update MealPlanner.tsx with drag contexts
+   - Add drag handles to meal plan items
+   - Implement drop zones for calendar days
+   - Add visual feedback components
 
-1. **Shopping List Generation** - Updated `generateShoppingList()`
-   - Converts ingredients to common units before aggregating
-   - Combines "2 cups flour" + "8 tbsp flour" = "2.5 cups flour"
-   - Handles incompatible units gracefully
+3. **State Management**
+   - Handle drag start/end states
+   - Update Zero mutations for meal plan changes
+   - Implement optimistic updates
+   - Handle conflicts gracefully
 
-2. **Recipe Display** - Updated RecipeCard component
-   - Shows converted units: "2 cups (473 ml)"
-   - Respects user preferences for auto-convert
-   - Smart serving size adjustments
+4. **Styling**
+   - Drag ghost/preview styling
+   - Drop zone highlights
+   - Animations and transitions
+   - Mobile-optimized touch targets
 
-3. **Grocery Items** - Enhanced display
-   - Shows precise decimal quantities
-   - Displays units alongside quantities
-   - Format: "2.5 cups flour" or "8 oz milk"
+### Current Status
 
-### Files Created
-- `server/migrations/011_add_unit_conversion_support.sql`
-- `server/migrations/rollback/011_drop_unit_conversion_support.sql`
-- `server/migrations/README_UNIT_CONVERSION.md`
-- `src/utils/unitConversion.ts`
-- `src/components/UnitPreferences.tsx`
-- `src/components/UnitPreferences.css`
-- `PHASE_28_COMPLETE.md`
+- [ ] Research and select drag-drop library
+- [ ] Install dependencies
+- [ ] Create drag context and providers
+- [ ] Implement calendar day drop zones
+- [ ] Implement meal plan drag sources
+- [ ] Add recipe list drag sources
+- [ ] Implement copy functionality
+- [ ] Add mobile touch support
+- [ ] Style drag interactions
+- [ ] Test on desktop
+- [ ] Test on mobile
+- [ ] Update documentation
 
-### Files Modified
-- `src/types.ts` - Added UnitConversion, UserPreferences types
-- `src/zero-schema.ts` - Added unit_conversions, user_preferences tables
-- `src/zero-store.ts` - Added 4 hooks, enhanced generateShoppingList
-- `src/components/RecipeCard.tsx` - Added conversion display
-- `src/components/GroceryItem.tsx` - Added unit/decimal display
-- `src/components/UserProfile.tsx` - Integrated UnitPreferences
-- `IMPLEMENTATION_PLAN.md` - Documented Phase 28
-- `IN_PROGRESS.md` - Updated status
+### Files to Modify/Create
 
-See [PHASE_28_COMPLETE.md](./PHASE_28_COMPLETE.md) for complete implementation details.
+- `package.json` - Add @dnd-kit dependencies
+- `src/components/MealPlanner.tsx` - Main implementation
+- `src/components/MealPlanItem.tsx` - Draggable meal plan component
+- `src/components/RecipeCard.tsx` - Add drag source
+- `src/components/MealPlanner.css` - Drag/drop styling
+- `src/hooks/useDragAndDrop.ts` - Custom drag/drop hook (if needed)
+- `src/types.ts` - Add drag/drop types
+- `IMPLEMENTATION_PLAN.md` - Document progress
 
 ---
 
 ## Previous Completions
 
-### Phase 27: Recipe API Integration - COMPLETE! ✅
-**Completed:** December 2024
+### Phase 28: Unit Conversion System - COMPLETE! ✅
+**Completed:** October 26, 2024
 
-See full details in [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md)
-
----
-
-## Next Phase Ideas
-
-### Phase 29: Enhanced Drag & Drop Meal Planner (Recommended Next)
-Based on the updated high priority list, implement visual drag and drop:
-- Visual drag and drop between calendar days
-- Drag to reorder meals within a day
-- Drag to copy meals to multiple days
-- Drag from recipe list to calendar
-- Touch-friendly mobile drag and drop
-
-### Phase 30: Recipe Import from URLs
-- Parse recipe websites and extract data
-- Support major recipe sites (AllRecipes, Food Network, etc.)
-- Schema.org recipe microdata parsing
-- Ingredient extraction with quantities and units
-- Instruction parsing and formatting
-- Image URL extraction
-
-### Phase 28.1: Unit Conversion Enhancements
-- Temperature conversions (°F ↔ °C)
-- Volume-to-weight conversions for common ingredients
-- Regional unit preferences (UK vs US measurements)
-- Custom user-defined conversions
+See full details in [IN_PROGRESS.md](./IN_PROGRESS.md) history.
 
 ---
-
-## Recent Completions
-
-- ✅ **Phase 28** (Oct 26, 2024) - Unit Conversion System
-- ✅ **Phase 27** (Dec 2024) - Recipe API Integration
-- ✅ **Phase 26** (Oct 26, 2024) - Recipe Integration
-- ✅ **Phase 25** (Oct 26, 2024) - Custom Category Creation
-- ✅ **Phase 24** (Oct 26, 2024) - Share Target API
-
-See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for complete phase history.

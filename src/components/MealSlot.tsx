@@ -11,9 +11,17 @@ interface MealSlotProps {
   onRemove: (mealPlanId: string) => void;
   onToggleCooked: (mealPlanId: string, isCooked: boolean) => void;
   onDragStart?: (e: React.DragEvent, mealPlan: MealPlan) => void;
+  onDragEnd?: (e: React.DragEvent) => void;
   onDragOver?: (e: React.DragEvent) => void;
   onDrop?: (e: React.DragEvent, date: Date, mealType: MealType) => void;
   isDragOver?: boolean;
+  isCopyMode?: boolean;
+  onTouchStart?: (e: React.TouchEvent, mealPlan: MealPlan) => void;
+  onTouchMove?: (e: React.TouchEvent) => void;
+  onTouchEnd?: () => void;
+  onTouchCancel?: () => void;
+  isLongPressing?: boolean;
+  isTouchDragging?: boolean;
 }
 
 export function MealSlot({
@@ -26,15 +34,29 @@ export function MealSlot({
   onRemove,
   onToggleCooked,
   onDragStart,
+  onDragEnd,
   onDragOver,
   onDrop,
   isDragOver,
+  isCopyMode,
+  onTouchStart,
+  onTouchMove,
+  onTouchEnd,
+  onTouchCancel,
+  isLongPressing,
+  isTouchDragging,
 }: MealSlotProps) {
   const isEmpty = !mealPlan || !recipe;
 
   const handleDragStart = (e: React.DragEvent) => {
     if (mealPlan && onDragStart) {
       onDragStart(e, mealPlan);
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent) => {
+    if (onDragEnd) {
+      onDragEnd(e);
     }
   };
 
@@ -52,13 +74,42 @@ export function MealSlot({
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (mealPlan && onTouchStart) {
+      onTouchStart(e, mealPlan);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (onTouchMove) {
+      onTouchMove(e);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (onTouchEnd) {
+      onTouchEnd();
+    }
+  };
+
+  const handleTouchCancel = () => {
+    if (onTouchCancel) {
+      onTouchCancel();
+    }
+  };
+
   if (isEmpty) {
     return (
       <div
-        className={`meal-slot meal-slot-empty meal-slot-${mealType} ${isDragOver ? 'drag-over' : ''}`}
+        className={`meal-slot meal-slot-empty meal-slot-${mealType} ${isDragOver ? 'drag-over' : ''} ${
+          isCopyMode ? 'drag-over-copy' : ''
+        }`}
         onClick={() => onAdd(date, mealType)}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
+        data-meal-slot="true"
+        data-date={date.toISOString()}
+        data-meal-type={mealType}
       >
         <div className="meal-slot-empty-content">
           <span className="meal-slot-add-icon">+</span>
@@ -73,12 +124,22 @@ export function MealSlot({
   return (
     <div
       className={`meal-slot meal-slot-filled meal-slot-${mealType} ${isDragOver ? 'drag-over' : ''} ${
-        mealPlan.isCooked ? 'meal-cooked' : ''
+        isCopyMode && isDragOver ? 'drag-over-copy' : ''
+      } ${mealPlan.isCooked ? 'meal-cooked' : ''} ${isLongPressing ? 'long-pressing' : ''} ${
+        isTouchDragging ? 'touch-dragging' : ''
       }`}
       draggable
       onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
+      data-meal-slot="true"
+      data-date={date.toISOString()}
+      data-meal-type={mealType}
     >
       <div className="meal-slot-content" onClick={() => onView(mealPlan)}>
         {mealPlan.isCooked && (
