@@ -155,7 +155,7 @@ import { useQuery } from '@rocicorp/zero/react';
 import { nanoid } from 'nanoid';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { schema, type Schema } from './zero-schema';
-import type { GroceryItem, FilterState, SortState, List, ListMember, PermissionLevel } from './types';
+import type { GroceryItem, FilterState, SortState, List, ListMember, PermissionLevel, BudgetInfo, PriceStats } from './types';
 import { createConflictResolver, type Conflict } from './utils/conflictResolver';
 import {
   getQueueManager,
@@ -517,6 +517,7 @@ export function useGroceryItems(listId?: string, filters?: FilterState, sort?: S
     gotten: item.gotten,
     category: item.category as GroceryItem['category'],
     notes: item.notes,
+    price: item.price,
     userId: item.user_id,
     listId: item.list_id,
     createdAt: item.createdAt,
@@ -610,8 +611,9 @@ export function useGroceryMutations() {
    * Add a new grocery item
    * Automatically associates the item with the current authenticated user
    * @param listId - Optional list ID to associate the item with a specific list
+   * @param price - Optional price per unit
    */
-  const addItem = async (name: string, quantity: number, category: string, notes: string, listId?: string): Promise<string> => {
+  const addItem = async (name: string, quantity: number, category: string, notes: string, listId?: string, price?: number): Promise<string> => {
     const id = nanoid();
     await zero.mutate.grocery_items.create({
       id,
@@ -620,6 +622,7 @@ export function useGroceryMutations() {
       gotten: false,
       category,
       notes,
+      price: price || 0,
       user_id: currentUserId, // Associate item with current user
       list_id: listId || '', // Default to empty string if no list specified
       createdAt: Date.now(),
@@ -844,6 +847,8 @@ export function useGroceryLists() {
         updatedAt: list.updatedAt,
         isArchived: list.is_archived || false,
         archivedAt: list.archived_at,
+        budget: list.budget,
+        currency: list.currency,
       });
     });
 
@@ -860,6 +865,8 @@ export function useGroceryLists() {
           updatedAt: list.updatedAt,
           isArchived: list.is_archived || false,
           archivedAt: list.archived_at,
+          budget: list.budget,
+          currency: list.currency,
         });
       }
     });
@@ -925,7 +932,7 @@ export function useListMutations() {
    * Create a new list
    * Automatically sets the current user as the owner
    */
-  const createList = async (name: string, color?: string, icon?: string): Promise<string> => {
+  const createList = async (name: string, color?: string, icon?: string, budget?: number, currency?: string): Promise<string> => {
     const id = nanoid();
     const now = Date.now();
 
@@ -935,6 +942,8 @@ export function useListMutations() {
       owner_id: currentUserId,
       color: color || '#4CAF50',
       icon: icon || '🛒',
+      budget: budget || 0,
+      currency: currency || 'USD',
       createdAt: now,
       updatedAt: now,
       is_archived: false,
@@ -983,6 +992,7 @@ export function useListMutations() {
         gotten: false,
         category: item.category,
         notes: item.notes || '',
+        price: 0,
         user_id: currentUserId,
         list_id: listId,
         createdAt: now + index, // Slight offset to maintain order
@@ -1023,6 +1033,22 @@ export function useListMutations() {
     await zero.mutate.lists.update({
       id: listId,
       name,
+      updatedAt: Date.now(),
+    });
+  };
+
+  /**
+   * Update a list's budget
+   * Only the owner or editors can update the list
+   * @param listId - ID of the list to update
+   * @param budget - Budget amount (optional, set to 0 to remove budget)
+   * @param currency - Currency code (optional, defaults to 'USD')
+   */
+  const updateListBudget = async (listId: string, budget?: number, currency?: string): Promise<void> => {
+    await zero.mutate.lists.update({
+      id: listId,
+      budget: budget || 0,
+      currency: currency || 'USD',
       updatedAt: Date.now(),
     });
   };
@@ -1091,6 +1117,7 @@ export function useListMutations() {
     getMyLists,
     getListById,
     updateListName,
+    updateListBudget,
     deleteList,
     addListMember,
     removeListMember,
@@ -1435,5 +1462,111 @@ export function useOfflineSync(config?: OfflineQueueConfig) {
     sync: queueHook.processQueue,
     hasPendingMutations: queueHook.pendingCount > 0,
     hasFailedMutations: queueHook.failedCount > 0,
+  };
+}
+
+// =============================================================================
+// Budget and Price Helper Functions
+// =============================================================================
+
+/**
+ * Calculate the total price of all items in a list
+ * Only includes items with price set
+ *
+ * @param items - Array of grocery items
+ * @returns Total cost of all items (quantity * price)
+ *
+ * @example
+ * ```typescript
+ * const items = useGroceryItems(listId);
+ * const total = calculateListTotal(items);
+ * console.log(`Total: $${total.toFixed(2)}`);
+ * ```
+ */
+export function calculateListTotal(items: GroceryItem[]): number {
+  return items.reduce((total, item) => {
+    const itemPrice = item.price || 0;
+    return total + (itemPrice * item.quantity);
+  }, 0);
+}
+
+/**
+ * Calculate budget information for a list
+ * Compares total spending against the budget
+ *
+ * @param items - Array of grocery items
+ * @param budget - Optional budget amount (if not provided, returns info without comparison)
+ * @returns Budget information including total, spent, remaining, and percent used
+ *
+ * @example
+ * ```typescript
+ * const items = useGroceryItems(listId);
+ * const lists = useGroceryLists();
+ * const currentList = lists.find(l => l.id === listId);
+ * const budgetInfo = calculateBudgetInfo(items, currentList?.budget);
+ *
+ * console.log(`Spent: $${budgetInfo.spent.toFixed(2)}`);
+ * console.log(`Remaining: $${budgetInfo.remaining.toFixed(2)}`);
+ * console.log(`Percent Used: ${budgetInfo.percentUsed.toFixed(1)}%`);
+ * ```
+ */
+export function calculateBudgetInfo(items: GroceryItem[], budget?: number): BudgetInfo {
+  const spent = calculateListTotal(items);
+  const totalBudget = budget || 0;
+  const remaining = totalBudget - spent;
+  const percentUsed = totalBudget > 0 ? (spent / totalBudget) * 100 : 0;
+
+  return {
+    total: totalBudget,
+    spent,
+    remaining,
+    percentUsed: Math.min(percentUsed, 100), // Cap at 100%
+  };
+}
+
+/**
+ * Calculate price statistics for items in a list
+ * Provides insights about pricing across all items
+ *
+ * @param items - Array of grocery items
+ * @returns Statistics including count, average, min, and max prices
+ *
+ * @example
+ * ```typescript
+ * const items = useGroceryItems(listId);
+ * const stats = calculatePriceStats(items);
+ *
+ * console.log(`Items with prices: ${stats.itemsWithPrice}/${stats.totalItems}`);
+ * console.log(`Average price: $${stats.averagePrice.toFixed(2)}`);
+ * console.log(`Price range: $${stats.minPrice.toFixed(2)} - $${stats.maxPrice.toFixed(2)}`);
+ * ```
+ */
+export function calculatePriceStats(items: GroceryItem[]): PriceStats {
+  const totalItems = items.length;
+  const itemsWithPrice = items.filter(item => item.price && item.price > 0);
+  const itemsWithPriceCount = itemsWithPrice.length;
+
+  if (itemsWithPriceCount === 0) {
+    return {
+      totalItems,
+      itemsWithPrice: 0,
+      averagePrice: 0,
+      minPrice: 0,
+      maxPrice: 0,
+    };
+  }
+
+  const prices = itemsWithPrice.map(item => item.price!);
+  const sum = prices.reduce((acc, price) => acc + price, 0);
+  const averagePrice = sum / itemsWithPriceCount;
+  const minPrice = Math.min(...prices);
+  const maxPrice = Math.max(...prices);
+
+  return {
+    totalItems,
+    itemsWithPrice: itemsWithPriceCount,
+    averagePrice,
+    minPrice,
+    maxPrice,
   };
 }

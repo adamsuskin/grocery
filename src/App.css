@@ -409,7 +409,142 @@ section h2 {
   color: var(--text-muted);
   font-size: 0.9rem;
   font-weight: 500;
+}
+
+/* Price input styling */
+.price-input-group {
+  min-width: 100px;
+  flex: 0 0 auto;
+}
+
+.price-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.currency-symbol {
+  position: absolute;
+  left: 12px;
+  color: #666;
+  pointer-events: none;
+  font-size: 1rem;
+  z-index: 1;
+}
+
+.input-price {
+  padding-left: 28px;
+  min-width: 100px;
+}
+
+/* Price display and editing styles */
+.item-quantity-price {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
   margin-right: 8px;
+}
+
+.price-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.item-price {
+  color: #2e7d32;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: #e8f5e9;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.item-price.editable {
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.item-price.editable:hover {
+  background-color: #c8e6c9;
+  border-color: #2e7d32;
+  transform: scale(1.05);
+}
+
+.item-price.editable:focus {
+  outline: 2px solid #2e7d32;
+  outline-offset: 2px;
+}
+
+.item-total {
+  color: #1565c0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: #e3f2fd;
+  white-space: nowrap;
+}
+
+.price-input {
+  width: 80px;
+  padding: 4px 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 2px solid #2e7d32;
+  border-radius: 4px;
+  outline: none;
+  background-color: #fff;
+  color: #2e7d32;
+}
+
+.price-input:focus {
+  border-color: #1b5e20;
+  box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.1);
+}
+
+.add-price-btn {
+  background: transparent;
+  border: 1px dashed var(--border-color);
+  padding: 2px 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border-radius: 4px;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.add-price-btn:hover {
+  background-color: #e8f5e9;
+  border-color: #2e7d32;
+  color: #2e7d32;
+  border-style: solid;
+}
+
+/* Responsive design for price input */
+@media (max-width: 768px) {
+  .price-input-group {
+    min-width: 120px;
+  }
+
+  .item-quantity-price {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 600px) {
+  .item-quantity-price {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    margin-top: 4px;
+  }
 }
 
 .btn-delete {

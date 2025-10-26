@@ -1,0 +1,537 @@
+.budget-tracker {
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border: 2px solid var(--border-color);
+  transition: all 0.3s ease;
+}
+
+.budget-tracker.within-budget {
+  border-color: var(--primary-color);
+  background: linear-gradient(to bottom, var(--card-bg), #f0f9f0);
+}
+
+.budget-tracker.near-budget {
+  border-color: #ff9800;
+  background: linear-gradient(to bottom, var(--card-bg), #fff8e1);
+}
+
+.budget-tracker.over-budget {
+  border-color: var(--danger-color);
+  background: linear-gradient(to bottom, var(--card-bg), #ffebee);
+}
+
+/* Header / Compact View */
+.budget-tracker-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  user-select: none;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.budget-tracker-header:hover {
+  background-color: rgba(0, 0, 0, 0.02);
+}
+
+.budget-overview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.budget-icon {
+  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(76, 175, 80, 0.1);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.budget-tracker.near-budget .budget-icon {
+  background: rgba(255, 152, 0, 0.1);
+}
+
+.budget-tracker.over-budget .budget-icon {
+  background: rgba(244, 67, 54, 0.1);
+}
+
+.budget-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.budget-not-set {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.budget-label {
+  font-weight: 600;
+  color: var(--text-color);
+  font-size: 0.95rem;
+}
+
+.budget-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.budget-amounts {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.budget-spending {
+  color: var(--text-color);
+}
+
+.budget-tracker.over-budget .budget-spending {
+  color: var(--danger-color);
+}
+
+.budget-separator {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.budget-total {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.budget-status-text {
+  font-size: 0.9rem;
+}
+
+.budget-remaining {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.budget-over {
+  color: var(--danger-color);
+  font-weight: 600;
+}
+
+.budget-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.budget-percentage {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-color);
+  min-width: 50px;
+  text-align: right;
+}
+
+.budget-tracker.near-budget .budget-percentage {
+  color: #ff9800;
+}
+
+.budget-tracker.over-budget .budget-percentage {
+  color: var(--danger-color);
+}
+
+.budget-expand-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.budget-expand-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+/* Progress Bar */
+.budget-progress-container {
+  margin-top: 12px;
+}
+
+.budget-progress-bar {
+  width: 100%;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.budget-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), #66bb6a);
+  border-radius: 4px;
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+.budget-tracker.near-budget .budget-progress-fill {
+  background: linear-gradient(90deg, #ffa726, #ff9800);
+}
+
+.budget-tracker.over-budget .budget-progress-fill {
+  background: linear-gradient(90deg, var(--danger-color), #ef5350);
+}
+
+/* Expanded Details */
+.budget-details {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Budget Editor */
+.budget-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.budget-editor-header h3 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.budget-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.budget-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.budget-currency-symbol {
+  position: absolute;
+  left: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.budget-input {
+  width: 100%;
+  padding: 10px 12px 10px 28px;
+  font-size: 1rem;
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.budget-input:focus {
+  border-color: var(--primary-color);
+}
+
+.budget-editor-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-sm {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+.btn-secondary {
+  background-color: #e0e0e0;
+  color: var(--text-color);
+}
+
+.btn-secondary:hover {
+  background-color: #d0d0d0;
+}
+
+.budget-display {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+}
+
+.budget-current {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.budget-value {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* Spending Breakdown */
+.budget-breakdown h3,
+.budget-items-status h3,
+.budget-price-stats h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.breakdown-grid,
+.items-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.breakdown-item,
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.breakdown-icon,
+.status-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.breakdown-content,
+.status-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+}
+
+.breakdown-label,
+.status-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.breakdown-value,
+.status-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+/* Price Statistics */
+.price-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+}
+
+.price-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+
+.price-stat-label {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.price-stat-value {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+/* Alerts */
+.budget-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.budget-alert {
+  display: flex;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 4px;
+  border-left: 4px solid;
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.alert-danger {
+  background-color: #ffebee;
+  border-color: var(--danger-color);
+}
+
+.alert-warning {
+  background-color: #fff8e1;
+  border-color: #ff9800;
+}
+
+.alert-info {
+  background-color: #e3f2fd;
+  border-color: #2196f3;
+}
+
+.alert-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.alert-content {
+  flex: 1;
+}
+
+.alert-content strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--text-color);
+  font-size: 0.95rem;
+}
+
+.alert-content p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-color);
+  line-height: 1.4;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+  .budget-tracker-header {
+    flex-wrap: wrap;
+  }
+
+  .budget-overview {
+    flex: 1 1 100%;
+  }
+
+  .budget-actions {
+    flex: 1 1 100%;
+    justify-content: space-between;
+  }
+
+  .budget-amounts {
+    font-size: 1.1rem;
+  }
+
+  .breakdown-grid,
+  .items-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .price-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .budget-display {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .budget-current {
+    justify-content: center;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .budget-tracker,
+  .budget-progress-fill,
+  .budget-details,
+  .budget-alert,
+  .budget-expand-btn {
+    animation: none;
+    transition: none;
+  }
+}
+
+/* Focus styles for keyboard navigation */
+.budget-expand-btn:focus,
+.budget-input:focus {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .budget-tracker {
+    border-width: 3px;
+  }
+
+  .budget-progress-bar {
+    border: 2px solid var(--text-color);
+  }
+
+  .breakdown-item,
+  .status-item,
+  .price-stat {
+    border-width: 2px;
+  }
+}

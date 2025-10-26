@@ -28,6 +28,9 @@ Phase 15 introduces a complete multi-user collaboration system that transforms t
 - ✅ **Add Items**: Add grocery items with name, quantity, category, and optional notes
 - 🏷️ **Categories**: Organize items into categories (Produce, Dairy, Meat, Bakery, Pantry, Frozen, Beverages, Other)
 - 📝 **Notes**: Add optional notes to items (brand preferences, location in store, etc.)
+- 💰 **Price Tracking**: Add prices to items in 10+ currencies with inline editing
+- 💵 **Budget Management**: Set list budgets and track spending with real-time progress
+- 📊 **Budget Alerts**: Visual indicators and alerts when approaching or exceeding budget
 - 📋 **List Templates**: Quick-start your list with 9 pre-built templates (Weekly Groceries, Party Supplies, Quick Dinner, etc.)
 - 🔍 **Template Search**: Find templates by name, description, or individual items
 - ✅ **Mark as Gotten**: Toggle items as gotten/not gotten
@@ -72,6 +75,260 @@ Phase 15 introduces a complete multi-user collaboration system that transforms t
 - 🔌 **Offline Support**: Works offline and syncs when reconnected
 - ⚡ **Performance**: Optimized queries with database indexes
 - 🔍 **Type Safety**: Fully typed with TypeScript
+
+## Price Tracking and Budget Management
+
+The Grocery List app includes comprehensive price tracking and budget management features to help you stay on top of your grocery spending. Track individual item prices, set budgets for your shopping lists, and get real-time insights into your spending patterns.
+
+### Overview
+
+Budget management features help you:
+- Track prices for individual grocery items
+- Set and monitor budgets for each shopping list
+- See real-time spending totals and budget progress
+- Get alerts when approaching or exceeding your budget
+- View detailed price statistics and spending insights
+- Support for multiple currencies
+
+### Adding Prices to Items
+
+You can add prices to items when creating new items:
+
+1. Fill in the item name, quantity, and category as usual
+2. Enter the price in the **Price** field (optional)
+3. Select your currency from the dropdown (defaults to USD)
+4. Click "Add Item" to add the item with its price
+
+**Example:**
+- Item: Apples
+- Quantity: 5
+- Price: 12.50 USD
+- The total cost for this item will be calculated automatically (5 × $12.50 = $62.50)
+
+**Supported Currencies:**
+- USD - US Dollar ($)
+- EUR - Euro (€)
+- GBP - British Pound (£)
+- CAD - Canadian Dollar (CA$)
+- AUD - Australian Dollar (A$)
+- JPY - Japanese Yen (¥)
+- INR - Indian Rupee (₹)
+- CNY - Chinese Yuan (¥)
+- MXN - Mexican Peso ($)
+- BRL - Brazilian Real (R$)
+
+**Notes:**
+- Price field is optional - items without prices won't affect budget calculations
+- Prices are stored per unit (the price you enter is multiplied by quantity)
+- You can use any currency for each item independently
+- Decimal prices are supported (e.g., 2.99, 10.50)
+
+### Editing Prices
+
+You can edit prices inline on existing items:
+
+1. Find the item you want to update
+2. Click the **Edit Price** button (pencil icon) next to the price
+3. Enter the new price in the input field
+4. Select a different currency if needed
+5. Click the **Save** button (checkmark) to save changes
+6. Or click **Cancel** (X) to discard changes
+
+**Features:**
+- Real-time validation ensures valid price formats
+- Changes sync immediately across all devices
+- Budget tracker updates automatically when prices change
+- Edit multiple items' prices independently
+- All list members with editor permission can update prices
+
+### Setting a List Budget
+
+List owners and editors can set budgets through List Management:
+
+1. Click the **"Manage List"** button (gear icon) at the top of the page
+2. Go to the **"General"** tab
+3. Find the **"Budget"** section
+4. Enter your budget amount (e.g., 150.00)
+5. Select your budget currency from the dropdown
+6. Click **"Save"** or **"Update Budget"**
+7. The budget tracker will appear on your list showing spending progress
+
+**Budget Features:**
+- Each list can have its own independent budget
+- Budget currency is separate from item currencies (mixed currency support)
+- Budget is optional - lists without budgets won't show the budget tracker
+- Only owners and editors can set or modify budgets
+- Budget amounts are stored with the list and visible to all members
+
+### Budget Tracker
+
+Once a budget is set, the Budget Tracker component automatically appears at the top of your shopping list, providing real-time spending insights:
+
+#### Budget Display
+
+The tracker shows:
+- **Total Budget**: Your set budget amount with currency symbol
+- **Total Spending**: Sum of all item prices (quantity × unit price) in your items
+- **Remaining Budget**: How much you have left to spend
+- **Budget Progress Bar**: Visual indicator of spending progress with color-coded alerts
+
+#### Visual Indicators
+
+The progress bar uses color coding to show your budget status:
+
+1. **Green** (0-70% used): You're well within budget
+   - "Great! You're under budget"
+   - Plenty of budget remaining
+
+2. **Yellow/Orange** (70-90% used): Approaching your limit
+   - "You're approaching your budget limit"
+   - Consider reviewing items or adjusting budget
+
+3. **Red** (90-100% used): Near or over budget
+   - "Warning: You're very close to your budget!"
+   - Time to cut back or increase budget
+
+4. **Dark Red** (Over 100%): Over budget
+   - "Alert: You've exceeded your budget!"
+   - Current spending exceeds set budget
+
+#### Budget Statistics
+
+The tracker displays detailed statistics:
+- **Percentage Used**: Shows what percentage of budget is spent (e.g., "85.3% of budget used")
+- **Total Items**: Count of items with prices (e.g., "12 items with prices")
+- **Average Price**: Average cost per item with price (e.g., "Average: $8.50 per item")
+- **Items Without Prices**: Count of items that don't have prices set
+
+#### Budget Alerts
+
+The tracker provides contextual alerts based on your spending:
+
+**Under Budget (< 70%)**:
+```
+✓ Great! You're under budget
+You have $45.00 remaining of your $150.00 budget
+```
+
+**Approaching Limit (70-90%)**:
+```
+⚠ You're approaching your budget limit
+You have $18.75 remaining of your $150.00 budget
+```
+
+**Close to Limit (90-100%)**:
+```
+⚠ Warning: You're very close to your budget!
+You have $7.50 remaining of your $150.00 budget
+```
+
+**Over Budget (> 100%)**:
+```
+⚠ Alert: You've exceeded your budget!
+You are $15.00 over your $150.00 budget
+```
+
+#### Price Statistics
+
+Additional insights shown in the tracker:
+- **Total Spending Breakdown**: See spending by category (if items are categorized)
+- **Items with vs without Prices**: Track which items still need pricing
+- **Real-time Updates**: All statistics update instantly as you add, edit, or remove items
+- **Multi-currency Support**: Displays all amounts in the budget's currency
+
+### Currency Support
+
+The app supports 10 major world currencies for maximum flexibility:
+
+| Currency | Code | Symbol | Example |
+|----------|------|--------|---------|
+| US Dollar | USD | $ | $12.50 |
+| Euro | EUR | € | €12.50 |
+| British Pound | GBP | £ | £12.50 |
+| Canadian Dollar | CAD | CA$ | CA$12.50 |
+| Australian Dollar | AUD | A$ | A$12.50 |
+| Japanese Yen | JPY | ¥ | ¥1250 |
+| Indian Rupee | INR | ₹ | ₹925 |
+| Chinese Yuan | CNY | ¥ | ¥85 |
+| Mexican Peso | MXN | $ | $235 |
+| Brazilian Real | BRL | R$ | R$65 |
+
+**Currency Features:**
+- Each item can have its own currency
+- Budget can be set in any supported currency
+- Currency symbols are displayed correctly for each locale
+- Automatic formatting based on currency (e.g., 2 decimals for USD, 0 for JPY)
+- Currency conversion is not automatic - all amounts are treated independently
+
+**Note**: The app does not perform automatic currency conversion. If you use multiple currencies in a single list, budget tracking will sum amounts as-is without conversion. For accurate budget tracking, it's recommended to use a single currency per list.
+
+### Budget Tips and Best Practices
+
+#### For Accurate Budget Tracking
+
+1. **Add Prices to All Items**: The budget tracker only includes items with prices. Add prices to all items for accurate totals.
+
+2. **Use Consistent Currency**: Stick to one currency per list to avoid confusion and ensure accurate budget tracking.
+
+3. **Update Prices Regularly**: If you're using estimated prices, update them with actual prices when shopping to track real spending.
+
+4. **Set Realistic Budgets**: Base your budget on historical spending patterns. Review and adjust as needed.
+
+5. **Review Before Shopping**: Check the budget tracker before heading to the store to see if you're within budget.
+
+#### For Effective Budget Management
+
+1. **Start with Estimates**: If you don't know exact prices, add estimates and update them later. Some tracking is better than none.
+
+2. **Use Notes for Price Sources**: Add notes to items indicating where prices came from (e.g., "Price from last week", "Online price").
+
+3. **Track Price Changes**: Edit item prices when you notice changes at the store to build a price history.
+
+4. **Set Buffer Room**: Set your budget 10-15% lower than your actual limit to account for price fluctuations and impulse purchases.
+
+5. **Categories Help**: Organize items by category to see which categories consume most of your budget.
+
+#### For Shared Lists
+
+1. **Communicate Budget**: Make sure all list editors know the budget limit before adding items.
+
+2. **Assign Responsibility**: Designate one person to track and update prices for accuracy.
+
+3. **Review Together**: Review the budget tracker with all members before shopping trips.
+
+4. **Use for Planning**: Use budget limits to guide discussions about what to buy vs what to skip.
+
+5. **Respect Viewer Access**: Viewers can see budgets and prices but cannot edit them - perfect for shoppers who need to stay within limits.
+
+#### Common Use Cases
+
+**Weekly Grocery Shopping**:
+- Set a weekly budget (e.g., $150)
+- Add all planned items with estimated prices
+- Adjust quantities if over budget
+- Track actual prices when shopping
+- Compare actual vs estimated spending
+
+**Special Event Planning**:
+- Set a total event budget
+- Create categories for different event needs
+- Track spending across categories
+- Make adjustments to stay within budget
+- Share with co-organizers for transparency
+
+**Monthly Budgeting**:
+- Create separate lists for each week
+- Set consistent weekly budgets
+- Track spending trends over time
+- Identify items that are getting more expensive
+- Plan better for future months
+
+**Budget-Conscious Shopping**:
+- Set a strict budget limit
+- Add desired items with prices
+- Remove or reduce quantities of expensive items until under budget
+- Use the budget tracker as a guide while shopping
+- Stay disciplined with the visual feedback
 
 ## Tech Stack
 

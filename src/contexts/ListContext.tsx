@@ -54,6 +54,8 @@ export interface GroceryList {
   members: ListMember[];
   createdAt: number;
   updatedAt: number;
+  budget?: number;
+  currency?: string;
 }
 
 // List context state

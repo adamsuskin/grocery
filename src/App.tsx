@@ -18,7 +18,8 @@ import { ListManagement } from './components/ListManagement';
 import { ShareListModal } from './components/ShareListModal';
 import { OnboardingTour } from './components/OnboardingTour';
 import { ListErrorBoundary } from './components/ListErrorBoundary';
-import { useListMutations } from './zero-store';
+import { BudgetTracker } from './components/BudgetTracker';
+import { useListMutations, useGroceryItems } from './zero-store';
 import { useOnboardingTour } from './hooks/useOnboardingTour';
 import type { FilterState, SortState, ListTemplate, PermissionLevel, ConflictResolution, GroceryItem } from './types';
 import { CATEGORIES } from './types';
@@ -34,12 +35,14 @@ function App() {
     createList,
     createListFromTemplate,
     updateListName,
+    updateListBudget,
     addListMember,
     updateMemberPermission,
     removeListMember,
     deleteList
   } = useListMutations();
   const { showTour, startTour, completeTour, skipTour } = useOnboardingTour();
+  const groceryItems = useGroceryItems(activeListId || '');
 
   // Sync status and conflicts
   const syncStatus = useSyncStatus();
@@ -485,6 +488,21 @@ function App() {
                 <h2>Add Item</h2>
                 <AddItemForm listId={activeListId} canEdit={canEdit()} />
               </section>
+
+              {currentList?.budget && currentList.budget > 0 && (
+                <section className="budget-section">
+                  <BudgetTracker
+                    items={groceryItems}
+                    budget={currentList.budget}
+                    currency={currentList.currency || 'USD'}
+                    onUpdateBudget={async (newBudget) => {
+                      if (currentList) {
+                        await updateListBudget(currentList.id, newBudget, currentList.currency);
+                      }
+                    }}
+                  />
+                </section>
+              )}
 
               <section className="list-section">
                 <h2>Shopping List</h2>

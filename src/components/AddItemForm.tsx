@@ -12,6 +12,7 @@ export function AddItemForm({ listId, canEdit }: AddItemFormProps) {
   const [quantity, setQuantity] = useState('1');
   const [category, setCategory] = useState<Category>('Other');
   const [notes, setNotes] = useState('');
+  const [price, setPrice] = useState('');
   const { addItem } = useGroceryMutations();
 
   const handleSubmit = async (e: FormEvent) => {
@@ -23,18 +24,34 @@ export function AddItemForm({ listId, canEdit }: AddItemFormProps) {
 
     const trimmedName = name.trim();
     const qty = parseInt(quantity, 10);
+    const priceValue = price.trim() ? parseFloat(price) : undefined;
 
+    // Validation
     if (!trimmedName || qty <= 0 || isNaN(qty)) {
       return;
     }
 
-    await addItem(trimmedName, qty, category, notes, listId);
+    // Validate price if provided (must be >= 0)
+    if (priceValue !== undefined && (isNaN(priceValue) || priceValue < 0)) {
+      return;
+    }
+
+    await addItem(trimmedName, qty, category, notes, listId, priceValue);
 
     // Reset form
     setName('');
     setQuantity('1');
     setCategory('Other');
     setNotes('');
+    setPrice('');
+  };
+
+  const handlePriceBlur = () => {
+    // Format price to 2 decimal places on blur if a valid number is entered
+    const priceValue = parseFloat(price);
+    if (!isNaN(priceValue) && priceValue >= 0) {
+      setPrice(priceValue.toFixed(2));
+    }
   };
 
   const isDisabled = !canEdit || !listId;
@@ -72,6 +89,22 @@ export function AddItemForm({ listId, canEdit }: AddItemFormProps) {
           required
           disabled={isDisabled}
         />
+      </div>
+      <div className="form-group price-input-group">
+        <div className="price-input-wrapper" title="Price is optional and helps track spending">
+          <span className="currency-symbol">$</span>
+          <input
+            type="number"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            onBlur={handlePriceBlur}
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+            className="input input-price"
+            disabled={isDisabled}
+          />
+        </div>
       </div>
       <div className="form-group">
         <select

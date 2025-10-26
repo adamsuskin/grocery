@@ -1,5 +1,5 @@
 export const schema = {
-  version: 7,
+  version: 8,
   tables: {
     users: {
       tableName: 'users' as const,
@@ -45,6 +45,8 @@ export const schema = {
         icon: { type: 'string' as const },
         is_archived: { type: 'boolean' as const },
         archived_at: { type: 'number' as const },
+        budget: { type: 'number' as const },
+        currency: { type: 'string' as const },
         createdAt: { type: 'number' as const },
         updatedAt: { type: 'number' as const },
       },
@@ -112,6 +114,7 @@ export const schema = {
         gotten: { type: 'boolean' as const },
         category: { type: 'string' as const },
         notes: { type: 'string' as const },
+        price: { type: 'number' as const },
         user_id: { type: 'string' as const },
         list_id: { type: 'string' as const },
         createdAt: { type: 'number' as const },

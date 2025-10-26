@@ -36,6 +36,11 @@ CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login DESC);
 --   - Added user_id column to track item ownership
 --   - Added foreign key constraint to users table
 --   - Added index for user_id lookups
+--
+-- Migration: Added price tracking support
+-- Date: 2025-10-26
+-- Changes:
+--   - Added price column for tracking individual item costs
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS grocery_items (
@@ -45,6 +50,7 @@ CREATE TABLE IF NOT EXISTS grocery_items (
   gotten BOOLEAN NOT NULL DEFAULT false,
   category TEXT NOT NULL DEFAULT 'Other',
   notes TEXT,
+  price REAL,  -- Price per unit/item. Nullable to allow items without price tracking
   created_at INTEGER NOT NULL,
   user_id TEXT NOT NULL,
   list_id TEXT NOT NULL,
@@ -76,6 +82,9 @@ CREATE INDEX IF NOT EXISTS idx_grocery_items_list_category ON grocery_items(list
 -- Composite index for list + creation time (optimizes sorting items within a list)
 CREATE INDEX IF NOT EXISTS idx_grocery_items_list_created ON grocery_items(list_id, created_at DESC);
 
+-- Composite index for list + price (optimizes price-based queries and sorting per list)
+CREATE INDEX IF NOT EXISTS idx_grocery_items_list_price ON grocery_items(list_id, price) WHERE price IS NOT NULL;
+
 -- ============================================
 -- Lists Table
 -- ============================================
@@ -85,6 +94,12 @@ CREATE INDEX IF NOT EXISTS idx_grocery_items_list_created ON grocery_items(list_
 --   - Added lists table for organizing grocery items
 --   - Supports multiple users collaborating on shared lists
 --   - Includes soft delete via is_archived flag
+--
+-- Migration: Added budget tracking support
+-- Date: 2025-10-26
+-- Changes:
+--   - Added budget column for tracking list spending limits
+--   - Added currency column to support multi-currency budgeting
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS lists (
@@ -94,6 +109,8 @@ CREATE TABLE IF NOT EXISTS lists (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL,
   is_archived INTEGER NOT NULL DEFAULT 0,
+  budget REAL,  -- Optional budget limit for the list. Nullable to allow lists without budget tracking
+  currency TEXT NOT NULL DEFAULT 'USD',  -- Currency code (ISO 4217 format recommended, e.g., USD, EUR, GBP)
   FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

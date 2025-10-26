@@ -474,7 +474,7 @@ export class OfflineQueueManager {
 
     switch (mutation.type) {
       case 'add': {
-        const { id, name, quantity, category, notes, listId, userId, createdAt } = mutation.payload;
+        const { id, name, quantity, category, notes, listId, userId, createdAt, price } = mutation.payload;
         await zero.mutate.grocery_items.create({
           id,
           name,
@@ -482,6 +482,7 @@ export class OfflineQueueManager {
           gotten: false,
           category,
           notes: notes || '',
+          price: price || 0,
           user_id: userId,
           list_id: listId || '',
           createdAt: createdAt || Date.now(),

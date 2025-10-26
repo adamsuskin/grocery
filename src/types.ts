@@ -29,6 +29,7 @@ export interface GroceryItemTable {
   user_id: string;
   list_id: string;
   created_at: number;
+  price: number | null; // Price per unit
 }
 
 export interface ListTable {
@@ -39,6 +40,8 @@ export interface ListTable {
   icon: string;
   created_at: number;
   updated_at: number;
+  budget: number | null; // Budget amount for the list
+  currency: string; // Currency code (e.g., 'USD', 'EUR')
 }
 
 export interface ListMemberTable {
@@ -63,6 +66,7 @@ export interface GroceryItem {
   userId: string;
   listId: string;
   createdAt: number;
+  price?: number; // Price per unit
 }
 
 // Input types for mutations
@@ -71,6 +75,7 @@ export interface AddItemInput {
   quantity: number;
   category: Category;
   notes: string;
+  price?: number; // Optional price per unit
 }
 
 export interface UpdateItemInput {
@@ -215,12 +220,35 @@ export interface GroceryListData {
   updatedAt: number;
   isArchived: boolean;
   archivedAt?: number;
+  budget?: number; // Budget amount for the list
+  currency?: string; // Currency code (e.g., 'USD', 'EUR')
 }
 
 /**
  * Alias for GroceryListData for backward compatibility
  */
 export type List = GroceryListData;
+
+/**
+ * Budget information for a list
+ */
+export interface BudgetInfo {
+  total: number; // Total budget amount
+  spent: number; // Amount spent so far
+  remaining: number; // Remaining budget
+  percentUsed: number; // Percentage of budget used (0-100)
+}
+
+/**
+ * Price statistics for items in a list
+ */
+export interface PriceStats {
+  totalItems: number; // Total number of items
+  itemsWithPrice: number; // Number of items with price set
+  averagePrice: number; // Average price of items with prices
+  minPrice: number; // Minimum price among items
+  maxPrice: number; // Maximum price among items
+}
 
 /**
  * Represents a member of a shared list
