@@ -6,6 +6,7 @@
  * - Background sync for offline mutations
  * - Periodic background sync for content updates
  * - Push notification support
+ * - Share Target API support for receiving shared content
  * - Automatic updates with skip waiting
  * - Cache versioning and cleanup
  * - Battery-aware and network-aware syncing
@@ -36,6 +37,7 @@ const RUNTIME_CACHE = `grocery-runtime-${CACHE_VERSION}`;
 const IMAGE_CACHE = `grocery-images-${CACHE_VERSION}`;
 const API_CACHE = `grocery-api-${CACHE_VERSION}`;
 const FONT_CACHE = `grocery-fonts-${CACHE_VERSION}`;
+const SHARED_FILES_CACHE = 'shared-files-cache';
 
 // Service worker lifecycle: take control immediately
 self.skipWaiting();
@@ -277,6 +279,7 @@ self.addEventListener('activate', (event) => {
         IMAGE_CACHE,
         API_CACHE,
         FONT_CACHE,
+        SHARED_FILES_CACHE,
       ];
 
       // Delete old caches
@@ -308,6 +311,13 @@ self.addEventListener('fetch', (event) => {
 
   // Skip Chrome extensions
   if (event.request.url.startsWith('chrome-extension://')) {
+    return;
+  }
+
+  // Handle Share Target API POST requests
+  const url = new URL(event.request.url);
+  if (event.request.method === 'POST' && url.pathname === '/share-target') {
+    event.respondWith(handleShareTarget(event.request));
     return;
   }
 
@@ -409,6 +419,174 @@ self.addEventListener('sync', (event) => {
     );
   }
 });
+
+/**
+ * TypeScript Types for Share Target API
+ */
+interface ShareMetadata {
+  shareId: string;
+  timestamp: number;
+  title: string | null;
+  text: string | null;
+  url: string | null;
+  fileCount: number;
+  fileKeys: string[];
+}
+
+
+/**
+ * Helper Functions for Share Target API
+ */
+
+/**
+ * Open or get IndexedDB connection for share metadata
+ */
+function openShareDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('share-target-db', 1);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+
+    request.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+
+      // Create object store if it doesn't exist
+      if (!db.objectStoreNames.contains('shares')) {
+        const objectStore = db.createObjectStore('shares', { keyPath: 'shareId' });
+        objectStore.createIndex('timestamp', 'timestamp', { unique: false });
+      }
+    };
+  });
+}
+
+/**
+ * Save share metadata to IndexedDB
+ */
+async function saveShareMetadata(metadata: ShareMetadata): Promise<void> {
+  const db = await openShareDB();
+
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(['shares'], 'readwrite');
+    const store = transaction.objectStore('shares');
+    const request = store.put(metadata);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+
+    transaction.oncomplete = () => db.close();
+  });
+}
+
+/**
+ * Generate unique share ID
+ */
+function generateShareId(): string {
+  return `share-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+/**
+ * Handle Share Target API requests
+ */
+async function handleShareTarget(request: Request): Promise<Response> {
+  try {
+    console.log('[ServiceWorker] Share Target request received');
+
+    // Parse form data from the request
+    const formData = await request.formData();
+
+    // Extract share data
+    const title = formData.get('title') as string | null;
+    const text = formData.get('text') as string | null;
+    const url = formData.get('url') as string | null;
+
+    // Extract files if present
+    const files: File[] = [];
+    // Iterate over formData to find files
+    formData.forEach((value) => {
+      if (value instanceof File) {
+        files.push(value);
+      }
+    });
+
+    console.log('[ServiceWorker] Share data:', {
+      title,
+      text,
+      url,
+      fileCount: files.length,
+    });
+
+    // Generate unique share ID
+    const shareId = generateShareId();
+
+    // Store files in Cache API
+    const fileKeys: string[] = [];
+    if (files.length > 0) {
+      const cache = await caches.open(SHARED_FILES_CACHE);
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileKey = `${shareId}-file-${i}`;
+        const fileUrl = `/shared-files/${fileKey}`;
+
+        // Convert file to blob and store in cache
+        const blob = await file.arrayBuffer();
+        const response = new Response(blob, {
+          headers: {
+            'Content-Type': file.type || 'application/octet-stream',
+            'Content-Length': file.size.toString(),
+            'X-File-Name': file.name,
+            'X-Share-Id': shareId,
+          },
+        });
+
+        await cache.put(fileUrl, response);
+        fileKeys.push(fileKey);
+
+        console.log('[ServiceWorker] Cached file:', {
+          key: fileKey,
+          name: file.name,
+          type: file.type,
+          size: file.size,
+        });
+      }
+    }
+
+    // Store metadata in IndexedDB
+    const metadata: ShareMetadata = {
+      shareId,
+      timestamp: Date.now(),
+      title: title || null,
+      text: text || null,
+      url: url || null,
+      fileCount: files.length,
+      fileKeys,
+    };
+
+    await saveShareMetadata(metadata);
+    console.log('[ServiceWorker] Saved share metadata:', metadata);
+
+    // Send message to all clients about the shared content
+    const clients = await self.clients.matchAll();
+    clients.forEach((client) => {
+      client.postMessage({
+        type: 'SHARE_RECEIVED',
+        shareId,
+        metadata,
+      });
+    });
+
+    console.log('[ServiceWorker] Notified clients about share');
+
+    // Return 303 redirect to app with share ID
+    return Response.redirect(`/?share=${shareId}`, 303);
+  } catch (error) {
+    console.error('[ServiceWorker] Share Target error:', error);
+
+    // Return error redirect
+    return Response.redirect('/?share-error=true', 303);
+  }
+}
 
 /**
  * Helper Functions for Periodic Background Sync

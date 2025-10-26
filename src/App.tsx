@@ -21,6 +21,7 @@ import { ShareListModal } from './components/ShareListModal';
 import { OnboardingTour } from './components/OnboardingTour';
 import { ListErrorBoundary } from './components/ListErrorBoundary';
 import { BudgetTracker } from './components/BudgetTracker';
+import { ShareTargetHandler } from './components/ShareTargetHandler';
 import { useListMutations, useGroceryItems } from './zero-store';
 import { useOnboardingTour } from './hooks/useOnboardingTour';
 import type { FilterState, SortState, ListTemplate, PermissionLevel, ConflictResolution, GroceryItem } from './types';
@@ -347,6 +348,17 @@ function App() {
           remoteUserName="Other User"
         />
       )}
+
+      {/* Share Target Handler - handles shared content from other apps */}
+      <ShareTargetHandler
+        onImportComplete={(listId) => {
+          console.log('Shared list imported successfully:', listId);
+          // Optionally switch to the new list or show a notification
+        }}
+        onError={(error) => {
+          console.error('Failed to import shared content:', error);
+        }}
+      />
 
       {/* Keyboard shortcuts help modal */}
       <KeyboardShortcutsHelp
