@@ -12,6 +12,7 @@ A collaborative grocery list application built with React, TypeScript, and Vite.
 - 🎛️ **Filter**: Toggle visibility of gotten items
 - 📊 **Results Counter**: See the number of items matching your filters
 - 🔄 **Sort**: Sort items by name, quantity, or date (ascending/descending)
+- ⚡ **Bulk Operations**: Mark all items as gotten or delete all gotten items at once
 - 🔄 **Real-time Sync**: Changes sync automatically across all devices and users
 - 💾 **Persistent**: Data stored in PostgreSQL with local caching
 - 📱 **Responsive**: Works on desktop and mobile
@@ -127,7 +128,33 @@ Click the checkbox next to an item to toggle its "gotten" status. Gotten items w
 
 ### Deleting Items
 
-Click the trash icon (🗑️) next to an item to delete it. A confirmation dialog will appear.
+Click the trash icon (🗑️) next to an item to delete it.
+
+### Bulk Operations
+
+The app includes powerful bulk operations to help you manage multiple items at once:
+
+**Mark All as Gotten:**
+- Click the "✓ Mark All Gotten" button to mark all items as gotten at once
+- The button shows how many items will be affected (e.g., "Mark All Gotten (5)")
+- A confirmation dialog will appear before proceeding
+- Disabled when all items are already marked as gotten
+- Great for quickly marking everything after a shopping trip!
+
+**Delete All Gotten Items:**
+- Click the "🗑️ Delete All Gotten" button to remove all gotten items from the list
+- The button shows how many items will be deleted (e.g., "Delete All Gotten (3)")
+- A warning confirmation dialog will appear before proceeding
+- This action cannot be undone, so use with caution
+- Disabled when there are no gotten items to delete
+- Perfect for cleaning up your list after shopping!
+
+Both bulk operations:
+- Work with the entire list (not just filtered items)
+- Include confirmation dialogs to prevent accidental actions
+- Are disabled when not applicable (buttons are grayed out)
+- Show real-time counts of affected items
+- Sync changes immediately across all devices
 
 ### Search, Filter, and Sort
 

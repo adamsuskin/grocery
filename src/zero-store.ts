@@ -102,9 +102,32 @@ export function useGroceryMutations() {
     await zeroInstance.mutate.grocery_items.delete({ id });
   };
 
+  const markAllGotten = async (items: GroceryItem[]): Promise<void> => {
+    // Update all items that aren't already marked as gotten
+    const updatePromises = items
+      .filter(item => !item.gotten)
+      .map(item => zeroInstance.mutate.grocery_items.update({
+        id: item.id,
+        gotten: true,
+      }));
+
+    await Promise.all(updatePromises);
+  };
+
+  const deleteAllGotten = async (items: GroceryItem[]): Promise<void> => {
+    // Delete all items that are marked as gotten
+    const deletePromises = items
+      .filter(item => item.gotten)
+      .map(item => zeroInstance.mutate.grocery_items.delete({ id: item.id }));
+
+    await Promise.all(deletePromises);
+  };
+
   return {
     addItem,
     markItemGotten,
     deleteItem,
+    markAllGotten,
+    deleteAllGotten,
   };
 }

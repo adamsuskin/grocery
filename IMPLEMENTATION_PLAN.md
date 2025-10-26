@@ -110,6 +110,21 @@ The application is feature-complete with the following capabilities:
 
 Or use: `pnpm dev:full` to start everything at once
 
+## Phase 11: Bulk Operations ✅
+- [x] Update types.ts with BulkOperationsProps interface
+- [x] Add markAllGotten mutation to zero-store.ts
+- [x] Add deleteAllGotten mutation to zero-store.ts
+- [x] Create BulkOperations component with UI buttons
+- [x] Add confirmation dialogs for both bulk operations
+- [x] Integrate BulkOperations into GroceryList component
+- [x] Add CSS styling for bulk operations and confirmation dialogs
+- [x] Show item counts on bulk operation buttons
+- [x] Disable buttons when no items to operate on
+- [x] Test all bulk operations functionality
+- [x] Verify TypeScript compilation
+- [x] Verify build process passes
+- [x] Update README.md with bulk operations documentation
+
 ## Future Enhancements
 
 ### Zero Advanced Features
@@ -125,6 +140,6 @@ Or use: `pnpm dev:full` to start everything at once
 - [ ] Add sharing/collaboration features (share lists with specific users)
 - [ ] Add item history and audit trail
 - [x] Add sorting options (by name, quantity, date)
-- [ ] Add bulk operations (mark all as gotten, delete all gotten items)
+- [x] Add bulk operations (mark all as gotten, delete all gotten items)
 - [ ] Add item images or icons
 - [ ] Add price tracking and budget features

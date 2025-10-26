@@ -297,6 +297,149 @@ section h2 {
   opacity: 1;
 }
 
+/* Bulk Operations */
+.bulk-operations {
+  margin-bottom: 16px;
+  padding: 16px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  border: 1px solid var(--border-color);
+}
+
+.bulk-operations h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: var(--text-color);
+  font-weight: 600;
+}
+
+.bulk-operations-buttons {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.bulk-btn {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+  background-color: white;
+}
+
+.bulk-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bulk-btn-mark {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.bulk-btn-mark:not(:disabled):hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.bulk-btn-delete {
+  color: var(--danger-color);
+  border-color: var(--danger-color);
+}
+
+.bulk-btn-delete:not(:disabled):hover {
+  background-color: var(--danger-color);
+  color: white;
+}
+
+/* Confirmation Dialog */
+.confirmation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.confirmation-dialog {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.confirmation-dialog h4 {
+  margin: 0 0 16px;
+  font-size: 1.25rem;
+  color: var(--text-color);
+}
+
+.confirmation-dialog p {
+  margin: 0 0 12px;
+  color: var(--text-color);
+  line-height: 1.5;
+}
+
+.warning-text {
+  color: var(--danger-color);
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.confirmation-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.confirm-btn {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.confirm-yes {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.confirm-yes:hover {
+  background-color: var(--primary-hover);
+}
+
+.confirm-danger {
+  background-color: var(--danger-color);
+}
+
+.confirm-danger:hover {
+  background-color: var(--danger-hover);
+}
+
+.confirm-no {
+  background-color: #e0e0e0;
+  color: var(--text-color);
+}
+
+.confirm-no:hover {
+  background-color: #d0d0d0;
+}
+
 /* Empty State */
 .empty-state {
   text-align: center;

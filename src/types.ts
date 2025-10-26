@@ -66,3 +66,11 @@ export interface SortControlsProps {
   sort: SortState;
   onChange: SortChangeHandler;
 }
+
+// Bulk operation types
+export interface BulkOperationsProps {
+  itemCount: number;
+  gottenCount: number;
+  onMarkAllGotten: () => Promise<void>;
+  onDeleteAllGotten: () => Promise<void>;
+}

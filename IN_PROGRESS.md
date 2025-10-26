@@ -1,3 +1,6 @@
 # Currently In Progress
 
-Nothing currently in progress. Phase 10 (Sorting Options) completed!
+**Feature**: Bulk Operations (Mark all as gotten, Delete all gotten items)
+
+**Started**: Now
+**Implementing**: Bulk operations to improve user experience with multiple items management

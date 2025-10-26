@@ -1,7 +1,9 @@
 import { useGroceryItems } from '../hooks/useGroceryItems';
+import { useGroceryMutations } from '../zero-store';
 import { GroceryItem } from './GroceryItem';
 import { SearchFilterBar } from './SearchFilterBar';
 import { SortControls } from './SortControls';
+import { BulkOperations } from './BulkOperations';
 import type { FilterState, FilterChangeHandler, SortState, SortChangeHandler } from '../types';
 
 interface GroceryListProps {
@@ -12,6 +14,9 @@ interface GroceryListProps {
 }
 
 export function GroceryList({ filters, onFilterChange, sort, onSortChange }: GroceryListProps) {
+  // Get mutations for bulk operations
+  const { markAllGotten, deleteAllGotten } = useGroceryMutations();
+
   // Get filtered and sorted items
   const filteredItems = useGroceryItems(filters, sort);
 
@@ -19,6 +24,16 @@ export function GroceryList({ filters, onFilterChange, sort, onSortChange }: Gro
   const allItems = useGroceryItems();
   const totalCount = allItems.length;
   const filteredCount = filteredItems.length;
+  const gottenCount = allItems.filter(item => item.gotten).length;
+
+  // Bulk operation handlers
+  const handleMarkAllGotten = async () => {
+    await markAllGotten(allItems);
+  };
+
+  const handleDeleteAllGotten = async () => {
+    await deleteAllGotten(allItems);
+  };
 
   // Determine if filters are active
   const hasActiveFilters = filters.searchText !== '' || !filters.showGotten;
@@ -43,6 +58,13 @@ export function GroceryList({ filters, onFilterChange, sort, onSortChange }: Gro
       />
 
       <SortControls sort={sort} onChange={onSortChange} />
+
+      <BulkOperations
+        itemCount={totalCount}
+        gottenCount={gottenCount}
+        onMarkAllGotten={handleMarkAllGotten}
+        onDeleteAllGotten={handleDeleteAllGotten}
+      />
 
       {filteredCount === 0 ? (
         <div className="empty-state">
