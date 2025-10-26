@@ -12,7 +12,6 @@
  */
 
 import { useState, useRef, useEffect } from 'react';
-import type { CustomCategory } from '../types';
 import {
   downloadCategoryBackup,
   importFromFile,
@@ -25,7 +24,6 @@ import {
   type ImportResult,
   type ConflictResolution,
   type StoredBackup,
-  type CategoryConflict,
 } from '../utils/categoryBackup';
 import './CategoryBackupRestore.css';
 
@@ -53,7 +51,6 @@ export function CategoryBackupRestore({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [conflictResolution, setConflictResolution] = useState<ConflictResolution>('skip');
   const [importPreview, setImportPreview] = useState<ImportResult | null>(null);
-  const [showConflictDialog, setShowConflictDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // History state
@@ -145,7 +142,8 @@ export function CategoryBackupRestore({
       setImportPreview(result);
 
       if (result.conflicts.length > 0) {
-        setShowConflictDialog(true);
+        // Show conflicts in preview
+        setViewMode('import');
       } else if (result.success) {
         // No conflicts, show preview
         setViewMode('import');
@@ -195,7 +193,6 @@ export function CategoryBackupRestore({
         // Reset state
         setSelectedFile(null);
         setImportPreview(null);
-        setShowConflictDialog(false);
         setViewMode('main');
 
         if (fileInputRef.current) {

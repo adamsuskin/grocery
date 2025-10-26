@@ -163,3 +163,196 @@ CREATE INDEX IF NOT EXISTS idx_list_members_permission ON list_members(list_id, 
 -- Index for sorting by join date
 CREATE INDEX IF NOT EXISTS idx_list_members_joined_at ON list_members(joined_at DESC);
 
+-- ============================================
+-- Recipes Table
+-- ============================================
+-- Migration: Added recipes table for Phase 26 - Recipe Integration
+-- Date: 2025-10-26
+-- Changes:
+--   - Added recipes table with comprehensive recipe information
+--   - Supports public/private recipes with user ownership
+--   - Optional association with grocery lists
+--   - Includes metadata like difficulty, cuisine, prep/cook times
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS recipes (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  instructions TEXT NOT NULL,
+  prep_time INTEGER,  -- Prep time in minutes
+  cook_time INTEGER,  -- Cook time in minutes
+  servings INTEGER DEFAULT 4,  -- Number of servings the recipe makes
+  difficulty TEXT,  -- easy, medium, hard
+  cuisine_type TEXT,  -- Italian, Mexican, Asian, etc.
+  image_url TEXT,  -- Optional recipe image URL
+  user_id TEXT NOT NULL,  -- Recipe creator
+  list_id TEXT,  -- Optional associated grocery list
+  is_public BOOLEAN DEFAULT false,  -- Public/private visibility
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE SET NULL,
+  CHECK (difficulty IS NULL OR difficulty IN ('easy', 'medium', 'hard'))
+);
+
+-- Index for finding recipes by user
+CREATE INDEX IF NOT EXISTS idx_recipes_user_id ON recipes(user_id);
+
+-- Index for finding recipes associated with a list
+CREATE INDEX IF NOT EXISTS idx_recipes_list_id ON recipes(list_id);
+
+-- Index for sorting recipes by creation time
+CREATE INDEX IF NOT EXISTS idx_recipes_created_at ON recipes(created_at DESC);
+
+-- Partial index for public recipes (optimizes public recipe discovery)
+CREATE INDEX IF NOT EXISTS idx_recipes_is_public ON recipes(is_public) WHERE is_public = true;
+
+-- Index for searching by cuisine type
+CREATE INDEX IF NOT EXISTS idx_recipes_cuisine ON recipes(cuisine_type);
+
+-- Index for filtering by difficulty
+CREATE INDEX IF NOT EXISTS idx_recipes_difficulty ON recipes(difficulty);
+
+-- ============================================
+-- Recipe Ingredients Table
+-- ============================================
+-- Migration: Added recipe_ingredients table for Phase 26 - Recipe Integration
+-- Date: 2025-10-26
+-- Changes:
+--   - Added recipe_ingredients table for ingredient details
+--   - Supports quantity, units, and optional notes
+--   - Category links to grocery categories for list generation
+--   - order_index ensures consistent ingredient display order
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS recipe_ingredients (
+  id TEXT PRIMARY KEY,
+  recipe_id TEXT NOT NULL,
+  name TEXT NOT NULL,  -- Ingredient name
+  quantity REAL NOT NULL,  -- Amount needed
+  unit TEXT NOT NULL,  -- cup, tbsp, gram, oz, etc.
+  notes TEXT,  -- Optional notes (e.g., "finely chopped", "room temperature")
+  category TEXT,  -- Link to grocery categories (Produce, Dairy, etc.)
+  order_index INTEGER NOT NULL,  -- Display order within recipe
+  created_at INTEGER NOT NULL,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+);
+
+-- Index for finding all ingredients for a recipe
+CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_recipe_id ON recipe_ingredients(recipe_id);
+
+-- Composite index for sorting ingredients within a recipe by order
+CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_order ON recipe_ingredients(recipe_id, order_index);
+
+-- Index for finding ingredients by category (useful for grocery list generation)
+CREATE INDEX IF NOT EXISTS idx_recipe_ingredients_category ON recipe_ingredients(category);
+
+-- ============================================
+-- Meal Plans Table
+-- ============================================
+-- Migration: Added meal_plans table for Phase 26 - Recipe Integration
+-- Date: 2025-10-26
+-- Changes:
+--   - Added meal_plans table for scheduling recipes
+--   - Supports meal planning with date and meal type
+--   - Optional association with grocery lists
+--   - Tracks cooking status and allows serving adjustments
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS meal_plans (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  list_id TEXT,  -- Associated grocery list
+  recipe_id TEXT NOT NULL,
+  planned_date INTEGER NOT NULL,  -- Unix timestamp for the planned meal date
+  meal_type TEXT NOT NULL,  -- breakfast, lunch, dinner, snack
+  servings INTEGER DEFAULT 4,  -- Override recipe servings if needed
+  notes TEXT,  -- Optional notes for this meal plan
+  is_cooked BOOLEAN DEFAULT false,  -- Track if meal has been cooked
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (list_id) REFERENCES lists(id) ON DELETE SET NULL,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+  CHECK (meal_type IN ('breakfast', 'lunch', 'dinner', 'snack'))
+);
+
+-- Index for finding meal plans by user
+CREATE INDEX IF NOT EXISTS idx_meal_plans_user_id ON meal_plans(user_id);
+
+-- Index for finding meal plans by date (critical for calendar views)
+CREATE INDEX IF NOT EXISTS idx_meal_plans_date ON meal_plans(planned_date);
+
+-- Index for finding meal plans by recipe
+CREATE INDEX IF NOT EXISTS idx_meal_plans_recipe ON meal_plans(recipe_id);
+
+-- Index for finding meal plans by list
+CREATE INDEX IF NOT EXISTS idx_meal_plans_list ON meal_plans(list_id);
+
+-- Composite index for user + date range queries
+CREATE INDEX IF NOT EXISTS idx_meal_plans_user_date ON meal_plans(user_id, planned_date);
+
+-- Composite index for filtering cooked/uncooked meals
+CREATE INDEX IF NOT EXISTS idx_meal_plans_user_cooked ON meal_plans(user_id, is_cooked);
+
+-- ============================================
+-- Recipe Collections Table
+-- ============================================
+-- Migration: Added recipe_collections table for Phase 26 - Recipe Integration
+-- Date: 2025-10-26
+-- Changes:
+--   - Added recipe_collections table for organizing recipes
+--   - Supports public/private collections
+--   - Users can create themed collections (e.g., "Quick Weeknight Dinners")
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS recipe_collections (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT,
+  is_public BOOLEAN DEFAULT false,  -- Public/private visibility
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Index for finding collections by user
+CREATE INDEX IF NOT EXISTS idx_recipe_collections_user_id ON recipe_collections(user_id);
+
+-- Index for sorting collections by creation time
+CREATE INDEX IF NOT EXISTS idx_recipe_collections_created ON recipe_collections(created_at DESC);
+
+-- Partial index for public collections
+CREATE INDEX IF NOT EXISTS idx_recipe_collections_public ON recipe_collections(is_public) WHERE is_public = true;
+
+-- ============================================
+-- Recipe Collection Items Table
+-- ============================================
+-- Migration: Added recipe_collection_items table for Phase 26 - Recipe Integration
+-- Date: 2025-10-26
+-- Changes:
+--   - Added recipe_collection_items junction table
+--   - Links recipes to collections (many-to-many relationship)
+--   - Tracks when recipes were added to collections
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS recipe_collection_items (
+  collection_id TEXT NOT NULL,
+  recipe_id TEXT NOT NULL,
+  added_at INTEGER NOT NULL,  -- When the recipe was added to this collection
+  PRIMARY KEY (collection_id, recipe_id),
+  FOREIGN KEY (collection_id) REFERENCES recipe_collections(id) ON DELETE CASCADE,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+);
+
+-- Index for finding all recipes in a collection
+CREATE INDEX IF NOT EXISTS idx_recipe_collection_items_collection ON recipe_collection_items(collection_id);
+
+-- Index for finding all collections containing a recipe
+CREATE INDEX IF NOT EXISTS idx_recipe_collection_items_recipe ON recipe_collection_items(recipe_id);
+
+-- Index for sorting recipes within a collection by when they were added
+CREATE INDEX IF NOT EXISTS idx_recipe_collection_items_added ON recipe_collection_items(collection_id, added_at DESC);
+

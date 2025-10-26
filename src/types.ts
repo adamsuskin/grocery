@@ -1251,3 +1251,151 @@ export interface GamificationSettingsProps {
   currentListId?: string;
   onClose?: () => void;
 }
+
+// Phase 26: Recipe Integration types
+
+// Recipe difficulty levels
+export type RecipeDifficulty = 'easy' | 'medium' | 'hard';
+
+// Cuisine types
+export type CuisineType =
+  | 'Italian'
+  | 'Mexican'
+  | 'Asian'
+  | 'American'
+  | 'Mediterranean'
+  | 'Indian'
+  | 'French'
+  | 'Thai'
+  | 'Other';
+
+// Meal types
+export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
+
+// Measurement units
+export type MeasurementUnit =
+  | 'cup'
+  | 'tbsp'
+  | 'tsp'
+  | 'oz'
+  | 'lb'
+  | 'g'
+  | 'kg'
+  | 'ml'
+  | 'l'
+  | 'piece'
+  | 'whole'
+  | 'clove'
+  | 'bunch'
+  | 'package';
+
+// Recipe ingredient
+export interface RecipeIngredient {
+  id: string;
+  recipeId: string;
+  name: string;
+  quantity: number;
+  unit: MeasurementUnit;
+  notes?: string;
+  category?: string; // Maps to grocery categories
+  orderIndex: number;
+  createdAt: number;
+}
+
+// Recipe
+export interface Recipe {
+  id: string;
+  name: string;
+  description?: string;
+  instructions: string;
+  prepTime?: number; // minutes
+  cookTime?: number; // minutes
+  servings: number;
+  difficulty?: RecipeDifficulty;
+  cuisineType?: CuisineType;
+  imageUrl?: string;
+  userId: string;
+  listId?: string;
+  isPublic: boolean;
+  createdAt: number;
+  updatedAt: number;
+  ingredients?: RecipeIngredient[]; // populated when fetched with ingredients
+}
+
+// Meal plan entry
+export interface MealPlan {
+  id: string;
+  userId: string;
+  listId?: string;
+  recipeId: string;
+  plannedDate: number; // unix timestamp
+  mealType: MealType;
+  servings: number;
+  notes?: string;
+  isCooked: boolean;
+  createdAt: number;
+  updatedAt: number;
+  recipe?: Recipe; // populated when fetched with recipe
+}
+
+// Recipe collection
+export interface RecipeCollection {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  isPublic: boolean;
+  createdAt: number;
+  updatedAt: number;
+  recipes?: Recipe[]; // populated when fetched with recipes
+  recipeCount?: number;
+}
+
+// Input types for creating/updating
+export interface CreateRecipeInput {
+  name: string;
+  description?: string;
+  instructions: string;
+  prepTime?: number;
+  cookTime?: number;
+  servings: number;
+  difficulty?: RecipeDifficulty;
+  cuisineType?: CuisineType;
+  imageUrl?: string;
+  listId?: string;
+  isPublic?: boolean;
+  ingredients: Omit<RecipeIngredient, 'id' | 'recipeId' | 'createdAt'>[];
+}
+
+export interface UpdateRecipeInput extends Partial<CreateRecipeInput> {
+  id: string;
+}
+
+export interface CreateMealPlanInput {
+  recipeId: string;
+  listId?: string;
+  plannedDate: number;
+  mealType: MealType;
+  servings?: number;
+  notes?: string;
+}
+
+export interface UpdateMealPlanInput extends Partial<CreateMealPlanInput> {
+  id: string;
+  isCooked?: boolean;
+}
+
+// Recipe filter and sort
+export interface RecipeFilterState {
+  searchText: string;
+  difficulty?: RecipeDifficulty[];
+  cuisineType?: CuisineType[];
+  prepTimeMax?: number;
+  cookTimeMax?: number;
+  isPublic?: boolean;
+}
+
+export interface RecipeSortState {
+  field: 'name' | 'createdAt' | 'prepTime' | 'cookTime';
+  direction: 'asc' | 'desc';
+}

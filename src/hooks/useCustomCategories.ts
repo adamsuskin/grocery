@@ -114,6 +114,8 @@ export function useCustomCategories(listId?: string, includeArchived: boolean = 
       displayOrder: category.display_order ?? 0,
       isArchived: category.is_archived ?? false,
       archivedAt: category.archived_at || undefined,
+      isLocked: category.is_locked ?? false,
+      lastEditedBy: category.last_edited_by || undefined,
       createdAt: category.createdAt,
       updatedAt: category.updatedAt,
     }));
@@ -186,7 +188,7 @@ export function useCustomCategoryMutations() {
   const checkEditPermission = async (listId: string, userId: string): Promise<boolean> => {
     try {
       // Query the list to check ownership
-      const listQuery = await zero.query.lists.where('id', listId).run();
+      const listQuery = await (zero.query.lists.where('id', listId) as any).run();
       const list = listQuery[0];
 
       if (list?.owner_id === userId) {
@@ -194,10 +196,9 @@ export function useCustomCategoryMutations() {
       }
 
       // Query list membership to check permission level
-      const memberQuery = await zero.query.list_members
+      const memberQuery = await (zero.query.list_members
         .where('list_id', listId)
-        .where('user_id', userId)
-        .run();
+        .where('user_id', userId) as any).run();
       const member = memberQuery[0];
 
       if (member && (member.permission === 'editor' || member.permission === 'owner')) {
@@ -280,6 +281,8 @@ export function useCustomCategoryMutations() {
         display_order: input.displayOrder ?? 0,
         is_archived: false,
         archived_at: 0,
+        is_locked: false,
+        last_edited_by: currentUserId,
         createdAt: now,
         updatedAt: now,
       });
@@ -353,9 +356,8 @@ export function useCustomCategoryMutations() {
 
     if (!categoriesToCheck) {
       try {
-        const currentCategory = await zero.query.custom_categories
-          .where('id', input.id)
-          .run();
+        const currentCategory = await (zero.query.custom_categories
+          .where('id', input.id) as any).run();
 
         if (currentCategory.length === 0) {
           throw new Error('Category not found');
@@ -364,14 +366,13 @@ export function useCustomCategoryMutations() {
         listId = currentCategory[0].list_id;
 
         // Check if user has permission to modify this list
-        const hasPermission = await checkEditPermission(listId, currentUserId);
+        const hasPermission = await checkEditPermission(listId!, currentUserId);
         if (!hasPermission) {
           throw new Error('You do not have permission to edit categories in this list. Only owners and editors can manage custom categories.');
         }
 
-        const existingCats = await zero.query.custom_categories
-          .where('list_id', listId)
-          .run();
+        const existingCats = await (zero.query.custom_categories
+          .where('list_id', listId!) as any).run();
 
         categoriesToCheck = existingCats.map((cat: any) => ({
           id: cat.id,
@@ -383,6 +384,8 @@ export function useCustomCategoryMutations() {
           displayOrder: cat.display_order ?? 0,
           isArchived: cat.is_archived ?? false,
           archivedAt: cat.archived_at || undefined,
+          isLocked: cat.is_locked ?? false,
+          lastEditedBy: cat.last_edited_by || undefined,
           createdAt: cat.createdAt,
           updatedAt: cat.updatedAt,
         }));
@@ -428,9 +431,8 @@ export function useCustomCategoryMutations() {
 
     try {
       // Get current category for logging changes
-      const currentCategory = await zero.query.custom_categories
-        .where('id', input.id)
-        .run();
+      const currentCategory = await (zero.query.custom_categories
+        .where('id', input.id) as any).run();
 
       if (currentCategory.length === 0) {
         throw new Error('Category not found');
@@ -528,7 +530,7 @@ export function useCustomCategoryMutations() {
     }
 
     // Get the category to find its list_id
-    const categoryQuery = await zero.query.custom_categories.where('id', categoryId).run();
+    const categoryQuery = await (zero.query.custom_categories.where('id', categoryId) as any).run();
     const category = categoryQuery[0];
 
     if (!category) {
@@ -595,7 +597,7 @@ export function useCustomCategoryMutations() {
     }
 
     // Get the category to find its list_id
-    const categoryQuery = await zero.query.custom_categories.where('id', categoryId).run();
+    const categoryQuery = await (zero.query.custom_categories.where('id', categoryId) as any).run();
     const category = categoryQuery[0];
 
     if (!category) {
@@ -616,7 +618,7 @@ export function useCustomCategoryMutations() {
       await zero.mutate.custom_categories.update({
         id: categoryId,
         is_archived: false,
-        archived_at: null,
+        archived_at: 0,
         updatedAt: Date.now(),
       });
 
@@ -666,7 +668,7 @@ export function useCustomCategoryMutations() {
     }
 
     // Get the category to find its list_id
-    const categoryQuery = await zero.query.custom_categories.where('id', categoryId).run();
+    const categoryQuery = await (zero.query.custom_categories.where('id', categoryId) as any).run();
     const category = categoryQuery[0];
 
     if (!category) {
@@ -685,9 +687,8 @@ export function useCustomCategoryMutations() {
     }
 
     // Check if any items are still using this category
-    const itemsQuery = await zero.query.grocery_items
-      .where('list_id', category.list_id)
-      .run();
+    const itemsQuery = await (zero.query.grocery_items
+      .where('list_id', category.list_id) as any).run();
 
     const itemsUsingCategory = itemsQuery.filter((item: any) => item.category === categoryId);
 
@@ -737,7 +738,7 @@ export function useCustomCategoryMutations() {
     }
 
     // Get all categories to verify they exist and check permissions
-    const categoriesQuery = await zero.query.custom_categories.run();
+    const categoriesQuery = await (zero.query.custom_categories as any).run();
     const categoriesToDelete = categoriesQuery.filter((cat: any) =>
       categoryIds.includes(cat.id)
     );
@@ -747,7 +748,7 @@ export function useCustomCategoryMutations() {
     }
 
     // Check permissions for each category's list
-    const listIds = [...new Set(categoriesToDelete.map((cat: any) => cat.list_id))];
+    const listIds = [...new Set(categoriesToDelete.map((cat: any) => cat.list_id as string))];
     for (const listId of listIds) {
       const hasPermission = await checkEditPermission(listId, currentUserId);
       if (!hasPermission) {
@@ -807,7 +808,7 @@ export function useCustomCategoryMutations() {
 
     // Get all categories to check permissions
     const categoryIds = updates.map(u => u.id);
-    const categoriesQuery = await zero.query.custom_categories.run();
+    const categoriesQuery = await (zero.query.custom_categories as any).run();
     const categoriesToUpdate = categoriesQuery.filter((cat: any) =>
       categoryIds.includes(cat.id)
     );
@@ -817,7 +818,7 @@ export function useCustomCategoryMutations() {
     }
 
     // Check permissions for each category's list
-    const listIds = [...new Set(categoriesToUpdate.map((cat: any) => cat.list_id))];
+    const listIds = [...new Set(categoriesToUpdate.map((cat: any) => cat.list_id as string))];
     for (const listId of listIds) {
       const hasPermission = await checkEditPermission(listId, currentUserId);
       if (!hasPermission) {
@@ -890,7 +891,7 @@ export function useCustomCategoryMutations() {
 
     // Get all categories involved
     const allCategoryIds = [...sourceIds, targetId];
-    const categoriesQuery = await zero.query.custom_categories.run();
+    const categoriesQuery = await (zero.query.custom_categories as any).run();
     const categories = categoriesQuery.filter((cat: any) =>
       allCategoryIds.includes(cat.id)
     );
@@ -907,7 +908,7 @@ export function useCustomCategoryMutations() {
     }
 
     // Verify all categories are from the same list
-    const listIds = [...new Set(categories.map((cat: any) => cat.list_id))];
+    const listIds = [...new Set(categories.map((cat: any) => cat.list_id as string))];
     if (listIds.length > 1) {
       throw new Error('Cannot merge categories from different lists');
     }
@@ -922,9 +923,8 @@ export function useCustomCategoryMutations() {
 
     try {
       // Move all items from source categories to target category
-      const itemsQuery = await zero.query.grocery_items
-        .where('list_id', listId)
-        .run();
+      const itemsQuery = await (zero.query.grocery_items
+        .where('list_id', listId) as any).run();
 
       const itemsToUpdate = itemsQuery.filter((item: any) =>
         sourceIds.includes(item.category)
@@ -976,7 +976,7 @@ export function useCustomCategoryMutations() {
     }
 
     // Get the categories
-    const categoriesQuery = await zero.query.custom_categories.run();
+    const categoriesQuery = await (zero.query.custom_categories as any).run();
     const categoriesToExport = categoriesQuery.filter((cat: any) =>
       categoryIds.includes(cat.id)
     );
@@ -1024,7 +1024,7 @@ export function useCustomCategoryMutations() {
     }
 
     // Get the category to find its list_id and check permissions
-    const categoryQuery = await zero.query.custom_categories.where('id', categoryId).run();
+    const categoryQuery = await (zero.query.custom_categories.where('id', categoryId) as any).run();
     const category = categoryQuery[0];
 
     if (!category) {

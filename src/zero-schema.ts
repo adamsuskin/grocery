@@ -1,5 +1,5 @@
 export const schema = {
-  version: 12,
+  version: 13,
   tables: {
     users: {
       tableName: 'users' as const,
@@ -333,6 +333,154 @@ export const schema = {
           dest: {
             field: 'id' as const,
             schema: () => schema.tables.users,
+          },
+        },
+      },
+    },
+    recipes: {
+      tableName: 'recipes' as const,
+      primaryKey: ['id'] as const,
+      columns: {
+        id: { type: 'string' as const },
+        name: { type: 'string' as const },
+        description: { type: 'string' as const, optional: true },
+        instructions: { type: 'string' as const },
+        prepTime: { type: 'number' as const, optional: true },
+        cookTime: { type: 'number' as const, optional: true },
+        servings: { type: 'number' as const },
+        difficulty: { type: 'string' as const, optional: true },
+        cuisineType: { type: 'string' as const, optional: true },
+        imageUrl: { type: 'string' as const, optional: true },
+        userId: { type: 'string' as const },
+        listId: { type: 'string' as const, optional: true },
+        isPublic: { type: 'boolean' as const },
+        createdAt: { type: 'number' as const },
+        updatedAt: { type: 'number' as const },
+      },
+      relationships: {
+        user: {
+          source: 'userId' as const,
+          dest: {
+            field: 'id' as const,
+            schema: () => schema.tables.users,
+          },
+        },
+        list: {
+          source: 'listId' as const,
+          dest: {
+            field: 'id' as const,
+            schema: () => schema.tables.lists,
+          },
+        },
+      },
+    },
+    recipe_ingredients: {
+      tableName: 'recipe_ingredients' as const,
+      primaryKey: ['id'] as const,
+      columns: {
+        id: { type: 'string' as const },
+        recipeId: { type: 'string' as const },
+        name: { type: 'string' as const },
+        quantity: { type: 'number' as const },
+        unit: { type: 'string' as const },
+        notes: { type: 'string' as const, optional: true },
+        category: { type: 'string' as const, optional: true },
+        orderIndex: { type: 'number' as const },
+        createdAt: { type: 'number' as const },
+      },
+      relationships: {
+        recipe: {
+          source: 'recipeId' as const,
+          dest: {
+            field: 'id' as const,
+            schema: () => schema.tables.recipes,
+          },
+        },
+      },
+    },
+    meal_plans: {
+      tableName: 'meal_plans' as const,
+      primaryKey: ['id'] as const,
+      columns: {
+        id: { type: 'string' as const },
+        userId: { type: 'string' as const },
+        listId: { type: 'string' as const, optional: true },
+        recipeId: { type: 'string' as const },
+        plannedDate: { type: 'number' as const },
+        mealType: { type: 'string' as const },
+        servings: { type: 'number' as const },
+        notes: { type: 'string' as const, optional: true },
+        isCooked: { type: 'boolean' as const },
+        createdAt: { type: 'number' as const },
+        updatedAt: { type: 'number' as const },
+      },
+      relationships: {
+        user: {
+          source: 'userId' as const,
+          dest: {
+            field: 'id' as const,
+            schema: () => schema.tables.users,
+          },
+        },
+        list: {
+          source: 'listId' as const,
+          dest: {
+            field: 'id' as const,
+            schema: () => schema.tables.lists,
+          },
+        },
+        recipe: {
+          source: 'recipeId' as const,
+          dest: {
+            field: 'id' as const,
+            schema: () => schema.tables.recipes,
+          },
+        },
+      },
+    },
+    recipe_collections: {
+      tableName: 'recipe_collections' as const,
+      primaryKey: ['id'] as const,
+      columns: {
+        id: { type: 'string' as const },
+        userId: { type: 'string' as const },
+        name: { type: 'string' as const },
+        description: { type: 'string' as const, optional: true },
+        isPublic: { type: 'boolean' as const },
+        createdAt: { type: 'number' as const },
+        updatedAt: { type: 'number' as const },
+      },
+      relationships: {
+        user: {
+          source: 'userId' as const,
+          dest: {
+            field: 'id' as const,
+            schema: () => schema.tables.users,
+          },
+        },
+      },
+    },
+    recipe_collection_items: {
+      tableName: 'recipe_collection_items' as const,
+      primaryKey: ['collectionId', 'recipeId'] as const,
+      columns: {
+        collectionId: { type: 'string' as const },
+        recipeId: { type: 'string' as const },
+        addedAt: { type: 'number' as const },
+      },
+      relationships: {
+        collection: {
+          source: 'collectionId' as const,
+          dest: {
+            field: 'id' as const,
+            schema: () => schema.tables.recipe_collections,
+          },
+        },
+        recipe: {
+          source: 'recipeId' as const,
+          dest: {
+            field: 'id' as const,
+            schema: () => schema.tables.recipes,
           },
         },
       },

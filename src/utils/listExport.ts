@@ -121,6 +121,9 @@ async function fetchExportData(listId: string): Promise<ExportData> {
         createdBy: cat.created_by,
         color: cat.color || undefined,
         icon: cat.icon || undefined,
+        displayOrder: cat.display_order ?? 0,
+        isArchived: cat.is_archived ?? false,
+        isLocked: cat.is_locked ?? false,
         createdAt: cat.createdAt,
         updatedAt: cat.updatedAt,
       }));

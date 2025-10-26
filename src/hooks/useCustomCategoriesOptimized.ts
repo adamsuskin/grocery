@@ -99,6 +99,8 @@ export function useCustomCategoriesOptimized(
       displayOrder: category.display_order ?? 0,
       isArchived: category.is_archived ?? false,
       archivedAt: category.archived_at || undefined,
+      isLocked: category.is_locked ?? false,
+      lastEditedBy: category.last_edited_by || undefined,
       createdAt: category.createdAt,
       updatedAt: category.updatedAt,
     }));

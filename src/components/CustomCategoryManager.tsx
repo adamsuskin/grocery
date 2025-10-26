@@ -1,6 +1,6 @@
 import { useState, useEffect, FormEvent, useCallback, useRef } from 'react';
 import { useCustomCategories, useCustomCategoryMutations } from '../hooks/useCustomCategories';
-import { useCustomCategorySearch, useSearchHighlight } from '../hooks/useCustomCategorySearch';
+import { useCustomCategorySearch } from '../hooks/useCustomCategorySearch';
 import { CATEGORIES, type PermissionLevel, type CustomCategory } from '../types';
 import { validateCategoryFields } from '../utils/categoryValidation';
 import {
@@ -11,12 +11,10 @@ import {
 import { ColorPicker } from './ColorPicker';
 import { EmojiPicker } from './EmojiPicker';
 import { CategoryCopyModal } from './CategoryCopyModal';
-import { CategoryContextMenu, type CategoryAction } from './CategoryContextMenu';
 import { CategoryBackupRestore } from './CategoryBackupRestore';
 import { CustomCategoriesOnboardingTour } from './CustomCategoriesOnboardingTour';
 import { createAutoBackup } from '../utils/categoryBackup';
 import { useCustomCategoriesTour } from '../hooks/useCustomCategoriesTour';
-import { useCustomCategoriesFlags } from '../hooks/useFeatureFlags';
 import './CustomCategoryManager.css';
 
 interface CustomCategoryManagerProps {
@@ -93,18 +91,9 @@ export function CustomCategoryManager({ listId, onClose, permissionLevel, onView
 
   // Search functionality
   const searchInputRef = useRef<HTMLInputElement>(null);
-  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const {
-    searchResults,
-    filters,
-    setQuery,
-    setDateRange,
-    setMinUsageCount,
-    setCreatedBy,
     clearFilters,
     hasActiveFilters,
-    totalResults,
-    totalCategories
   } = useCustomCategorySearch(categories);
 
   useEffect(() => {
@@ -480,7 +469,8 @@ export function CustomCategoryManager({ listId, onClose, permissionLevel, onView
     }
   };
 
-  const handleResetOrder = async () => {
+  // Note: handleResetOrder is currently unused but available for future UI enhancements
+  const _handleResetOrder = async () => {
     setError(null);
     setIsBulkProcessing(true);
 
@@ -507,7 +497,8 @@ export function CustomCategoryManager({ listId, onClose, permissionLevel, onView
     });
   };
 
-  const handleContextMenuAction = async (action: CategoryAction) => {
+  // Note: handleContextMenuAction is currently unused but available for future UI enhancements
+  const _handleContextMenuAction = async (action: string) => {
     if (!contextMenu) return;
 
     const category = contextMenu.category;

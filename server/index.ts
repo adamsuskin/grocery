@@ -26,6 +26,9 @@ import usersRoutes from './users/routes';
 import activitiesRoutes from './activities/routes';
 import invitesRoutes from './invites/routes';
 import notificationsRoutes from './notifications/routes';
+import recipesRoutes from './recipes/routes';
+import mealPlansRoutes from './meal-plans/routes';
+import collectionsRoutes from './recipes/collections-routes';
 import { authErrorHandler } from './auth/middleware';
 
 /**
@@ -277,6 +280,35 @@ app.get('/api', (req: Request, res: Response) => {
         unsubscribe: 'POST /api/notifications/unsubscribe - Unsubscribe from push notifications',
         test: 'POST /api/notifications/test - Send test notification',
       },
+      recipes: {
+        create: 'POST /api/recipes - Create new recipe with ingredients',
+        getAll: 'GET /api/recipes - Get user\'s recipes',
+        getPublic: 'GET /api/recipes/public - Get all public recipes',
+        getOne: 'GET /api/recipes/:id - Get specific recipe with ingredients',
+        update: 'PUT /api/recipes/:id - Update recipe and ingredients',
+        delete: 'DELETE /api/recipes/:id - Delete recipe',
+        duplicate: 'POST /api/recipes/:id/duplicate - Duplicate recipe',
+        togglePublic: 'PATCH /api/recipes/:id/public - Toggle recipe public/private',
+        search: 'GET /api/recipes/search?q=... - Search recipes by keywords',
+      },
+      mealPlans: {
+        create: 'POST /api/meal-plans - Create meal plan entry',
+        getAll: 'GET /api/meal-plans - Get meal plans with date filters',
+        getOne: 'GET /api/meal-plans/:id - Get specific meal plan',
+        update: 'PUT /api/meal-plans/:id - Update meal plan',
+        delete: 'DELETE /api/meal-plans/:id - Delete meal plan',
+        markCooked: 'PATCH /api/meal-plans/:id/cooked - Mark meal as cooked',
+        generateList: 'POST /api/meal-plans/generate-list - Generate shopping list from meal plans',
+      },
+      collections: {
+        create: 'POST /api/collections - Create recipe collection',
+        getAll: 'GET /api/collections - Get user\'s collections',
+        getOne: 'GET /api/collections/:id - Get collection with recipes',
+        update: 'PUT /api/collections/:id - Update collection',
+        delete: 'DELETE /api/collections/:id - Delete collection',
+        addRecipe: 'POST /api/collections/:id/recipes/:recipeId - Add recipe to collection',
+        removeRecipe: 'DELETE /api/collections/:id/recipes/:recipeId - Remove recipe from collection',
+      },
     },
   });
 });
@@ -290,6 +322,9 @@ app.use('/api/lists', activitiesRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api', invitesRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/recipes', recipesRoutes);
+app.use('/api/meal-plans', mealPlansRoutes);
+app.use('/api/collections', collectionsRoutes);
 
 /**
  * Error Handling Middleware (must be last)

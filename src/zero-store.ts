@@ -155,7 +155,29 @@ import { useQuery } from '@rocicorp/zero/react';
 import { nanoid } from 'nanoid';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { schema, type Schema } from './zero-schema';
-import type { GroceryItem, FilterState, SortState, List, ListMember, PermissionLevel, BudgetInfo, PriceStats } from './types';
+import type {
+  GroceryItem,
+  FilterState,
+  SortState,
+  List,
+  ListMember,
+  PermissionLevel,
+  BudgetInfo,
+  PriceStats,
+  Recipe,
+  RecipeIngredient,
+  RecipeDifficulty,
+  CuisineType,
+  MealType,
+  MeasurementUnit,
+  MealPlan,
+  RecipeCollection,
+  CreateRecipeInput,
+  UpdateRecipeInput,
+  CreateMealPlanInput,
+  UpdateMealPlanInput,
+  Category,
+} from './types';
 import { createConflictResolver, type Conflict } from './utils/conflictResolver';
 import {
   getQueueManager,
@@ -1045,6 +1067,11 @@ export function useListMutations() {
           created_by: currentUserId,
           color: category.color || '',
           icon: category.icon || '',
+          display_order: index,
+          is_archived: false,
+          archived_at: 0,
+          is_locked: false,
+          last_edited_by: currentUserId,
           createdAt: now + index,
           updatedAt: now + index,
         })
@@ -1542,6 +1569,1083 @@ export function useOfflineSync(config?: OfflineQueueConfig) {
     hasPendingMutations: queueHook.pendingCount > 0,
     hasFailedMutations: queueHook.failedCount > 0,
   };
+}
+
+// =============================================================================
+// Phase 26: Recipe Integration Hooks
+// =============================================================================
+
+/**
+ * React hook to get all recipes for a user
+ *
+ * @param userId - User ID to filter recipes
+ * @returns Array of recipes owned by the user
+ *
+ * @example
+ * ```typescript
+ * const recipes = useRecipes(currentUserId);
+ * ```
+ */
+export function useRecipes(userId: string) {
+  const zero = getZeroInstance();
+
+  const recipesQuery = useQuery(
+    zero.query.recipes.where('userId', userId)
+  );
+
+  const recipes: Recipe[] = useMemo(
+    () => recipesQuery.map((recipe: any) => ({
+      id: recipe.id,
+      name: recipe.name,
+      description: recipe.description,
+      instructions: recipe.instructions,
+      prepTime: recipe.prepTime,
+      cookTime: recipe.cookTime,
+      servings: recipe.servings,
+      difficulty: recipe.difficulty as RecipeDifficulty | undefined,
+      cuisineType: recipe.cuisineType as CuisineType | undefined,
+      imageUrl: recipe.imageUrl,
+      userId: recipe.userId,
+      listId: recipe.listId,
+      isPublic: recipe.isPublic,
+      createdAt: recipe.createdAt,
+      updatedAt: recipe.updatedAt,
+    })),
+    [recipesQuery]
+  );
+
+  return recipes;
+}
+
+/**
+ * React hook to get all public recipes
+ *
+ * @returns Array of public recipes from all users
+ *
+ * @example
+ * ```typescript
+ * const publicRecipes = usePublicRecipes();
+ * ```
+ */
+export function usePublicRecipes() {
+  const zero = getZeroInstance();
+
+  const publicRecipesQuery = useQuery(
+    zero.query.recipes.where('isPublic', true)
+  );
+
+  const recipes: Recipe[] = useMemo(
+    () => publicRecipesQuery.map((recipe: any) => ({
+      id: recipe.id,
+      name: recipe.name,
+      description: recipe.description,
+      instructions: recipe.instructions,
+      prepTime: recipe.prepTime,
+      cookTime: recipe.cookTime,
+      servings: recipe.servings,
+      difficulty: recipe.difficulty as RecipeDifficulty | undefined,
+      cuisineType: recipe.cuisineType as CuisineType | undefined,
+      imageUrl: recipe.imageUrl,
+      userId: recipe.userId,
+      listId: recipe.listId,
+      isPublic: recipe.isPublic,
+      createdAt: recipe.createdAt,
+      updatedAt: recipe.updatedAt,
+    })),
+    [publicRecipesQuery]
+  );
+
+  return recipes;
+}
+
+/**
+ * React hook to get a single recipe with its ingredients
+ *
+ * @param recipeId - Recipe ID to fetch
+ * @returns Recipe with ingredients populated, or null if not found
+ *
+ * @example
+ * ```typescript
+ * const recipe = useRecipe('recipe-123');
+ * ```
+ */
+export function useRecipe(recipeId: string) {
+  const zero = getZeroInstance();
+
+  const recipeQuery = useQuery(
+    zero.query.recipes.where('id', recipeId)
+  );
+
+  const ingredientsQuery = useQuery(
+    zero.query.recipe_ingredients.where('recipeId', recipeId)
+  );
+
+  const recipe: Recipe | null = useMemo(() => {
+    if (recipeQuery.length === 0) return null;
+
+    const recipeData = recipeQuery[0];
+    const ingredients: RecipeIngredient[] = ingredientsQuery
+      .map((ing: any) => ({
+        id: ing.id,
+        recipeId: ing.recipeId,
+        name: ing.name,
+        quantity: ing.quantity,
+        unit: ing.unit as MeasurementUnit,
+        notes: ing.notes,
+        category: ing.category,
+        orderIndex: ing.orderIndex,
+        createdAt: ing.createdAt,
+      }))
+      .sort((a, b) => a.orderIndex - b.orderIndex);
+
+    return {
+      id: recipeData.id,
+      name: recipeData.name,
+      description: recipeData.description,
+      instructions: recipeData.instructions,
+      prepTime: recipeData.prepTime,
+      cookTime: recipeData.cookTime,
+      servings: recipeData.servings,
+      difficulty: recipeData.difficulty as RecipeDifficulty | undefined,
+      cuisineType: recipeData.cuisineType as CuisineType | undefined,
+      imageUrl: recipeData.imageUrl,
+      userId: recipeData.userId,
+      listId: recipeData.listId,
+      isPublic: recipeData.isPublic,
+      createdAt: recipeData.createdAt,
+      updatedAt: recipeData.updatedAt,
+      ingredients,
+    };
+  }, [recipeQuery, ingredientsQuery]);
+
+  return recipe;
+}
+
+/**
+ * React hook to get ingredients for a recipe
+ *
+ * @param recipeId - Recipe ID to get ingredients for
+ * @returns Array of recipe ingredients sorted by order index
+ *
+ * @example
+ * ```typescript
+ * const ingredients = useRecipeIngredients('recipe-123');
+ * ```
+ */
+export function useRecipeIngredients(recipeId: string) {
+  const zero = getZeroInstance();
+
+  const ingredientsQuery = useQuery(
+    zero.query.recipe_ingredients.where('recipeId', recipeId)
+  );
+
+  const ingredients: RecipeIngredient[] = useMemo(
+    () => ingredientsQuery
+      .map((ing: any) => ({
+        id: ing.id,
+        recipeId: ing.recipeId,
+        name: ing.name,
+        quantity: ing.quantity,
+        unit: ing.unit as MeasurementUnit,
+        notes: ing.notes,
+        category: ing.category,
+        orderIndex: ing.orderIndex,
+        createdAt: ing.createdAt,
+      }))
+      .sort((a, b) => a.orderIndex - b.orderIndex),
+    [ingredientsQuery]
+  );
+
+  return ingredients;
+}
+
+/**
+ * React hook to get meal plans for a user with optional date filtering
+ *
+ * @param userId - User ID to filter meal plans
+ * @param startDate - Optional start date (unix timestamp)
+ * @param endDate - Optional end date (unix timestamp)
+ * @returns Array of meal plans
+ *
+ * @example
+ * ```typescript
+ * const mealPlans = useMealPlans(userId, startOfWeek, endOfWeek);
+ * ```
+ */
+export function useMealPlans(userId: string, startDate?: number, endDate?: number) {
+  const zero = getZeroInstance();
+
+  let query = zero.query.meal_plans.where('userId', userId);
+
+  const mealPlansQuery = useQuery(query);
+
+  const mealPlans: MealPlan[] = useMemo(() => {
+    let plans = mealPlansQuery.map((plan: any) => ({
+      id: plan.id,
+      userId: plan.userId,
+      listId: plan.listId,
+      recipeId: plan.recipeId,
+      plannedDate: plan.plannedDate,
+      mealType: plan.mealType as MealType,
+      servings: plan.servings,
+      notes: plan.notes,
+      isCooked: plan.isCooked,
+      createdAt: plan.createdAt,
+      updatedAt: plan.updatedAt,
+    }));
+
+    // Apply date filtering client-side
+    if (startDate !== undefined) {
+      plans = plans.filter(p => p.plannedDate >= startDate);
+    }
+    if (endDate !== undefined) {
+      plans = plans.filter(p => p.plannedDate <= endDate);
+    }
+
+    // Sort by planned date
+    return plans.sort((a, b) => a.plannedDate - b.plannedDate);
+  }, [mealPlansQuery, startDate, endDate]);
+
+  return mealPlans;
+}
+
+/**
+ * React hook to get meal plans for a specific date
+ *
+ * @param userId - User ID to filter meal plans
+ * @param date - Date timestamp (unix timestamp)
+ * @returns Array of meal plans for that date
+ *
+ * @example
+ * ```typescript
+ * const todayMeals = useMealPlansByDate(userId, Date.now());
+ * ```
+ */
+export function useMealPlansByDate(userId: string, date: number) {
+  const zero = getZeroInstance();
+
+  const mealPlansQuery = useQuery(
+    zero.query.meal_plans.where('userId', userId)
+  );
+
+  const mealPlans: MealPlan[] = useMemo(() => {
+    // Normalize date to start of day
+    const targetDate = new Date(date);
+    targetDate.setHours(0, 0, 0, 0);
+    const startOfDay = targetDate.getTime();
+    const endOfDay = startOfDay + 24 * 60 * 60 * 1000 - 1;
+
+    return mealPlansQuery
+      .filter((plan: any) => plan.plannedDate >= startOfDay && plan.plannedDate <= endOfDay)
+      .map((plan: any) => ({
+        id: plan.id,
+        userId: plan.userId,
+        listId: plan.listId,
+        recipeId: plan.recipeId,
+        plannedDate: plan.plannedDate,
+        mealType: plan.mealType as MealType,
+        servings: plan.servings,
+        notes: plan.notes,
+        isCooked: plan.isCooked,
+        createdAt: plan.createdAt,
+        updatedAt: plan.updatedAt,
+      }))
+      .sort((a, b) => {
+        // Sort by meal type order: breakfast, lunch, dinner, snack
+        const mealOrder: Record<MealType, number> = {
+          breakfast: 0,
+          lunch: 1,
+          dinner: 2,
+          snack: 3,
+        };
+        return mealOrder[a.mealType] - mealOrder[b.mealType];
+      });
+  }, [mealPlansQuery, date]);
+
+  return mealPlans;
+}
+
+/**
+ * React hook to get recipe collections for a user
+ *
+ * @param userId - User ID to filter collections
+ * @returns Array of recipe collections
+ *
+ * @example
+ * ```typescript
+ * const collections = useRecipeCollections(userId);
+ * ```
+ */
+export function useRecipeCollections(userId: string) {
+  const zero = getZeroInstance();
+
+  const collectionsQuery = useQuery(
+    zero.query.recipe_collections.where('userId', userId)
+  );
+
+  const collections: RecipeCollection[] = useMemo(
+    () => collectionsQuery.map((collection: any) => ({
+      id: collection.id,
+      userId: collection.userId,
+      name: collection.name,
+      description: collection.description,
+      isPublic: collection.isPublic,
+      createdAt: collection.createdAt,
+      updatedAt: collection.updatedAt,
+    })).sort((a, b) => b.updatedAt - a.updatedAt),
+    [collectionsQuery]
+  );
+
+  return collections;
+}
+
+/**
+ * React hook to get a single collection with its recipes
+ *
+ * @param collectionId - Collection ID to fetch
+ * @returns Collection with recipes populated, or null if not found
+ *
+ * @example
+ * ```typescript
+ * const collection = useRecipeCollection('collection-123');
+ * ```
+ */
+export function useRecipeCollection(collectionId: string) {
+  const zero = getZeroInstance();
+
+  const collectionQuery = useQuery(
+    zero.query.recipe_collections.where('id', collectionId)
+  );
+
+  const collectionItemsQuery = useQuery(
+    zero.query.recipe_collection_items.where('collectionId', collectionId)
+  );
+
+  // Get recipe IDs from collection items
+  const recipeIds = useMemo(
+    () => collectionItemsQuery.map((item: any) => item.recipeId),
+    [collectionItemsQuery]
+  );
+
+  // Fetch recipes for the collection
+  const recipesQuery = useQuery(
+    recipeIds.length > 0 ? zero.query.recipes.where('id', 'IN', recipeIds) : [] as any
+  );
+
+  const collection: RecipeCollection | null = useMemo(() => {
+    if (collectionQuery.length === 0) return null;
+
+    const collectionData = collectionQuery[0];
+    const recipes: Recipe[] = recipesQuery.map((recipe: any) => ({
+      id: recipe.id,
+      name: recipe.name,
+      description: recipe.description,
+      instructions: recipe.instructions,
+      prepTime: recipe.prepTime,
+      cookTime: recipe.cookTime,
+      servings: recipe.servings,
+      difficulty: recipe.difficulty as RecipeDifficulty | undefined,
+      cuisineType: recipe.cuisineType as CuisineType | undefined,
+      imageUrl: recipe.imageUrl,
+      userId: recipe.userId,
+      listId: recipe.listId,
+      isPublic: recipe.isPublic,
+      createdAt: recipe.createdAt,
+      updatedAt: recipe.updatedAt,
+    }));
+
+    return {
+      id: collectionData.id,
+      userId: collectionData.userId,
+      name: collectionData.name,
+      description: collectionData.description,
+      isPublic: collectionData.isPublic,
+      createdAt: collectionData.createdAt,
+      updatedAt: collectionData.updatedAt,
+      recipes,
+      recipeCount: recipes.length,
+    };
+  }, [collectionQuery, recipesQuery]);
+
+  return collection;
+}
+
+/**
+ * React hook for recipe mutations
+ * Provides functions for creating, updating, and deleting recipes
+ *
+ * @returns Object with recipe mutation functions
+ *
+ * @example
+ * ```typescript
+ * const { createRecipe, updateRecipe, deleteRecipe } = useRecipeMutations();
+ * ```
+ */
+export function useRecipeMutations() {
+  const zero = getZeroInstance();
+  const currentUserId = (zero as any).userID || 'demo-user';
+
+  /**
+   * Create a new recipe with ingredients
+   */
+  const createRecipe = async (input: CreateRecipeInput): Promise<Recipe> => {
+    const recipeId = nanoid();
+    const now = Date.now();
+
+    // Create recipe
+    await zero.mutate.recipes.create({
+      id: recipeId,
+      name: input.name,
+      description: input.description || '',
+      instructions: input.instructions,
+      prepTime: input.prepTime || 0,
+      cookTime: input.cookTime || 0,
+      servings: input.servings,
+      difficulty: input.difficulty || '',
+      cuisineType: input.cuisineType || '',
+      imageUrl: input.imageUrl || '',
+      userId: currentUserId,
+      listId: input.listId || '',
+      isPublic: input.isPublic || false,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Create ingredients
+    const ingredientPromises = input.ingredients.map((ingredient, index) =>
+      zero.mutate.recipe_ingredients.create({
+        id: nanoid(),
+        recipeId,
+        name: ingredient.name,
+        quantity: ingredient.quantity,
+        unit: ingredient.unit,
+        notes: ingredient.notes || '',
+        category: ingredient.category || '',
+        orderIndex: ingredient.orderIndex !== undefined ? ingredient.orderIndex : index,
+        createdAt: now,
+      })
+    );
+
+    await Promise.all(ingredientPromises);
+
+    return {
+      id: recipeId,
+      name: input.name,
+      description: input.description,
+      instructions: input.instructions,
+      prepTime: input.prepTime,
+      cookTime: input.cookTime,
+      servings: input.servings,
+      difficulty: input.difficulty,
+      cuisineType: input.cuisineType,
+      imageUrl: input.imageUrl,
+      userId: currentUserId,
+      listId: input.listId,
+      isPublic: input.isPublic || false,
+      createdAt: now,
+      updatedAt: now,
+    };
+  };
+
+  /**
+   * Update an existing recipe
+   */
+  const updateRecipe = async (input: UpdateRecipeInput): Promise<Recipe> => {
+    const now = Date.now();
+    const updates: any = {
+      id: input.id,
+      updatedAt: now,
+    };
+
+    if (input.name !== undefined) updates.name = input.name;
+    if (input.description !== undefined) updates.description = input.description;
+    if (input.instructions !== undefined) updates.instructions = input.instructions;
+    if (input.prepTime !== undefined) updates.prepTime = input.prepTime;
+    if (input.cookTime !== undefined) updates.cookTime = input.cookTime;
+    if (input.servings !== undefined) updates.servings = input.servings;
+    if (input.difficulty !== undefined) updates.difficulty = input.difficulty;
+    if (input.cuisineType !== undefined) updates.cuisineType = input.cuisineType;
+    if (input.imageUrl !== undefined) updates.imageUrl = input.imageUrl;
+    if (input.listId !== undefined) updates.listId = input.listId;
+    if (input.isPublic !== undefined) updates.isPublic = input.isPublic;
+
+    await zero.mutate.recipes.update(updates);
+
+    // If ingredients are updated, delete old ones and create new ones
+    if (input.ingredients) {
+      // Delete existing ingredients
+      const existingIngredients = await (zero.query.recipe_ingredients
+        .where('recipeId', input.id) as any).run();
+
+      const deletePromises = existingIngredients.map((ing: any) =>
+        zero.mutate.recipe_ingredients.delete({ id: ing.id })
+      );
+      await Promise.all(deletePromises);
+
+      // Create new ingredients
+      const ingredientPromises = input.ingredients.map((ingredient, index) =>
+        zero.mutate.recipe_ingredients.create({
+          id: nanoid(),
+          recipeId: input.id,
+          name: ingredient.name,
+          quantity: ingredient.quantity,
+          unit: ingredient.unit,
+          notes: ingredient.notes || '',
+          category: ingredient.category || '',
+          orderIndex: ingredient.orderIndex !== undefined ? ingredient.orderIndex : index,
+          createdAt: now,
+        })
+      );
+      await Promise.all(ingredientPromises);
+    }
+
+    // Return updated recipe (simplified, real implementation would query)
+    return {
+      id: input.id,
+      name: input.name || '',
+      description: input.description,
+      instructions: input.instructions || '',
+      prepTime: input.prepTime,
+      cookTime: input.cookTime,
+      servings: input.servings || 1,
+      difficulty: input.difficulty,
+      cuisineType: input.cuisineType,
+      imageUrl: input.imageUrl,
+      userId: currentUserId,
+      listId: input.listId,
+      isPublic: input.isPublic || false,
+      createdAt: 0,
+      updatedAt: now,
+    };
+  };
+
+  /**
+   * Delete a recipe and its ingredients
+   */
+  const deleteRecipe = async (recipeId: string): Promise<void> => {
+    // Delete ingredients first
+    const ingredients = await (zero.query.recipe_ingredients.where('recipeId', recipeId) as any).run();
+    const deleteIngredientPromises = ingredients.map((ing: any) =>
+      zero.mutate.recipe_ingredients.delete({ id: ing.id })
+    );
+    await Promise.all(deleteIngredientPromises);
+
+    // Delete recipe
+    await zero.mutate.recipes.delete({ id: recipeId });
+  };
+
+  /**
+   * Duplicate a recipe with a new name
+   */
+  const duplicateRecipe = async (recipeId: string, newName?: string): Promise<Recipe> => {
+    // Fetch original recipe
+    const originalRecipe = await (zero.query.recipes.where('id', recipeId) as any).run();
+    if (originalRecipe.length === 0) {
+      throw new Error('Recipe not found');
+    }
+
+    const recipe = originalRecipe[0];
+    const ingredients = await (zero.query.recipe_ingredients.where('recipeId', recipeId) as any).run();
+
+    // Create duplicate
+    const newRecipeId = nanoid();
+    const now = Date.now();
+
+    await zero.mutate.recipes.create({
+      id: newRecipeId,
+      name: newName || `${recipe.name} (Copy)`,
+      description: recipe.description,
+      instructions: recipe.instructions,
+      prepTime: recipe.prepTime,
+      cookTime: recipe.cookTime,
+      servings: recipe.servings,
+      difficulty: recipe.difficulty,
+      cuisineType: recipe.cuisineType,
+      imageUrl: recipe.imageUrl,
+      userId: currentUserId,
+      listId: recipe.listId,
+      isPublic: false, // Duplicates are private by default
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    // Duplicate ingredients
+    const ingredientPromises = ingredients.map((ing: any) =>
+      zero.mutate.recipe_ingredients.create({
+        id: nanoid(),
+        recipeId: newRecipeId,
+        name: ing.name,
+        quantity: ing.quantity,
+        unit: ing.unit,
+        notes: ing.notes,
+        category: ing.category,
+        orderIndex: ing.orderIndex,
+        createdAt: now,
+      })
+    );
+    await Promise.all(ingredientPromises);
+
+    return {
+      id: newRecipeId,
+      name: newName || `${recipe.name} (Copy)`,
+      description: recipe.description,
+      instructions: recipe.instructions,
+      prepTime: recipe.prepTime,
+      cookTime: recipe.cookTime,
+      servings: recipe.servings,
+      difficulty: recipe.difficulty,
+      cuisineType: recipe.cuisineType,
+      imageUrl: recipe.imageUrl,
+      userId: currentUserId,
+      listId: recipe.listId,
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+  };
+
+  /**
+   * Toggle recipe public/private status
+   */
+  const toggleRecipePublic = async (recipeId: string): Promise<Recipe> => {
+    const recipe = await (zero.query.recipes.where('id', recipeId) as any).run();
+    if (recipe.length === 0) {
+      throw new Error('Recipe not found');
+    }
+
+    const currentRecipe = recipe[0];
+    const newPublicStatus = !currentRecipe.isPublic;
+    const now = Date.now();
+
+    await zero.mutate.recipes.update({
+      id: recipeId,
+      isPublic: newPublicStatus,
+      updatedAt: now,
+    });
+
+    return {
+      ...currentRecipe,
+      isPublic: newPublicStatus,
+      updatedAt: now,
+    };
+  };
+
+  return {
+    createRecipe,
+    updateRecipe,
+    deleteRecipe,
+    duplicateRecipe,
+    toggleRecipePublic,
+  };
+}
+
+/**
+ * React hook for meal plan mutations
+ * Provides functions for creating, updating, and deleting meal plans
+ *
+ * @returns Object with meal plan mutation functions
+ *
+ * @example
+ * ```typescript
+ * const { createMealPlan, updateMealPlan, deleteMealPlan } = useMealPlanMutations();
+ * ```
+ */
+export function useMealPlanMutations() {
+  const zero = getZeroInstance();
+  const currentUserId = (zero as any).userID || 'demo-user';
+
+  /**
+   * Create a new meal plan
+   */
+  const createMealPlan = async (input: CreateMealPlanInput): Promise<MealPlan> => {
+    const id = nanoid();
+    const now = Date.now();
+
+    await zero.mutate.meal_plans.create({
+      id,
+      userId: currentUserId,
+      listId: input.listId || '',
+      recipeId: input.recipeId,
+      plannedDate: input.plannedDate,
+      mealType: input.mealType,
+      servings: input.servings || 1,
+      notes: input.notes || '',
+      isCooked: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return {
+      id,
+      userId: currentUserId,
+      listId: input.listId,
+      recipeId: input.recipeId,
+      plannedDate: input.plannedDate,
+      mealType: input.mealType,
+      servings: input.servings || 1,
+      notes: input.notes,
+      isCooked: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+  };
+
+  /**
+   * Update an existing meal plan
+   */
+  const updateMealPlan = async (input: UpdateMealPlanInput): Promise<MealPlan> => {
+    const now = Date.now();
+    const updates: any = {
+      id: input.id,
+      updatedAt: now,
+    };
+
+    if (input.listId !== undefined) updates.listId = input.listId;
+    if (input.recipeId !== undefined) updates.recipeId = input.recipeId;
+    if (input.plannedDate !== undefined) updates.plannedDate = input.plannedDate;
+    if (input.mealType !== undefined) updates.mealType = input.mealType;
+    if (input.servings !== undefined) updates.servings = input.servings;
+    if (input.notes !== undefined) updates.notes = input.notes;
+    if (input.isCooked !== undefined) updates.isCooked = input.isCooked;
+
+    await zero.mutate.meal_plans.update(updates);
+
+    // Return updated meal plan (simplified)
+    return {
+      id: input.id,
+      userId: currentUserId,
+      listId: input.listId,
+      recipeId: input.recipeId || '',
+      plannedDate: input.plannedDate || Date.now(),
+      mealType: input.mealType || 'dinner',
+      servings: input.servings || 1,
+      notes: input.notes,
+      isCooked: input.isCooked || false,
+      createdAt: 0,
+      updatedAt: now,
+    };
+  };
+
+  /**
+   * Delete a meal plan
+   */
+  const deleteMealPlan = async (mealPlanId: string): Promise<void> => {
+    await zero.mutate.meal_plans.delete({ id: mealPlanId });
+  };
+
+  /**
+   * Mark a meal as cooked
+   */
+  const markMealCooked = async (mealPlanId: string): Promise<MealPlan> => {
+    const now = Date.now();
+
+    await zero.mutate.meal_plans.update({
+      id: mealPlanId,
+      isCooked: true,
+      updatedAt: now,
+    });
+
+    // Fetch and return updated meal plan
+    const mealPlans = await (zero.query.meal_plans.where('id', mealPlanId) as any).run();
+    if (mealPlans.length === 0) {
+      throw new Error('Meal plan not found');
+    }
+
+    const mealPlan = mealPlans[0];
+    return {
+      id: mealPlan.id,
+      userId: mealPlan.userId,
+      listId: mealPlan.listId,
+      recipeId: mealPlan.recipeId,
+      plannedDate: mealPlan.plannedDate,
+      mealType: mealPlan.mealType,
+      servings: mealPlan.servings,
+      notes: mealPlan.notes,
+      isCooked: true,
+      createdAt: mealPlan.createdAt,
+      updatedAt: now,
+    };
+  };
+
+  /**
+   * Generate a shopping list from meal plans
+   * Creates a new list with grocery items for the selected meal plans
+   */
+  const generateShoppingList = async (mealPlanIds: string[]): Promise<string> => {
+    // Fetch meal plans
+    const mealPlans = await (zero.query.meal_plans.where('id', 'IN', mealPlanIds) as any).run();
+
+    // Get unique recipe IDs
+    const recipeIds: string[] = [...new Set(mealPlans.map((mp: any) => mp.recipeId))] as string[];
+
+    // Fetch recipes and ingredients
+    const recipes = await (zero.query.recipes.where('id', 'IN', recipeIds) as any).run();
+    const allIngredients = await (zero.query.recipe_ingredients.where('recipeId', 'IN', recipeIds) as any).run();
+
+    // Create new list
+    const listId = nanoid();
+    const now = Date.now();
+
+    await zero.mutate.lists.create({
+      id: listId,
+      name: `Meal Plan - ${new Date().toLocaleDateString()}`,
+      owner_id: currentUserId,
+      color: '#4CAF50',
+      icon: '🍽️',
+      budget: 0,
+      currency: 'USD',
+      createdAt: now,
+      updatedAt: now,
+      is_archived: false,
+      archived_at: 0,
+    });
+
+    // Add owner as member
+    await zero.mutate.list_members.create({
+      id: nanoid(),
+      list_id: listId,
+      user_id: currentUserId,
+      permission: 'owner',
+      added_at: now,
+      added_by: currentUserId,
+      user_email: '',
+      user_name: '',
+      updated_at: now,
+    });
+
+    // Group ingredients by name and sum quantities
+    const ingredientMap = new Map<string, {
+      name: string;
+      quantity: number;
+      unit: string;
+      category: string;
+      notes: string;
+    }>();
+
+    mealPlans.forEach((mealPlan: any) => {
+      const planIngredients = allIngredients.filter((ing: any) => ing.recipeId === mealPlan.recipeId);
+      const servingsMultiplier = mealPlan.servings / (recipes.find((r: any) => r.id === mealPlan.recipeId)?.servings || 1);
+
+      planIngredients.forEach((ing: any) => {
+        const key = `${ing.name}-${ing.unit}`;
+        const existing = ingredientMap.get(key);
+
+        if (existing) {
+          existing.quantity += ing.quantity * servingsMultiplier;
+        } else {
+          ingredientMap.set(key, {
+            name: ing.name,
+            quantity: ing.quantity * servingsMultiplier,
+            unit: ing.unit,
+            category: ing.category || 'Other',
+            notes: ing.notes || '',
+          });
+        }
+      });
+    });
+
+    // Create grocery items
+    const itemPromises = Array.from(ingredientMap.values()).map((item, index) =>
+      zero.mutate.grocery_items.create({
+        id: nanoid(),
+        name: item.name,
+        quantity: Math.ceil(item.quantity), // Round up
+        gotten: false,
+        category: item.category,
+        notes: item.notes,
+        price: 0,
+        user_id: currentUserId,
+        list_id: listId,
+        createdAt: now + index,
+        updatedAt: now + index,
+      })
+    );
+
+    await Promise.all(itemPromises);
+
+    return listId;
+  };
+
+  return {
+    createMealPlan,
+    updateMealPlan,
+    deleteMealPlan,
+    markMealCooked,
+    generateShoppingList,
+  };
+}
+
+/**
+ * React hook for recipe collection mutations
+ * Provides functions for managing recipe collections
+ *
+ * @returns Object with collection mutation functions
+ *
+ * @example
+ * ```typescript
+ * const { createCollection, addRecipeToCollection } = useRecipeCollectionMutations();
+ * ```
+ */
+export function useRecipeCollectionMutations() {
+  const zero = getZeroInstance();
+  const currentUserId = (zero as any).userID || 'demo-user';
+
+  /**
+   * Create a new recipe collection
+   */
+  const createCollection = async (name: string, description?: string): Promise<RecipeCollection> => {
+    const id = nanoid();
+    const now = Date.now();
+
+    await zero.mutate.recipe_collections.create({
+      id,
+      userId: currentUserId,
+      name,
+      description: description || '',
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    return {
+      id,
+      userId: currentUserId,
+      name,
+      description,
+      isPublic: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+  };
+
+  /**
+   * Update a recipe collection
+   */
+  const updateCollection = async (
+    id: string,
+    name: string,
+    description?: string
+  ): Promise<RecipeCollection> => {
+    const now = Date.now();
+
+    await zero.mutate.recipe_collections.update({
+      id,
+      name,
+      description: description || '',
+      updatedAt: now,
+    });
+
+    return {
+      id,
+      userId: currentUserId,
+      name,
+      description,
+      isPublic: false,
+      createdAt: 0,
+      updatedAt: now,
+    };
+  };
+
+  /**
+   * Delete a recipe collection
+   */
+  const deleteCollection = async (collectionId: string): Promise<void> => {
+    // Delete collection items first
+    const items = await (zero.query.recipe_collection_items.where('collectionId', collectionId) as any).run();
+    const deleteItemPromises = items.map((item: any) =>
+      zero.mutate.recipe_collection_items.delete({
+        collectionId: item.collectionId,
+        recipeId: item.recipeId,
+      })
+    );
+    await Promise.all(deleteItemPromises);
+
+    // Delete collection
+    await zero.mutate.recipe_collections.delete({ id: collectionId });
+  };
+
+  /**
+   * Add a recipe to a collection
+   */
+  const addRecipeToCollection = async (collectionId: string, recipeId: string): Promise<void> => {
+    const now = Date.now();
+
+    await zero.mutate.recipe_collection_items.create({
+      collectionId,
+      recipeId,
+      addedAt: now,
+    });
+
+    // Update collection's updatedAt
+    await zero.mutate.recipe_collections.update({
+      id: collectionId,
+      updatedAt: now,
+    });
+  };
+
+  /**
+   * Remove a recipe from a collection
+   */
+  const removeRecipeFromCollection = async (collectionId: string, recipeId: string): Promise<void> => {
+    await zero.mutate.recipe_collection_items.delete({
+      collectionId,
+      recipeId,
+    });
+
+    // Update collection's updatedAt
+    await zero.mutate.recipe_collections.update({
+      id: collectionId,
+      updatedAt: Date.now(),
+    });
+  };
+
+  return {
+    createCollection,
+    updateCollection,
+    deleteCollection,
+    addRecipeToCollection,
+    removeRecipeFromCollection,
+  };
+}
+
+/**
+ * Utility function to convert a recipe to grocery items
+ * Useful for adding recipe ingredients to a shopping list
+ *
+ * @param recipe - Recipe with ingredients
+ * @param servings - Optional servings adjustment (defaults to recipe servings)
+ * @returns Array of grocery items ready to be added to a list
+ *
+ * @example
+ * ```typescript
+ * const recipe = useRecipe('recipe-123');
+ * const items = await recipeToGroceryItems(recipe, 4);
+ * ```
+ */
+export async function recipeToGroceryItems(
+  recipe: Recipe,
+  servings?: number
+): Promise<GroceryItem[]> {
+  if (!recipe.ingredients || recipe.ingredients.length === 0) {
+    return [];
+  }
+
+  const targetServings = servings || recipe.servings;
+  const multiplier = targetServings / recipe.servings;
+  const now = Date.now();
+
+  return recipe.ingredients.map((ingredient, index) => ({
+    id: nanoid(),
+    name: `${ingredient.name} (${Math.ceil(ingredient.quantity * multiplier)} ${ingredient.unit})`,
+    quantity: Math.ceil(ingredient.quantity * multiplier),
+    gotten: false,
+    category: (ingredient.category || 'Other') as Category,
+    notes: ingredient.notes || `From recipe: ${recipe.name}`,
+    userId: recipe.userId,
+    listId: recipe.listId || '',
+    createdAt: now + index,
+    updatedAt: now + index,
+  }));
 }
 
 // =============================================================================

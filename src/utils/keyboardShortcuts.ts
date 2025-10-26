@@ -11,7 +11,9 @@ export type ShortcutKey =
   | 'ctrl+l'
   | 'ctrl+r'
   | 'ctrl+k'
+  | 'ctrl+m'
   | 'ctrl+shift+c'
+  | 'ctrl+shift+n'
   | 'escape'
   | '?'
   | 'arrowup'
@@ -23,7 +25,7 @@ export type ShortcutKey =
 export interface KeyboardShortcut {
   key: ShortcutKey;
   description: string;
-  category: 'List Operations' | 'Navigation' | 'General' | 'Sync' | 'Category Management';
+  category: 'List Operations' | 'Navigation' | 'General' | 'Sync' | 'Category Management' | 'Recipes & Meal Planning';
   handler: () => void;
   enabled?: boolean;
   // Prevent default browser behavior
@@ -45,6 +47,7 @@ export function getShortcutKey(event: KeyboardEvent): ShortcutKey | null {
   if (event.ctrlKey || event.metaKey) {
     // Ctrl+Shift combinations
     if (event.shiftKey && key === 'c') return 'ctrl+shift+c';
+    if (event.shiftKey && key === 'n') return 'ctrl+shift+n';
 
     // Ctrl combinations
     if (key === 'n') return 'ctrl+n';
@@ -52,6 +55,7 @@ export function getShortcutKey(event: KeyboardEvent): ShortcutKey | null {
     if (key === 'l') return 'ctrl+l';
     if (key === 'r') return 'ctrl+r';
     if (key === 'k') return 'ctrl+k';
+    if (key === 'm') return 'ctrl+m';
   }
 
   // Single keys
@@ -141,8 +145,12 @@ export function formatShortcutKey(key: ShortcutKey): string {
       return `${ctrlKey}+R`;
     case 'ctrl+k':
       return `${ctrlKey}+K`;
+    case 'ctrl+m':
+      return `${ctrlKey}+M`;
     case 'ctrl+shift+c':
       return `${ctrlKey}+${shiftKey}+C`;
+    case 'ctrl+shift+n':
+      return `${ctrlKey}+${shiftKey}+N`;
     case 'escape':
       return 'Esc';
     case '?':

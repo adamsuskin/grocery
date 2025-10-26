@@ -354,10 +354,9 @@ export function useCategoryVoteMutations() {
     }
 
     // Check if user already voted
-    const existingVotes = await zero.query.category_votes
+    const existingVotes = await (zero.query.category_votes
       .where('category_id', input.categoryId)
-      .where('user_id', currentUserId)
-      .run();
+      .where('user_id', currentUserId) as any).run();
 
     const now = Date.now();
 
@@ -397,10 +396,9 @@ export function useCategoryVoteMutations() {
       throw new Error('User must be authenticated to remove votes');
     }
 
-    const existingVotes = await zero.query.category_votes
+    const existingVotes = await (zero.query.category_votes
       .where('category_id', categoryId)
-      .where('user_id', currentUserId)
-      .run();
+      .where('user_id', currentUserId) as any).run();
 
     if (existingVotes.length === 0) {
       return; // No vote to remove
@@ -474,10 +472,9 @@ export function useSuggestionVoteMutations() {
     }
 
     // Check if user already voted
-    const existingVotes = await zero.query.category_suggestion_votes
+    const existingVotes = await (zero.query.category_suggestion_votes
       .where('suggestion_id', input.suggestionId)
-      .where('user_id', currentUserId)
-      .run();
+      .where('user_id', currentUserId) as any).run();
 
     const now = Date.now();
 
@@ -515,10 +512,9 @@ export function useSuggestionVoteMutations() {
       throw new Error('User must be authenticated to remove votes');
     }
 
-    const existingVotes = await zero.query.category_suggestion_votes
+    const existingVotes = await (zero.query.category_suggestion_votes
       .where('suggestion_id', suggestionId)
-      .where('user_id', currentUserId)
-      .run();
+      .where('user_id', currentUserId) as any).run();
 
     if (existingVotes.length === 0) {
       return; // No vote to remove

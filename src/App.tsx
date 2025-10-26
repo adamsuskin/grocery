@@ -23,9 +23,12 @@ import { ListErrorBoundary } from './components/ListErrorBoundary';
 import { BudgetTracker } from './components/BudgetTracker';
 import { ShareTargetHandler } from './components/ShareTargetHandler';
 import { CustomCategoryManager } from './components/CustomCategoryManager';
-import { useListMutations, useGroceryItems, useCustomCategories } from './zero-store';
+import { RecipeList } from './components/RecipeList';
+import { RecipeEditor } from './components/RecipeEditor';
+import { MealPlanner } from './components/MealPlanner';
+import { useListMutations, useGroceryItems, useCustomCategories, useRecipes, useRecipeMutations } from './zero-store';
 import { useOnboardingTour } from './hooks/useOnboardingTour';
-import type { FilterState, SortState, ListTemplate, PermissionLevel, ConflictResolution, GroceryItem } from './types';
+import type { FilterState, SortState, ListTemplate, PermissionLevel, ConflictResolution, GroceryItem, Recipe, CreateRecipeInput, UpdateRecipeInput, Category } from './types';
 import { CATEGORIES } from './types';
 import { createShortcutHandler, type KeyboardShortcut } from './utils/keyboardShortcuts';
 import { getListFilters } from './utils/filterPreferences';
@@ -49,6 +52,10 @@ function App() {
   const { showTour, startTour, completeTour, skipTour } = useOnboardingTour();
   const groceryItems = useGroceryItems(activeListId || '');
 
+  // Recipe data and mutations
+  const recipes = useRecipes(user?.id || '');
+  const { createRecipe, updateRecipe } = useRecipeMutations();
+
   // Sync status and conflicts
   const syncStatus = useSyncStatus();
   const { conflicts, resolveConflict, dismissConflict } = useConflicts();
@@ -64,12 +71,12 @@ function App() {
 
   const [filters, setFilters] = useState<FilterState>(() => {
     if (activeListId) {
-      return getListFilters(activeListId, allCategories);
+      return getListFilters(activeListId, allCategories as Category[]);
     }
     return {
       searchText: '',
       showGotten: true,
-      categories: allCategories,
+      categories: allCategories as Category[],
       categoryMode: 'include',
       categoryType: 'all',
     };
@@ -78,7 +85,7 @@ function App() {
   // Update filters when list changes or custom categories change
   useEffect(() => {
     if (activeListId) {
-      const savedFilters = getListFilters(activeListId, allCategories);
+      const savedFilters = getListFilters(activeListId, allCategories as Category[]);
       setFilters(savedFilters);
     }
   }, [activeListId, allCategories]);
@@ -95,6 +102,12 @@ function App() {
   const [showListSelector, setShowListSelector] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const listSelectorRef = useRef<HTMLDivElement>(null);
+
+  // Recipe and Meal Planner states
+  const [showRecipes, setShowRecipes] = useState(false);
+  const [showMealPlanner, setShowMealPlanner] = useState(false);
+  const [showRecipeEditor, setShowRecipeEditor] = useState(false);
+  const [editingRecipe, setEditingRecipe] = useState<Recipe | undefined>(undefined);
 
   const handleFilterChange = (newFilters: Partial<FilterState>) => {
     setFilters(prev => ({ ...prev, ...newFilters }));
@@ -169,6 +182,49 @@ function App() {
     }
   }, [currentList, userPermission]);
 
+  // Recipe handlers
+  const handleToggleRecipes = useCallback(() => {
+    setShowRecipes(prev => !prev);
+    if (showMealPlanner) {
+      setShowMealPlanner(false);
+    }
+  }, [showMealPlanner]);
+
+  const handleToggleMealPlanner = useCallback(() => {
+    setShowMealPlanner(prev => !prev);
+    if (showRecipes) {
+      setShowRecipes(false);
+    }
+  }, [showRecipes]);
+
+  const handleCreateRecipe = useCallback(() => {
+    setEditingRecipe(undefined);
+    setShowRecipeEditor(true);
+  }, []);
+
+  const handleEditRecipe = useCallback((recipe: Recipe) => {
+    setEditingRecipe(recipe);
+    setShowRecipeEditor(true);
+  }, []);
+
+  const handleSaveRecipe = useCallback(async (recipeInput: CreateRecipeInput | UpdateRecipeInput) => {
+    try {
+      if ('id' in recipeInput && recipeInput.id) {
+        // Update existing recipe
+        await updateRecipe(recipeInput as UpdateRecipeInput);
+      } else {
+        // Create new recipe
+        await createRecipe(recipeInput as CreateRecipeInput);
+      }
+      setShowRecipeEditor(false);
+      setEditingRecipe(undefined);
+    } catch (error) {
+      console.error('Failed to save recipe:', error);
+      throw error; // Re-throw to let the editor handle the error
+    }
+  }, [createRecipe, updateRecipe]);
+
+
   // Define keyboard shortcuts
   const shortcuts: KeyboardShortcut[] = [
     {
@@ -212,10 +268,24 @@ function App() {
     },
     {
       key: 'ctrl+r',
-      description: 'Retry sync',
-      category: 'Sync',
-      handler: syncStatus.onRetrySync,
-      enabled: isAuthenticated && !syncStatus.isSyncing,
+      description: 'Toggle recipes view',
+      category: 'Recipes & Meal Planning',
+      handler: handleToggleRecipes,
+      enabled: isAuthenticated,
+    },
+    {
+      key: 'ctrl+m',
+      description: 'Toggle meal planner',
+      category: 'Recipes & Meal Planning',
+      handler: handleToggleMealPlanner,
+      enabled: isAuthenticated,
+    },
+    {
+      key: 'ctrl+shift+n',
+      description: 'Create new recipe',
+      category: 'Recipes & Meal Planning',
+      handler: handleCreateRecipe,
+      enabled: isAuthenticated,
     },
     {
       key: 'escape',
@@ -224,6 +294,9 @@ function App() {
       handler: () => {
         if (currentConflict) {
           setCurrentConflict(null);
+        } else if (showRecipeEditor) {
+          setShowRecipeEditor(false);
+          setEditingRecipe(undefined);
         } else if (showShortcutsHelp) {
           setShowShortcutsHelp(false);
         } else if (showListManagement) {
@@ -234,6 +307,10 @@ function App() {
           setShowCategoryManager(false);
         } else if (showListSelector) {
           setShowListSelector(false);
+        } else if (showRecipes) {
+          setShowRecipes(false);
+        } else if (showMealPlanner) {
+          setShowMealPlanner(false);
         } else {
           // Clear focus from any active element
           (document.activeElement as HTMLElement)?.blur();
@@ -496,11 +573,78 @@ function App() {
         </ListErrorBoundary>
       )}
 
+      {/* Recipe Editor modal */}
+      {showRecipeEditor && (
+        <ListErrorBoundary
+          componentName="Recipe Editor"
+          onReset={() => {
+            setShowRecipeEditor(false);
+            setEditingRecipe(undefined);
+          }}
+        >
+          <RecipeEditor
+            recipe={editingRecipe}
+            isOpen={showRecipeEditor}
+            onClose={() => {
+              setShowRecipeEditor(false);
+              setEditingRecipe(undefined);
+            }}
+            onSave={handleSaveRecipe}
+            listId={activeListId || undefined}
+          />
+        </ListErrorBoundary>
+      )}
+
       <header className="header">
         <div className="header-content">
           <div className="header-title">
-            <h1>🛒 Grocery List</h1>
-            <p className="subtitle">Collaborative shopping list</p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <div>
+                <h1>🛒 Grocery List</h1>
+                <p className="subtitle">Collaborative shopping list</p>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <button
+                  className={`btn ${showRecipes ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={handleToggleRecipes}
+                  title="Toggle recipes view (Ctrl+R)"
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                  }}
+                >
+                  Recipes
+                  {recipes.length > 0 && (
+                    <span
+                      style={{
+                        background: showRecipes ? 'rgba(255,255,255,0.3)' : 'var(--primary-color)',
+                        color: showRecipes ? 'white' : 'white',
+                        padding: '2px 6px',
+                        borderRadius: '10px',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                      }}
+                    >
+                      {recipes.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  className={`btn ${showMealPlanner ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={handleToggleMealPlanner}
+                  title="Toggle meal planner (Ctrl+M)"
+                  style={{
+                    padding: '8px 16px',
+                    fontSize: '14px',
+                  }}
+                >
+                  Meal Planner
+                </button>
+              </div>
+            </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <SyncStatus {...syncStatus} />
@@ -574,37 +718,68 @@ function App() {
                 </ListErrorBoundary>
               </div>
 
-              <section className="add-section">
-                <h2>Add Item</h2>
-                <AddItemForm listId={activeListId} canEdit={canEdit()} />
-              </section>
-
-              {currentList?.budget && currentList.budget > 0 && (
-                <section className="budget-section">
-                  <BudgetTracker
-                    items={groceryItems}
-                    budget={currentList.budget}
-                    currency={currentList.currency || 'USD'}
-                    onUpdateBudget={async (newBudget) => {
-                      if (currentList) {
-                        await updateListBudget(currentList.id, newBudget, currentList.currency);
-                      }
-                    }}
-                  />
+              {/* Recipe List View */}
+              {showRecipes ? (
+                <section className="recipe-view-section">
+                  <ListErrorBoundary componentName="Recipe List">
+                    <RecipeList
+                      userId={user?.id || ''}
+                      showPublic={false}
+                      onRecipeClick={handleEditRecipe}
+                      onCreateRecipe={handleCreateRecipe}
+                    />
+                  </ListErrorBoundary>
                 </section>
-              )}
+              ) : showMealPlanner ? (
+                /* Meal Planner View */
+                <section className="meal-planner-section">
+                  <ListErrorBoundary componentName="Meal Planner">
+                    <MealPlanner
+                      userId={user?.id || ''}
+                      listId={activeListId || undefined}
+                      onGenerateList={(listId) => {
+                        console.log('Generate shopping list for:', listId);
+                        // Future: implement list generation from meal plan
+                      }}
+                    />
+                  </ListErrorBoundary>
+                </section>
+              ) : (
+                /* Grocery List View (default) */
+                <>
+                  <section className="add-section">
+                    <h2>Add Item</h2>
+                    <AddItemForm listId={activeListId} canEdit={canEdit()} />
+                  </section>
 
-              <section className="list-section">
-                <h2>Shopping List</h2>
-                <GroceryList
-                  listId={activeListId}
-                  canEdit={canEdit()}
-                  filters={filters}
-                  onFilterChange={handleFilterChange}
-                  sort={sort}
-                  onSortChange={handleSortChange}
-                />
-              </section>
+                  {currentList?.budget && currentList.budget > 0 && (
+                    <section className="budget-section">
+                      <BudgetTracker
+                        items={groceryItems}
+                        budget={currentList.budget}
+                        currency={currentList.currency || 'USD'}
+                        onUpdateBudget={async (newBudget) => {
+                          if (currentList) {
+                            await updateListBudget(currentList.id, newBudget, currentList.currency);
+                          }
+                        }}
+                      />
+                    </section>
+                  )}
+
+                  <section className="list-section">
+                    <h2>Shopping List</h2>
+                    <GroceryList
+                      listId={activeListId}
+                      canEdit={canEdit()}
+                      filters={filters}
+                      onFilterChange={handleFilterChange}
+                      sort={sort}
+                      onSortChange={handleSortChange}
+                    />
+                  </section>
+                </>
+              )}
             </>
           )}
         </section>

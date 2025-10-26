@@ -147,7 +147,7 @@ export async function exportCategories(
     const zero = getZeroInstance();
 
     // Fetch the list name
-    const listQuery = await zero.query.lists.where('id', listId).run();
+    const listQuery = await (zero.query.lists.where('id', listId) as any).run();
     const list = listQuery[0];
 
     if (!list) {
@@ -157,8 +157,8 @@ export async function exportCategories(
     const listName = list.name || 'Unnamed List';
 
     // Fetch custom categories for the list
-    const categoriesQuery = await zero.query.custom_categories
-      .where('list_id', listId)
+    const categoriesQuery = await (zero.query.custom_categories
+      .where('list_id', listId) as any)
       .run();
 
     if (categoriesQuery.length === 0) {
@@ -182,8 +182,8 @@ export async function exportCategories(
     // Get item counts if requested
     let itemCounts: Record<string, number> = {};
     if (includeItems) {
-      const itemsQuery = await zero.query.grocery_items
-        .where('list_id', listId)
+      const itemsQuery = await (zero.query.grocery_items
+        .where('list_id', listId) as any)
         .run();
 
       itemCounts = itemsQuery.reduce((acc: Record<string, number>, item: any) => {
@@ -409,8 +409,8 @@ export async function importCategories(
 
     // Fetch existing categories
     const zero = getZeroInstance();
-    const existingQuery = await zero.query.custom_categories
-      .where('list_id', listId)
+    const existingQuery = await (zero.query.custom_categories
+      .where('list_id', listId) as any)
       .run();
 
     const existingCategories: CustomCategory[] = existingQuery.map((cat: any) => ({

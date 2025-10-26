@@ -21,7 +21,7 @@ import { useCustomCategoriesOptimized } from '../hooks/useCustomCategoriesOptimi
 import { useCustomCategoryMutations } from '../hooks/useCustomCategories';
 import { CATEGORIES, type PermissionLevel } from '../types';
 import { validateCategoryFields } from '../utils/categoryValidation';
-import { useDebounce, useFilteredCategories } from '../utils/debounce';
+import { useFilteredCategories } from '../utils/debounce';
 import { useRenderPerformance } from '../utils/categoryPerformance';
 import {
   logCategoryCreated,

@@ -51,6 +51,11 @@ export function AddItemForm({ listId, canEdit }: AddItemFormProps) {
     createdBy: c.created_by,
     color: c.color || undefined,
     icon: c.icon || undefined,
+    displayOrder: c.display_order ?? 0,
+    isArchived: c.is_archived ?? false,
+    archivedAt: c.archived_at || undefined,
+    isLocked: c.is_locked ?? false,
+    lastEditedBy: c.last_edited_by || undefined,
     createdAt: c.createdAt,
     updatedAt: c.updatedAt,
   }));

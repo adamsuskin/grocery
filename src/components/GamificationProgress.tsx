@@ -3,7 +3,6 @@ import {
   UserLevel,
   getLevelInfo,
   getNextLevelInfo,
-  calculateLevel,
 } from '../utils/categoryGamification';
 import './GamificationProgress.css';
 
